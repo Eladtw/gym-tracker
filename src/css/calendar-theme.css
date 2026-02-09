@@ -1,0 +1,762 @@
+/* src/css/calendar-theme.css */
+/* עיצוב לוח השנה – עובד בלי Tailwind, מוגבל רק בתוך .calendar-scope */
+
+/* ===== מעטפת עמוד כמו במוקאפ ===== */
+.calendar-page-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+  background: #f3f4f6;
+}
+
+/* ===== משתני בסיס – חלים רק בתוך ה-wrapper של הקלנדר ===== */
+.calendar-scope {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: oklch(0.145 0 0);
+  --card: #ffffff;
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: #030213;
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.0058 264.53);
+  --secondary-foreground: #030213;
+  --muted: #ececf0;
+  --muted-foreground: #717182;
+  --accent: #e9ebef;
+  --accent-foreground: #030213;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f3f3f5;
+  --switch-background: #cbced4;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: oklch(0.708 0 0);
+
+  --radius: 0.625rem;
+
+  --status-today: #3b82f6;
+  --status-planned: #38bdf8;
+  --status-inprogress: #f59e0b;
+  --status-completed: #10b981;
+
+  --planned-bg: #f0f9ff;
+  --inprogress-bg: #fffbeb;
+  --completed-bg: #ecfdf5;
+
+  --workout-today-border: #3b82f6;
+  --workout-today-bg: #eaf2ff;
+
+  --workout-future-border: #22c55e;
+  --workout-future-bg: #ecfdf3;
+
+  --workout-past-border: #64748b;
+  --workout-past-bg: #f1f5f9;
+
+  font-size: var(--font-size);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* טיפוגרפיה בסיסית בתוך הקלנדר */
+.calendar-scope h1 {
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+}
+.calendar-scope h2 {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+}
+.calendar-scope p,
+.calendar-scope label,
+.calendar-scope button,
+.calendar-scope input {
+  font-size: 1rem;
+  font-weight: var(--font-weight-normal);
+  line-height: 1.5;
+}
+
+/* ===== Layout של הקלנדר ===== */
+.calendar-wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 18px 24px;
+  font-family: system-ui, sans-serif;
+  background: #ffffff;
+  border-radius: 32px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.calendar-main-header {
+  margin-bottom: 8px;
+}
+
+.calendar-main-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.calendar-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.calendar-title {
+  margin: 0;
+}
+
+.calendar-grid-7 {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-weekdays-row {
+  margin-bottom: 6px;
+}
+
+/* כפתורים רגילים בלוח שנה */
+.calendar-scope button {
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: var(--font-weight-medium);
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.calendar-scope button:hover {
+  background: #020015;
+  transform: translateY(-0.5px);
+}
+
+.calendar-nav-btn {
+  background: #f9fafb;
+  color: #111827;
+  border-radius: 14px;
+  padding: 6px 14px;
+  box-shadow: none;
+}
+
+.calendar-nav-btn:hover {
+  background: #e5e7eb;
+  transform: translateY(0);
+}
+
+/* קופסת הסיכום מתחת לקלנדר */
+.calendar-day-summary {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+/* שורת הכותרת של ימי השבוע */
+.calendar-scope .weekday-header {
+  color: #6b7280;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* תאי ימים */
+.day-cell {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 60px;
+  background: #fff;
+  position: relative;
+  cursor: pointer;
+  transition: box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s;
+}
+
+.day-cell-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.day-cell.is-today {
+  outline: 2px solid var(--status-today);
+  outline-offset: 0;
+}
+
+.day-cell.is-selected {
+  background: #06b6d4;
+  border-color: #06b6d4;
+  color: #f9fafb;
+}
+
+.day-cell.workout-today {
+  background: var(--workout-today-bg);
+  box-shadow: inset 0 0 0 2px var(--workout-today-border);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.day-cell.workout-future {
+  background: var(--workout-future-bg);
+  box-shadow: inset 0 0 0 2px var(--workout-future-border);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.day-cell.workout-past {
+  background: var(--workout-past-bg);
+  box-shadow: inset 0 0 0 2px var(--workout-past-border);
+  border-color: rgba(100, 116, 139, 0.25);
+}
+
+.day-cell.is-selected.workout-today,
+.day-cell.is-selected.workout-future,
+.day-cell.is-selected.workout-past {
+  background: #06b6d4;
+  border-color: #06b6d4;
+  color: #f9fafb;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.day-session-dot {
+  font-size: 12px;
+  color: var(--status-completed);
+}
+
+.day-cell.has-planned .day-session-dot {
+  color: var(--status-planned);
+}
+.day-cell.has-completed .day-session-dot {
+  color: var(--status-completed);
+}
+
+.day-cell.is-selected .day-session-dot {
+  color: #e0f2fe;
+}
+
+/* ===== Legend ===== */
+.calendar-legend {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  justify-content: center;
+  align-items: center;
+}
+
+.calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.calendar-legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.calendar-legend-swatch--workout-today {
+  background: var(--workout-today-bg);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: inset 0 0 0 2px var(--workout-today-border);
+}
+
+.calendar-legend-swatch--workout-future {
+  background: var(--workout-future-bg);
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: inset 0 0 0 2px var(--workout-future-border);
+}
+
+.calendar-legend-swatch--workout-past {
+  background: var(--workout-past-bg);
+  border-color: rgba(100, 116, 139, 0.35);
+  box-shadow: inset 0 0 0 2px var(--workout-past-border);
+}
+
+/* ===== Modal ===== */
+.calendar-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  z-index: 50;
+}
+
+.calendar-modal-panel {
+  width: 100%;
+  max-width: 420px;
+  height: 100vh;
+  background: #ffffff;
+  box-shadow: -4px 0 24px rgba(15, 23, 42, 0.25);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px 48px;
+}
+
+.calendar-modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.calendar-modal-toprow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.calendar-modal-date {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.calendar-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.calendar-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.calendar-modal-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.calendar-modal-section {
+  margin-bottom: 8px;
+}
+
+.calendar-label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.calendar-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.calendar-exercises-container {
+  margin-top: 12px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.calendar-empty-hint {
+  margin-top: 32px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.calendar-exercises-count {
+  margin-top: 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* ✅ NEW: Workout overview card */
+.calendar-workout-overview {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  margin-top: 6px;
+}
+
+.calendar-workout-name {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: #0f172a;
+}
+
+.calendar-workout-muscles {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.muscle-chip {
+  border-radius: 999px;
+  padding: 3px 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 11px;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.calendar-workout-muscles-empty {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* כרטיס תרגיל */
+.exercise-card {
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.exercise-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.exercise-summary {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.exercise-chevron {
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.exercise-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.exercise-tag {
+  border-radius: 999px;
+  padding: 3px 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 11px;
+  background: #ffffff;
+  color: #111827;
+}
+
+.exercise-tag.is-unknown {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+
+/* סטים בתצוגת פרטים */
+.set-details-box {
+  margin-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+}
+
+.set-details-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.set-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e5e7eb33;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+/* פוטר של המודאל */
+.calendar-modal-footer {
+  margin-top: 0;
+  margin-bottom: 25px;
+}
+
+.calendar-start-btn {
+  width: 100%;
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #020617;
+  color: #ffffff;
+  border: 0;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.calendar-start-btn.is-disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.calendar-error-msg {
+  margin-top: 6px;
+  color: #ef4444;
+  font-size: 13px;
+}
+
+/* ===== Custom workout select (Figma style) ===== */
+.wk-select {
+  position: relative;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.wk-select-trigger {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.wk-select-trigger:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.wk-select-trigger:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+.wk-select-arrow {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.wk-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+  padding: 6px 0;
+  z-index: 999;
+}
+
+.wk-select-option {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.wk-select-option:hover {
+  background: #f3f4f6;
+}
+
+.wk-select-option.is-selected {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+/* ===== Planned list (PRO UI v2) ===== */
+.calendar-planned-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.calendar-planned-count {
+  font-size: 11px;
+  color: #6b7280;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.calendar-planned-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calendar-planned-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding: 10px 12px 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.calendar-planned-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+}
+
+.calendar-planned-card.is-active {
+  border-color: #0ea5b7;
+  box-shadow: 0 0 0 2px rgba(14, 165, 183, 0.12);
+  background: #fbfdff;
+}
+
+.calendar-planned-accent {
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.calendar-planned-accent.accent-today {
+  background: var(--status-today);
+}
+
+.calendar-planned-accent.accent-planned {
+  background: var(--status-planned);
+}
+
+.calendar-planned-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.calendar-planned-radio {
+  width: 16px;
+  height: 16px;
+  accent-color: #0ea5b7;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.calendar-planned-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.calendar-planned-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+
+.calendar-planned-sub {
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+.calendar-planned-delete-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.calendar-planned-delete-icon:hover {
+  background: #f8fafc;
+  border-color: #d1d5db;
+  color: #0f172a;
+}
+
+.calendar-planned-empty {
+  border: 1px dashed #e5e7eb;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 14px 12px;
+}
+
+.calendar-planned-empty-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.calendar-planned-empty-sub {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .calendar-wrap {
+    padding: 16px 12px 20px;
+    border-radius: 24px;
+  }
+
+  .calendar-main-title {
+    font-size: 1.6rem;
+  }
+
+  .day-cell {
+    min-height: 52px;
+  }
+
+  .calendar-modal-panel {
+    max-width: 100%;
+  }
+}

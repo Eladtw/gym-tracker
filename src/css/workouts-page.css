@@ -1,0 +1,386 @@
+/* src/css/workouts-page.css */
+
+/* בסיס לעמוד האימונים */
+.workouts-page-root {
+  padding: 16px;
+  max-width: 960px;
+  margin: 0 auto;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+/* כותרת ודסקריפשן */
+.workouts-header {
+  margin-bottom: 16px;
+}
+
+.workouts-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.workouts-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* אזור הכפתור העליון */
+.workouts-top-actions {
+  max-width: 480px;
+  margin-bottom: 20px;
+}
+
+.workouts-message {
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+/* כפתור ראשי */
+.workouts-primary-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 0;
+  background: #030712;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease,
+    box-shadow 0.15s ease;
+}
+
+.workouts-primary-btn:hover {
+  background: #020617;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
+  transform: translateY(-0.5px);
+}
+
+.workouts-primary-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* רשימת האימונים */
+.workouts-list-section {
+  margin-top: 8px;
+}
+
+.workouts-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* כרטיס אימון */
+.workouts-item {
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+  margin-bottom: 14px;
+  padding: 18px 16px 12px;
+  transition: box-shadow 0.15s ease, transform 0.08s ease,
+    border-color 0.15s ease;
+}
+
+.workouts-item:hover {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  border-color: #0ea5e9;
+  transform: translateY(-1px);
+}
+
+/* header של הכרטיס */
+.workouts-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.workouts-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.workouts-item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.workouts-item-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 1.08rem;
+}
+
+/* תאריך יצירה */
+.workouts-item-meta {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* צד ימין של ה-header – רק חץ */
+.workouts-item-actions {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* אייקונים */
+.workouts-icon-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  transition: background 0.12s ease, transform 0.08s ease;
+  min-width: 32px;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workouts-icon-btn:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+}
+
+.workouts-icon-danger {
+  color: #ef4444;
+}
+
+/* חץ */
+.workouts-chevron-btn {
+  font-size: 0.9rem;
+}
+
+/* שורת סטטוס מתחת לשם האימון – כמות תרגילים וסטים */
+.workouts-item-stats {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+
+.workouts-item-stats-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+/* קבוצות השריר שעובד האימון */
+.workouts-item-muscles {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.workouts-muscle-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid rgba(129, 140, 248, 0.7);
+  white-space: nowrap;
+}
+
+/* אזור התרגילים בכרטיס (כאשר הכרטיס פתוח) */
+.workouts-exercises {
+  margin-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+}
+
+.workouts-empty-ex {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* שורה של תרגיל */
+.workouts-ex-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.9rem;
+}
+
+.workouts-ex-name {
+  color: #111827;
+}
+
+.workouts-ex-summary {
+  color: #6b7280;
+  margin-left: 12px;
+}
+
+/* שורת אקשנים בתחתית הכרטיס */
+.workouts-item-footer {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* טקסט כשאין אימונים */
+.workouts-empty {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* ===== Modal כללי (יצירה + מחיקה) ===== */
+
+.workouts-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.workouts-modal {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 20px 18px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+}
+
+.workouts-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.workouts-modal-subtitle {
+  margin: 4px 0 14px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* label + input */
+.workouts-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.workouts-input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0 4px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.workouts-input:focus {
+  outline: 2px solid #4f46e5;
+  outline-offset: 1px;
+}
+
+/* כפתורי המודל */
+.workouts-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.workouts-modal-confirm {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: #030712;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.workouts-modal-confirm:hover {
+  background: #020617;
+}
+
+.workouts-modal-cancel {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.workouts-modal-cancel:hover {
+  background: #f9fafb;
+}
+
+/* ===== עיצוב מיוחד למודל מחיקה ===== */
+
+.workouts-modal-danger {
+  border: 1px solid #fee2e2;
+}
+
+.workouts-modal-delete-title {
+  color: #b91c1c;
+}
+
+.workouts-modal-delete-confirm {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: #dc2626;
+  color: #ffffff;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.workouts-modal-delete-confirm:hover {
+  background: #b91c1c;
+}
+
+.workouts-modal-delete-confirm:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* ===== רספונסיביות ===== */
+
+@media (max-width: 640px) {
+  .workouts-page-root {
+    padding: 12px;
+  }
+
+  .workouts-item-header {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .workouts-item-actions {
+    align-self: flex-start;
+  }
+
+  .workouts-item-footer {
+    justify-content: flex-end;
+  }
+}

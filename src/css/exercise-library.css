@@ -1,0 +1,605 @@
+/* ===== PAGE LAYOUT ===== */
+
+.el-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-bottom: 80px; /* שיהיה מקום ל־bottom nav */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #0f172a;
+  background: #f3f4f6;
+}
+
+.el-header {
+  margin-bottom: 14px;
+}
+
+.el-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.el-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* במקום layout שורה – עוברים לטור (מובייל) */
+
+.el-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+}
+
+/* ===== FILTER CARD ===== */
+
+.el-filters-card {
+  width: 100%;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+  padding: 16px 16px 14px;
+}
+
+.el-filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.el-filters-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.el-filters-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.el-filters-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.el-reset-btn {
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  font-size: 0.8rem;
+  color: #4f46e5;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.el-reset-btn:hover {
+  background: #eef2ff;
+}
+
+.el-filters-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.el-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.el-field-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.el-select {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 9px 11px;
+  font-size: 0.88rem;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03);
+}
+
+/* ===== LIST + CARDS ===== */
+
+.el-list-section {
+  width: 100%;
+}
+
+.el-list-header {
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.el-list-caption {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* במובייל – טור אחד מלא, מרכזי */
+.el-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.el-empty-state {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* Exercise card */
+
+.el-card {
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.el-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
+}
+
+.el-card-image-wrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+  background: #0f172a;
+}
+
+.el-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.el-card-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.el-card-body {
+  padding: 10px 12px 11px;
+}
+
+.el-card-title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.el-card-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Tags */
+
+.el-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.el-tag-group {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.el-tag-subgroup {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.el-tag-equipment {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+/* ===== MODAL ===== */
+
+.el-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 40;
+}
+
+.el-modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 40px);
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* top image */
+
+.el-modal-image-header {
+  position: relative;
+  height: 220px;
+  background: #0f172a;
+}
+
+.el-modal-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* gradient over image */
+.el-modal-image-gradient {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 110px;
+  background: linear-gradient(
+    to top,
+    rgba(15, 23, 42, 0.9),
+    rgba(15, 23, 42, 0)
+  );
+  z-index: 1;
+}
+
+.el-modal-image-content {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 10px;
+  color: #f9fafb;
+  z-index: 2;
+}
+
+.el-modal-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.el-modal-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* close button */
+
+.el-modal-close {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(15, 23, 42, 0.78);
+  color: #f9fafb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.el-modal-close:hover {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.el-modal-body {
+  padding: 14px 16px 16px;
+  overflow-y: auto;
+}
+
+.el-modal-section {
+  margin-bottom: 12px;
+}
+
+.el-modal-card {
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 10px 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.el-modal-primary-card {
+  background: #eef2ff;
+  border-color: #e0e7ff;
+}
+
+.el-modal-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #eef2ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.el-secondary-icon {
+  background: #111827;
+}
+
+.el-modal-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.el-modal-card-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.el-modal-card-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* secondary muscles pills */
+
+.el-secondary-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.el-secondary-pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  font-size: 0.7rem;
+  color: #111827;
+}
+
+.el-secondary-empty {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* YouTube link */
+
+.el-youtube-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Add to workout section */
+
+.el-add-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 10px;
+}
+
+.el-add-header {
+  margin-bottom: 8px;
+}
+
+.el-add-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.el-add-plus {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.el-add-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.el-workout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.el-empty-workouts {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.el-workout-item {
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 7px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.el-workout-item--active {
+  background: #eef2ff;
+  border-color: #4f46e5;
+}
+
+.el-workout-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.el-workout-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.el-workout-sub {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.el-workout-radio-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.el-add-button {
+  width: 100%;
+  border-radius: 999px;
+  border: 0;
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: #4f46e5;
+  color: #f9fafb;
+}
+
+.el-add-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ===== Custom workout select ===== */
+
+.wk-select {
+  position: relative;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.wk-select-trigger {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.wk-select-trigger:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.wk-select-trigger:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+.wk-select-arrow {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.wk-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+  padding: 6px 0;
+  z-index: 999;
+}
+
+.wk-select-option {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.wk-select-option:hover {
+  background: #f3f4f6;
+}
+
+.wk-select-option.is-selected {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+/* ===== RESPONSIVE (אופציונלי – 2 עמודות במסכים רחבים) ===== */
+
+@media (min-width: 600px) {
+  .el-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

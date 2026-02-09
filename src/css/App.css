@@ -1,0 +1,147 @@
+/* src/App.css */
+/* ===== Reset בסיסי ===== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #f3f4f6;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+/* קישורים בלי קו תחתון כברירת מחדל */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ===== App shell – מעטפת כללית ===== */
+
+.app-shell {
+  max-width: 480px;          /* מייצר תחושה של מובייל במרכז המסך */
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px 8px;
+  box-sizing: border-box;
+}
+
+/* ===== Top bar (אימייל + Logout) ===== */
+
+.app-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 4px 8px;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.app-topbar-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* כפתור Logout */
+
+.app-logout-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+  transition: background 0.12s ease, transform 0.08s ease,
+    box-shadow 0.12s ease;
+}
+
+.app-logout-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.5);
+}
+
+.app-logout-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.3);
+}
+
+/* ===== אזור התוכן המרכזי ===== */
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Bottom tab bar ===== */
+
+.app-bottom-nav {
+  position: sticky;
+  bottom: 0;
+  margin-top: 10px;
+  background: #ffffff;
+  border-radius: 24px 24px 0 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 -6px 18px rgba(15, 23, 42, 0.12);
+  display: flex;
+  justify-content: space-around;
+  padding: 6px 10px 8px;
+}
+
+/* פריט יחיד בטאב בר */
+
+.app-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.app-nav-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* מצב אקטיבי – כמו במוקאפ */
+
+.app-nav-item--active {
+  color: #06b6d4;
+  font-weight: 600;
+}
+
+.app-nav-item--active .app-nav-icon {
+  background: rgba(6, 182, 212, 0.1);
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+/* ===== התאמות למסכים קטנים ===== */
+
+@media (max-width: 480px) {
+  .app-shell {
+    padding: 8px 6px 6px;
+  }
+
+  .app-bottom-nav {
+    border-radius: 18px 18px 0 0;
+  }
+}

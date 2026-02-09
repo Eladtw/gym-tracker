@@ -1,0 +1,896 @@
+/* ===== Root layout ===== */
+
+.wd-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px 32px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #0f172a;
+  background: radial-gradient(circle at top left, #e0f2fe 0, transparent 50%),
+    radial-gradient(circle at bottom right, #fef3c7 0, transparent 50%);
+  min-height: 100vh;
+}
+
+/* מצב טעינה */
+.wd-loading {
+  padding: 48px 16px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+/* ===== Header ===== */
+
+.wd-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.wd-back-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #111827;
+  backdrop-filter: blur(6px);
+  transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.08s ease,
+    border-color 0.16s ease;
+}
+
+.wd-back-btn:hover {
+  background: #f9fafb;
+  border-color: #94a3b8;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+  transform: translateY(-1px);
+}
+
+/* ===== Title block ===== */
+
+.wd-title-block {
+  margin-bottom: 18px;
+  padding: 14px 16px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wd-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: #020617;
+}
+
+.wd-subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.wd-start-session-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  border-radius: 999px;
+  border: 0;
+  background: linear-gradient(135deg, #10b981, #22c55e);
+  color: #ffffff;
+  padding: 7px 18px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+  transition: transform 0.08s ease, box-shadow 0.12s ease, filter 0.12s ease,
+    background 0.12s ease;
+}
+
+.wd-start-session-btn:hover {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(16, 185, 129, 0.5);
+}
+
+.wd-start-session-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.wd-message {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+/* ===== Add exercise ===== */
+
+.wd-add-section {
+  margin-bottom: 14px;
+}
+
+.wd-add-card {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.8);
+  background: rgba(248, 250, 252, 0.95);
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #0f172a;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease,
+    transform 0.08s ease;
+}
+
+.wd-add-card:hover {
+  background: #f3f4f6;
+  border-color: #0ea5e9;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  transform: translateY(-1px);
+}
+
+/* ===== Exercise cards ===== */
+
+.wd-ex-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wd-empty {
+  font-size: 0.9rem;
+  color: #6b7280;
+  padding: 10px 2px;
+}
+
+.wd-ex-card {
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(255, 255, 255, 0.98);
+  padding: 10px 12px 8px;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  transition: box-shadow 0.16s ease, transform 0.08s ease, border-color 0.16s ease;
+}
+
+.wd-ex-card:hover {
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  transform: translateY(-1px);
+  border-color: #0ea5e9;
+}
+
+.wd-ex-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wd-ex-left {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.wd-ex-handle {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  padding-top: 2px;
+  user-select: none;
+}
+
+.wd-ex-index {
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.wd-ex-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wd-ex-name {
+  font-weight: 550;
+  font-size: 0.98rem;
+  color: #020617;
+}
+
+/* meta: קבוצת שריר / שריר עיקרי / וריאציה / סיכום סטים */
+.wd-ex-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+  align-items: center;
+}
+
+.wd-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  line-height: 1.1;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.wd-chip-group {
+  background: #eef2ff;
+  color: #3730a3;
+  border-color: rgba(129, 140, 248, 0.7);
+}
+
+.wd-chip-primary-muscle {
+  background: #ecfeff;
+  color: #0f766e;
+  border-color: rgba(34, 211, 238, 0.8);
+}
+
+.wd-chip-variation {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: rgba(148, 163, 184, 0.9);
+}
+
+.wd-ex-summary {
+  font-size: 0.78rem;
+  color: #6b7280;
+  padding-left: 4px;
+}
+
+.wd-ex-weightline {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+/* לימין – כפתורים ו-Progress */
+.wd-ex-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wd-icon-btn {
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.wd-icon-btn:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+}
+
+.wd-icon-danger {
+  color: #ef4444;
+}
+
+.wd-ex-progress-link {
+  font-size: 0.75rem;
+  text-decoration: none;
+  color: #0f766e;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  font-weight: 500;
+  transition: background 0.16s ease, transform 0.08s ease, box-shadow 0.12s ease;
+}
+
+.wd-ex-progress-link:hover {
+  background: #bbf7d0;
+  box-shadow: 0 6px 14px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+/* סטים מפורטים בכרטיס */
+.wd-ex-sets {
+  margin-top: 8px;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 6px;
+}
+
+.wd-ex-set-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  padding: 2px 0;
+}
+
+.wd-ex-set-label {
+  color: #6b7280;
+}
+
+.wd-ex-set-desc {
+  color: #111827;
+}
+
+/* ===== Modal (Add/Edit) ===== */
+
+.wd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+
+  padding: max(14px, env(safe-area-inset-top)) 14px
+    max(14px, env(safe-area-inset-bottom));
+}
+
+.wd-modal {
+  width: 100%;
+  max-width: 720px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.5);
+
+  height: 88vh;
+  max-height: 88vh;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.wd-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.wd-modal-title {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 600;
+}
+
+.wd-modal-close {
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.wd-modal-close:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+}
+
+.wd-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  padding: 14px 18px;
+  padding-right: 14px;
+}
+
+.wd-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  padding: 12px 18px 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+/* ===== Form controls ===== */
+
+.wd-field-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.wd-input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  margin-top: 2px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.wd-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.7);
+  background: #f9fafb;
+}
+
+/* suggestions */
+
+.wd-suggestions {
+  margin-top: 6px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 4px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.16);
+}
+
+.wd-suggestion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.12s ease, transform 0.08s ease;
+}
+
+.wd-suggestion-item:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+}
+
+.wd-suggestion-mg {
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+.wd-suggestion-primary {
+  opacity: 0.75;
+  font-size: 0.8rem;
+}
+
+.wd-suggestion-owner {
+  opacity: 0.6;
+  font-size: 0.75rem;
+}
+
+/* ✅ Locked exercise (edit mode) */
+.wd-locked-ex {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.wd-locked-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.wd-locked-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* ✅ Variation box */
+.wd-variation-box {
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+  background: #ffffff;
+}
+
+.wd-variation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.wd-variation-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.wd-mini-muted {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.wd-no-variations {
+  border-radius: 10px;
+  padding: 10px;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.wd-inline-warn {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: #b91c1c;
+}
+
+/* sets editor */
+
+.wd-sets-section {
+  margin-top: 10px;
+}
+
+.wd-sets-grid {
+  margin-top: 4px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  background: #f9fafb;
+}
+
+.wd-sets-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.wd-sets-row-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.wd-sets-row-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.wd-error-text {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+
+/* new exercise section */
+
+.wd-new-ex-section {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px dashed #e5e7eb;
+  background: #f9fafb;
+}
+
+.wd-new-ex-title {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.wd-help-text {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* footer buttons */
+
+.wd-btn-primary,
+.wd-btn-secondary,
+.wd-btn-ghost {
+  border-radius: 12px;
+  border: 0;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.08s ease,
+    border-color 0.16s ease;
+}
+
+.wd-btn-primary {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.wd-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
+.wd-btn-primary:hover:not(:disabled) {
+  background: #020617;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.35);
+}
+
+.wd-btn-secondary {
+  background: #0ea5e9;
+  color: #ffffff;
+}
+
+.wd-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
+.wd-btn-secondary:hover:not(:disabled) {
+  background: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(14, 165, 233, 0.4);
+}
+
+.wd-btn-ghost {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.wd-btn-ghost:hover {
+  background: #f9fafb;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.wd-or-text {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* ===== Toasts ===== */
+
+.toast-wrap {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 60;
+}
+
+.toast {
+  min-width: 240px;
+  max-width: 320px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  font-size: 0.85rem;
+}
+
+.toast-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.toast-x {
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.toast-x:hover {
+  background: #f3f4f6;
+}
+
+.toast-text {
+  white-space: pre-line;
+}
+
+.toast-error {
+  border-left: 4px solid #ef4444;
+}
+
+.toast-ok {
+  border-left: 4px solid #22c55e;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 640px) {
+  .wd-page {
+    padding: 12px;
+  }
+
+  .wd-title-block {
+    padding: 12px 12px 14px;
+  }
+
+  /* ✅ modal stays bottom-sheet but opens almost full screen */
+  .wd-modal-overlay {
+    align-items: flex-end;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .wd-modal {
+    max-width: 100%;
+    width: 100%;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+
+    height: 94vh;
+    max-height: 94vh;
+  }
+
+  .wd-ex-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .wd-ex-actions {
+    align-self: flex-end;
+  }
+
+  /* ✅ toasts full width on mobile */
+  .toast-wrap {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+  }
+
+  .toast {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   ✅ Image button + Image Modal (SAME AS SessionPage)
+   ========================================================= */
+
+/* image icon button – same look/behavior */
+.wd-img-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: transform 0.08s ease, background 0.12s ease;
+}
+
+.wd-img-icon-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  transform: translateY(-1px);
+}
+
+.wd-img-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ====== Image Modal (Session exact classes) ====== */
+.img-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 9999;
+}
+
+.img-modal-panel {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.img-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.img-modal-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.img-modal-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+}
+
+.img-modal-body {
+  padding: 12px;
+  background: #f9fafb;
+}
+
+.img-modal-loading,
+.img-modal-empty {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.85rem;
+  padding: 18px 8px;
+}
+
+.img-modal-img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.img-modal-footer {
+  padding: 10px 12px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.img-modal-btn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
