@@ -134,7 +134,12 @@ function ExerciseCard({
     if (!isPosNum(weight) || !isPosNum(reps)) return;
 
     setLocalSaving(true);
-    await onLogSet(exercise.exercise_id, exercise.variation_id ?? null, weight, reps);
+    await onLogSet(
+      exercise.exercise_id,
+      exercise.variation_id ?? null,
+      weight,
+      reps
+    );
     setLocalSaving(false);
   }
 
@@ -171,7 +176,8 @@ function ExerciseCard({
             <div className="session-ex-sub">
               <span
                 className={
-                  "session-ex-chip" + (chipText === "Unknown" ? " is-unknown" : "")
+                  "session-ex-chip" +
+                  (chipText === "Unknown" ? " is-unknown" : "")
                 }
               >
                 {chipText}
@@ -184,7 +190,7 @@ function ExerciseCard({
               )}
 
               <span className="session-ex-sets-label">
-                {doneCount} / {plannedDisplay} sets
+                {doneSets.length} / {plannedDisplay} sets
               </span>
             </div>
           </div>
@@ -210,7 +216,6 @@ function ExerciseCard({
             🖼
           </button>
 
-          {/* Placeholder ל-Mark (אם תרצה להפוך בהמשך לסטטוס/סימון) */}
           <button
             type="button"
             className="session-mark-btn"
@@ -231,7 +236,6 @@ function ExerciseCard({
         />
       </div>
 
-      {/* אזור הפנימי – נפתח רק כש-open */}
       {open && (
         <div className="session-ex-body">
           {/* Planned Sets */}
@@ -253,11 +257,11 @@ function ExerciseCard({
             )}
           </div>
 
-          {/* Log Set – לסט הבא בלבד */}
+          {/* Log Set */}
           <div className="session-box">
             <div className="session-log-header">
               <div className="session-box-title">
-                Log Set {canLogMore ? nextIndex : doneCount}
+                Log Set {canLogMore ? doneSets.length + 1 : doneSets.length}
               </div>
               {targetForNext && (
                 <div className="session-log-target">
@@ -313,7 +317,7 @@ function ExerciseCard({
                 ? "All sets logged"
                 : localSaving || isSaving
                 ? "Saving…"
-                : `+ Log Set ${nextIndex}`}
+                : `+ Log Set ${doneSets.length + 1}`}
             </button>
           </div>
 
@@ -362,10 +366,8 @@ export default function SessionPage() {
   const [saving, setSaving] = useState(false);
   const [ending, setEnding] = useState(false);
 
-  // metaByExerciseId: exercise_id -> { image_path, group_label, primary_subgroup_label }
   const [metaByExerciseId, setMetaByExerciseId] = useState(new Map());
 
-  // image modal state
   const [imgOpen, setImgOpen] = useState(false);
   const [imgTitle, setImgTitle] = useState("");
   const [imgUrl, setImgUrl] = useState("");
@@ -454,7 +456,6 @@ export default function SessionPage() {
       return;
     }
 
-    // 1) exercises_catalog: image_path + primary_subgroup_id
     const { data: exRows, error: exErr } = await supabase
       .from("exercises_catalog")
       .select("id, image_path, primary_subgroup_id")
@@ -469,7 +470,6 @@ export default function SessionPage() {
       new Set((exRows || []).map((r) => r.primary_subgroup_id).filter(Boolean))
     );
 
-    // 2) muscle_subgroups: label + group_id
     let subgroups = [];
     if (primarySubgroupIds.length) {
       const { data: sg, error: sgErr } = await supabase
@@ -485,7 +485,6 @@ export default function SessionPage() {
       new Set((subgroups || []).map((s) => s.group_id).filter(Boolean))
     );
 
-    // 3) muscle_groups: label
     let groups = [];
     if (groupIds.length) {
       const { data: g, error: gErr } = await supabase
@@ -502,7 +501,9 @@ export default function SessionPage() {
 
     const map = new Map();
     (exRows || []).forEach((r) => {
-      const sg = r.primary_subgroup_id ? subgroupById.get(r.primary_subgroup_id) : null;
+      const sg = r.primary_subgroup_id
+        ? subgroupById.get(r.primary_subgroup_id)
+        : null;
       const groupLabel = sg?.group_id ? groupLabelById.get(sg.group_id) : null;
 
       map.set(String(r.id), {
@@ -515,7 +516,6 @@ export default function SessionPage() {
     setMetaByExerciseId(map);
   }, []);
 
-  // NEW: load variation labels for workout items that have variation_id
   const attachVariationLabels = useCallback(async (items) => {
     const variationIds = Array.from(
       new Set((items || []).map((x) => x.variation_id).filter(Boolean).map(String))
@@ -533,11 +533,15 @@ export default function SessionPage() {
       return items || [];
     }
 
-    const labelById = new Map((vars || []).map((v) => [String(v.id), v.label || "Variation"]));
+    const labelById = new Map(
+      (vars || []).map((v) => [String(v.id), v.label || "Variation"])
+    );
 
     return (items || []).map((it) => ({
       ...it,
-      variation_label: it.variation_id ? (labelById.get(String(it.variation_id)) || "Variation") : null,
+      variation_label: it.variation_id
+        ? labelById.get(String(it.variation_id)) || "Variation"
+        : null,
     }));
   }, []);
 
@@ -573,16 +577,13 @@ export default function SessionPage() {
         .select("id, exercise_id, exercise_name, variation_id, set_targets, order_index")
         .eq("workout_id", s.workout_id)
         .order("order_index");
+
       if (eI) setMsg("❌ " + eI.message);
 
       const cleaned = (items || []).filter((it) => it.exercise_id);
 
-      // attach variation labels
       const withVarLabels = await attachVariationLabels(cleaned);
-
       setWorkoutItems(withVarLabels);
-
-      // load meta for these exercises (image + primary muscle labels)
       await loadExerciseMeta(withVarLabels);
     } else {
       setWorkoutItems([]);
@@ -594,12 +595,12 @@ export default function SessionPage() {
       .select("id, exercise_id, exercise_name, variation_id, set_index, weight, reps, created_at")
       .eq("session_id", sessionId)
       .order("created_at", { ascending: true });
+
     if (eP) setMsg("❌ " + eP.message);
     setSets(performed || []);
     setLoading(false);
   }
 
-  // קיבוץ סטים לפי תרגיל+וריאציה
   const grouped = useMemo(() => {
     const map = new Map();
     for (const st of sets) {
@@ -610,7 +611,6 @@ export default function SessionPage() {
     return map;
   }, [sets]);
 
-  // סיכומים
   const totalPlannedSets = useMemo(() => {
     let sum = 0;
     for (const it of workoutItems) {
@@ -627,7 +627,6 @@ export default function SessionPage() {
 
   const isEnded = !!session?.ended_at;
 
-  // אם נרשם סט ראשון והסשן עוד לא "started" – נסמן started_at
   async function ensureStartedIfNeeded() {
     if (!session?.id) return;
     if (session.started_at || session.ended_at) return;
@@ -641,13 +640,10 @@ export default function SessionPage() {
       .single();
 
     if (!error && data?.started_at) {
-      setSession((prev) =>
-        prev ? { ...prev, started_at: data.started_at } : prev
-      );
+      setSession((prev) => (prev ? { ...prev, started_at: data.started_at } : prev));
     }
   }
 
-  // לוג סט עבור תרגיל ספציפי (+ וריאציה) – מכבד כמות סטים מתוכננת
   async function logSetForExercise(exerciseId, variationId, weight, reps) {
     setMsg("");
 
@@ -678,9 +674,7 @@ export default function SessionPage() {
     const already = grouped.get(key) || [];
     const nextIndex = already.length + 1;
 
-    const plannedCount = Array.isArray(plan.set_targets)
-      ? plan.set_targets.length
-      : 0;
+    const plannedCount = Array.isArray(plan.set_targets) ? plan.set_targets.length : 0;
 
     if (plannedCount && nextIndex > plannedCount) {
       setMsg("❌ All planned sets for this exercise are already logged");
@@ -696,7 +690,7 @@ export default function SessionPage() {
         session_id: sessionId,
         exercise_id: plan.exercise_id,
         exercise_name: plan.exercise_name ?? "",
-        variation_id: plan.variation_id ?? null, // ✅ IMPORTANT
+        variation_id: plan.variation_id ?? null,
         set_index: nextIndex,
         weight: Number(weight),
         reps: Number(reps),
@@ -715,20 +709,14 @@ export default function SessionPage() {
     setMsg("✅ Set logged");
   }
 
-  // סיום סשן: עדכון ended_at
   async function finishSession() {
     setMsg("");
     if (!session?.id || !!session?.ended_at) return;
 
     setEnding(true);
 
-    const updates = {
-      ended_at: new Date().toISOString(),
-    };
-
-    if (!session.started_at) {
-      updates.started_at = new Date().toISOString();
-    }
+    const updates = { ended_at: new Date().toISOString() };
+    if (!session.started_at) updates.started_at = new Date().toISOString();
 
     const { data, error } = await supabase
       .from("sessions")
@@ -761,7 +749,6 @@ export default function SessionPage() {
     setMsg("✅ Session completed");
   }
 
-  // פתיחת תמונה (Signed URL אם אפשר, אחרת Public URL)
   const openExerciseImage = useCallback(async (exerciseId, exerciseName, imagePath) => {
     const path = imagePath || null;
     setImgTitle(exerciseName || "Exercise image");
@@ -773,7 +760,6 @@ export default function SessionPage() {
     setImgLoading(true);
 
     try {
-      // try signed (works for private buckets)
       const { data, error } = await supabase.storage
         .from(BUCKET)
         .createSignedUrl(path, 60 * 60);
@@ -784,7 +770,6 @@ export default function SessionPage() {
         return;
       }
 
-      // fallback to public
       const pub = supabase.storage.from(BUCKET).getPublicUrl(path);
       setImgUrl(pub?.data?.publicUrl || "");
     } catch (e) {
@@ -813,7 +798,6 @@ export default function SessionPage() {
   return (
     <div className="session-page-root">
       <div className="session-page-shell">
-        {/* טופ־בר */}
         <header className="session-header">
           <button
             type="button"
@@ -836,10 +820,7 @@ export default function SessionPage() {
           </div>
 
           <div className="session-progress">
-            <div
-              className="session-progress-fill"
-              style={{ width: `${progressPct}%` }}
-            />
+            <div className="session-progress-fill" style={{ width: `${progressPct}%` }} />
           </div>
 
           {!isEnded && startedLabel && (
@@ -853,7 +834,6 @@ export default function SessionPage() {
           )}
         </header>
 
-        {/* כרטיס תרגילים */}
         <section className="session-card">
           <h3 className="session-card-title">Exercises</h3>
 
@@ -908,20 +888,21 @@ export default function SessionPage() {
             </p>
           )}
         </section>
+
+        {/* ✅ הכפתור עכשיו חלק מה-flow ונמצא מתחת ל-Session summary */}
+        <div className="session-finish-wrap">
+          <button
+            className="session-finish-btn"
+            onClick={finishSession}
+            disabled={ending || isEnded}
+          >
+            {isEnded ? "Session completed" : ending ? "Finishing…" : "Finish Session"}
+          </button>
+
+          {/* ספייס קטן למובייל כדי שלא “ידבק” לסרגל התחתון */}
+        </div>
       </div>
 
-      {/* כפתור תחתון */}
-      <div className="session-bottom-bar">
-        <button
-          className="session-bottom-btn"
-          onClick={finishSession}
-          disabled={ending || isEnded}
-        >
-          {isEnded ? "Session completed" : ending ? "Finishing…" : "Finish Session"}
-        </button>
-      </div>
-
-      {/* Modal תמונה */}
       <ImageModal
         open={imgOpen}
         title={imgTitle}
