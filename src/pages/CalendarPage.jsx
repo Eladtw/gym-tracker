@@ -285,6 +285,7 @@ function WorkoutSelectorModal({
   );
   const workoutName = selectedWorkout?.name || "Workout";
 
+  // ✅ Workout muscle groups = all unique PRIMARY groups in the workout
   const workoutMuscles = useMemo(() => {
     const unique = uniquePrimaryGroupsFromItems(chosenWorkoutItems);
     unique.sort((a, b) => a.localeCompare(b));
@@ -344,6 +345,7 @@ function WorkoutSelectorModal({
 
           {chosenWorkoutId && (
             <>
+              {/* ✅ Workout header + muscle groups */}
               <div className="calendar-workout-overview">
                 <div className="calendar-workout-name">{workoutName}</div>
                 <div className="calendar-workout-muscles">
@@ -370,6 +372,7 @@ function WorkoutSelectorModal({
                 const summary = summarizeTargets(it.set_targets);
                 const isOpen = expandedId === it.id;
 
+                // ✅ Group of primary muscle, then primary muscle subgroup
                 const groupLabel = it?.primary_group_label || "Unknown";
                 const primarySubLabel = it?.primary_subgroup_label || "Unknown";
 
@@ -388,6 +391,7 @@ function WorkoutSelectorModal({
                       <div className="exercise-chevron">{isOpen ? "▴" : "▾"}</div>
                     </div>
 
+                    {/* ✅ Show: Group • Primary Subgroup (chips) */}
                     <div className="exercise-tag-row">
                       <span
                         className={
@@ -514,13 +518,19 @@ export default function CalendarPage() {
 
   const navigate = useNavigate();
 
-  // ✅ Lock body scroll when a modal is open (prevents "background scroll" on mobile)
+  // ✅ Lock body scroll when modal is open (fix mobile scroll + overscroll)
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    if (activeModal) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = prev || "";
+    const isOpen = !!activeModal;
+    const body = document.body;
+
+    if (isOpen) {
+      body.classList.add("calendar-modal-open");
+    } else {
+      body.classList.remove("calendar-modal-open");
+    }
+
     return () => {
-      document.body.style.overflow = prev || "";
+      body.classList.remove("calendar-modal-open");
     };
   }, [activeModal]);
 
@@ -633,6 +643,7 @@ export default function CalendarPage() {
   }, [month]);
 
   // ✅ Load exercises + show: Primary Group + Primary Subgroup
+  // Source of truth for PRIMARY is exercises_catalog.primary_subgroup_id
   useEffect(() => {
     if (!chosenWorkoutId) {
       setChosenWorkoutItems([]);
@@ -661,11 +672,13 @@ export default function CalendarPage() {
         new Set(rows.map((r) => r.exercise_id).filter(Boolean))
       );
 
-      const exerciseIdToPrimarySubId = new Map();
-      const primarySubIdToObj = new Map();
-      const groupIdToLabel = new Map();
+      // Maps
+      const exerciseIdToPrimarySubId = new Map(); // exercise_id -> primary_subgroup_id
+      const primarySubIdToObj = new Map(); // subgroup_id -> {label, group_id}
+      const groupIdToLabel = new Map(); // group_id -> label
 
       if (exerciseIds.length > 0) {
+        // 1) exercises_catalog -> primary_subgroup_id
         const { data: exMeta, error: exErr } = await supabase
           .from("exercises_catalog")
           .select("id, primary_subgroup_id")
@@ -679,9 +692,12 @@ export default function CalendarPage() {
           });
 
           const primarySubIds = Array.from(
-            new Set((exMeta || []).map((e) => e.primary_subgroup_id).filter(Boolean))
+            new Set(
+              (exMeta || []).map((e) => e.primary_subgroup_id).filter(Boolean)
+            )
           );
 
+          // 2) muscle_subgroups -> label + group_id
           if (primarySubIds.length > 0) {
             const { data: subs, error: subErr } = await supabase
               .from("muscle_subgroups")
@@ -699,6 +715,7 @@ export default function CalendarPage() {
                 new Set((subs || []).map((sg) => sg.group_id).filter(Boolean))
               );
 
+              // 3) muscle_groups -> label
               if (groupIds.length > 0) {
                 const { data: groups, error: gErr } = await supabase
                   .from("muscle_groups")
@@ -722,7 +739,9 @@ export default function CalendarPage() {
         const exId = r.exercise_id || null;
         const primarySubId = exId ? exerciseIdToPrimarySubId.get(exId) : null;
         const subObj = primarySubId ? primarySubIdToObj.get(primarySubId) : null;
-        const groupLabel = subObj?.group_id ? groupIdToLabel.get(subObj.group_id) : null;
+        const groupLabel = subObj?.group_id
+          ? groupIdToLabel.get(subObj.group_id)
+          : null;
 
         return {
           ...r,
@@ -736,6 +755,7 @@ export default function CalendarPage() {
     })();
   }, [chosenWorkoutId]);
 
+  // טעינת Sessions ליום עבר
   async function loadDaySessions(date) {
     setDaySessionsLoading(true);
     setDaySessions([]);
@@ -763,6 +783,7 @@ export default function CalendarPage() {
     setDaySessionsLoading(false);
   }
 
+  // ---------- Start for TODAY ----------
   async function startSessionForDate() {
     if (!selectedDate) return setMsg("Pick a date");
 
@@ -851,6 +872,7 @@ export default function CalendarPage() {
     navigate(`/session/${data.id}`);
   }
 
+  // ---------- Plan for FUTURE ----------
   async function planSessionForDate() {
     if (!selectedDate) return setMsg("Pick a date");
     if (!chosenWorkoutId) return setMsg("Pick a workout");
@@ -901,6 +923,7 @@ export default function CalendarPage() {
     setMsg("✅ Workout planned for this day");
   }
 
+  // ---------- Delete a specific planned session ----------
   async function deletePlanById(planId) {
     if (!planId) return;
 
@@ -934,6 +957,7 @@ export default function CalendarPage() {
     setMsg("✅ Plan deleted");
   }
 
+  // ---------- Day click ----------
   async function handleDayClick(d) {
     setSelectedDate(d);
     setMsg("");
@@ -989,136 +1013,130 @@ export default function CalendarPage() {
 
   return (
     <>
-      {/* ✅ Root that prevents "extra scroll" beyond bottom nav */}
-      <div className="calendar-root">
-        {/* ✅ Only this area scrolls, and stops above bottom nav */}
-        <div className="calendar-scroll">
-          <div className="calendar-page-shell">
-            <div className="calendar-scope calendar-wrap">
-              <header className="calendar-main-header">
-                <h1 className="calendar-main-title">Today&apos;s plan</h1>
-              </header>
+      <div className="calendar-page-shell">
+        <div className="calendar-scope calendar-wrap">
+          <header className="calendar-main-header">
+            <h1 className="calendar-main-title">Today&apos;s plan</h1>
+          </header>
 
-              <div className="calendar-header-row">
-                <button
-                  className="calendar-nav-btn"
-                  aria-label="Previous month"
-                  onClick={() => setMonth((m) => m.subtract(1, "month"))}
-                >
-                  ◀
-                </button>
-                <h2 className="calendar-title">{month.format("MMMM YYYY")}</h2>
-                <button
-                  className="calendar-nav-btn"
-                  aria-label="Next month"
-                  onClick={() => setMonth((m) => m.add(1, "month"))}
-                >
-                  ▶
-                </button>
+          <div className="calendar-header-row">
+            <button
+              className="calendar-nav-btn"
+              aria-label="Previous month"
+              onClick={() => setMonth((m) => m.subtract(1, "month"))}
+            >
+              ◀
+            </button>
+            <h2 className="calendar-title">{month.format("MMMM YYYY")}</h2>
+            <button
+              className="calendar-nav-btn"
+              aria-label="Next month"
+              onClick={() => setMonth((m) => m.add(1, "month"))}
+            >
+              ▶
+            </button>
+          </div>
+
+          <div className="calendar-grid-7 calendar-weekdays-row">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+              <div key={d} className="weekday-header">
+                {d}
               </div>
+            ))}
+          </div>
 
-              <div className="calendar-grid-7 calendar-weekdays-row">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                  <div key={d} className="weekday-header">
-                    {d}
-                  </div>
-                ))}
-              </div>
+          <div className="calendar-grid-7 calendar-days-grid">
+            {days.map((d) => {
+              const isCur = d.month() === month.month();
+              const isToday = d.isSame(todayIL, "day");
+              const isSelected = selectedDate && d.isSame(selectedDate, "day");
 
-              <div className="calendar-grid-7 calendar-days-grid">
-                {days.map((d) => {
-                  const isCur = d.month() === month.month();
-                  const isToday = d.isSame(todayIL, "day");
-                  const isSelected = selectedDate && d.isSame(selectedDate, "day");
+              const isPastDay = d.isBefore(todayIL, "day");
+              const isFutureDay = d.isAfter(todayIL, "day");
 
-                  const isPastDay = d.isBefore(todayIL, "day");
-                  const isFutureDay = d.isAfter(todayIL, "day");
+              const key = d.format("YYYY-MM-DD");
 
-                  const key = d.format("YYYY-MM-DD");
+              const plannedArr = plannedByDate.get(key) || [];
+              const plannedCountCell = plannedArr.length;
 
-                  const plannedArr = plannedByDate.get(key) || [];
-                  const plannedCountCell = plannedArr.length;
+              const completedCountCell = completedCountByDate.get(key) || 0;
+              const hasCompleted = completedCountCell > 0;
 
-                  const completedCountCell = completedCountByDate.get(key) || 0;
-                  const hasCompleted = completedCountCell > 0;
+              const hasAnyWorkout = plannedCountCell > 0 || hasCompleted;
 
-                  const hasAnyWorkout = plannedCountCell > 0 || hasCompleted;
+              const firstPlannedWorkoutName =
+                plannedCountCell > 0
+                  ? workouts.find(
+                      (w) => String(w.id) === String(plannedArr[0].workout_id)
+                    )?.name
+                  : null;
 
-                  const firstPlannedWorkoutName =
+              return (
+                <div
+                  key={key}
+                  className={
+                    "day-cell" +
+                    (isCur ? " is-current" : " is-outside") +
+                    (isToday ? " is-today" : "") +
+                    (plannedCountCell > 0 ? " has-planned" : "") +
+                    (hasCompleted ? " has-completed" : "") +
+                    (isSelected ? " is-selected" : "") +
+                    (hasAnyWorkout && isToday ? " workout-today" : "") +
+                    (hasAnyWorkout && isFutureDay ? " workout-future" : "") +
+                    (hasAnyWorkout && isPastDay ? " workout-past" : "")
+                  }
+                  onClick={() => handleDayClick(d)}
+                  title={
                     plannedCountCell > 0
-                      ? workouts.find(
-                          (w) => String(w.id) === String(plannedArr[0].workout_id)
-                        )?.name
-                      : null;
+                      ? `Planned: ${plannedCountCell}`
+                      : hasCompleted
+                      ? `${completedCountCell} completed`
+                      : ""
+                  }
+                >
+                  <div className="day-cell-top">
+                    <span className="day-number">{d.date()}</span>
 
-                  return (
-                    <div
-                      key={key}
-                      className={
-                        "day-cell" +
-                        (isCur ? " is-current" : " is-outside") +
-                        (isToday ? " is-today" : "") +
-                        (plannedCountCell > 0 ? " has-planned" : "") +
-                        (hasCompleted ? " has-completed" : "") +
-                        (isSelected ? " is-selected" : "") +
-                        (hasAnyWorkout && isToday ? " workout-today" : "") +
-                        (hasAnyWorkout && isFutureDay ? " workout-future" : "") +
-                        (hasAnyWorkout && isPastDay ? " workout-past" : "")
-                      }
-                      onClick={() => handleDayClick(d)}
-                      title={
-                        plannedCountCell > 0
-                          ? `Planned: ${plannedCountCell}`
-                          : hasCompleted
-                          ? `${completedCountCell} completed`
-                          : ""
-                      }
-                    >
-                      <div className="day-cell-top">
-                        <span className="day-number">{d.date()}</span>
+                    {hasCompleted && (
+                      <span className="day-session-dot day-session-dot--completed">
+                        ● {completedCountCell}
+                      </span>
+                    )}
 
-                        {hasCompleted && (
-                          <span className="day-session-dot day-session-dot--completed">
-                            ● {completedCountCell}
-                          </span>
-                        )}
+                    {!hasCompleted && plannedCountCell > 0 && (
+                      <span className="day-session-dot day-session-dot--planned">
+                        ● {plannedCountCell}
+                      </span>
+                    )}
+                  </div>
 
-                        {!hasCompleted && plannedCountCell > 0 && (
-                          <span className="day-session-dot day-session-dot--planned">
-                            ● {plannedCountCell}
-                          </span>
-                        )}
-                      </div>
-
-                      {plannedCountCell > 0 && firstPlannedWorkoutName && (
-                        <div className="day-planned-name">
-                          {firstPlannedWorkoutName}
-                          {plannedCountCell > 1 ? ` +${plannedCountCell - 1}` : ""}
-                        </div>
-                      )}
+                  {plannedCountCell > 0 && firstPlannedWorkoutName && (
+                    <div className="day-planned-name">
+                      {firstPlannedWorkoutName}
+                      {plannedCountCell > 1 ? ` +${plannedCountCell - 1}` : ""}
                     </div>
-                  );
-                })}
-              </div>
-
-              <div className="calendar-day-summary">{summaryText}</div>
-
-              <div className="calendar-legend">
-                <div className="calendar-legend-item">
-                  <span className="calendar-legend-swatch calendar-legend-swatch--workout-today" />
-                  <span className="calendar-legend-text">Today</span>
+                  )}
                 </div>
+              );
+            })}
+          </div>
 
-                <div className="calendar-legend-item">
-                  <span className="calendar-legend-swatch calendar-legend-swatch--workout-future" />
-                  <span className="calendar-legend-text">Future workout day</span>
-                </div>
+          <div className="calendar-day-summary">{summaryText}</div>
 
-                <div className="calendar-legend-item">
-                  <span className="calendar-legend-swatch calendar-legend-swatch--workout-past" />
-                  <span className="calendar-legend-text">Past workout day</span>
-                </div>
-              </div>
+          <div className="calendar-legend">
+            <div className="calendar-legend-item">
+              <span className="calendar-legend-swatch calendar-legend-swatch--workout-today" />
+              <span className="calendar-legend-text">Today</span>
+            </div>
+
+            <div className="calendar-legend-item">
+              <span className="calendar-legend-swatch calendar-legend-swatch--workout-future" />
+              <span className="calendar-legend-text">Future workout day</span>
+            </div>
+
+            <div className="calendar-legend-item">
+              <span className="calendar-legend-swatch calendar-legend-swatch--workout-past" />
+              <span className="calendar-legend-text">Past workout day</span>
             </div>
           </div>
         </div>
