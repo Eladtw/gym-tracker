@@ -729,63 +729,33 @@
 }
 
 /* ===== Responsive ===== */
-
 @media (max-width: 640px) {
-  .wd-page {
-    padding: 12px;
-  }
-
-  .wd-title-block {
-    padding: 12px 12px 14px;
-  }
-
-  /* ✅ modal stays bottom-sheet but opens almost full screen */
+  /* במקום bottom-sheet — נעשה center */
   .wd-modal-overlay {
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: 12px; /* קטן יותר */
   }
 
   .wd-modal {
     max-width: 100%;
     width: 100%;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-top-left-radius: 18px;
-    border-top-right-radius: 18px;
+    border-radius: 18px;
 
-    height: 94vh;
-    max-height: 94vh;
+    /* גובה יותר נכון במובייל */
+    height: min(86dvh, 720px);
+    max-height: 86dvh;
 
-    /* ✅ Extra safety: keep modal visually above bottom nav area */
-    margin-bottom: calc(var(--bottom-nav-h, 72px) + env(safe-area-inset-bottom, 0px));
-
-    transform: translateY(50px);
+    /* חשוב: שלא "יברח" למעלה */
+    margin: 0;
   }
 
-  .wd-ex-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .wd-ex-actions {
-    align-self: flex-end;
-  }
-
-  /* ✅ toasts full width on mobile */
-  .toast-wrap {
-    right: 10px;
-    left: 10px;
-    bottom: 10px;
-  }
-
-  .toast {
-    min-width: 0;
-    max-width: none;
-    width: 100%;
+  /* אם אתה רוצה שה-footer לא ידרוס את התוכן בגלילה */
+  .wd-modal-body {
+    padding-bottom: 18px;
   }
 }
+
 
 /* =========================================================
    ✅ Image button + Image Modal (SAME AS SessionPage)
