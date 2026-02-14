@@ -1,3 +1,4 @@
+/* src/css/workout-detail.css */
 /* ===== Root layout ===== */
 
 .wd-page {
@@ -343,7 +344,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+
+  /* ✅ FIX: must be above App bottom nav (App.css uses z-index: 1000) */
+  z-index: 2000;
 
   padding: max(14px, env(safe-area-inset-top)) 14px
     max(14px, env(safe-area-inset-bottom));
@@ -679,7 +682,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 60;
+
+  /* ✅ FIX: toast should also be above bottom nav */
+  z-index: 2100;
 }
 
 .toast {
@@ -751,6 +756,11 @@
 
     height: 94vh;
     max-height: 94vh;
+
+    /* ✅ Extra safety: keep modal visually above bottom nav area */
+    margin-bottom: calc(var(--bottom-nav-h, 72px) + env(safe-area-inset-bottom, 0px));
+
+    transform: translateY(50px);
   }
 
   .wd-ex-header {
