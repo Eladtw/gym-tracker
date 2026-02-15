@@ -80,6 +80,10 @@ body.calendar-modal-open {
   --workout-past-border: #64748b;
   --workout-past-bg: #f1f5f9;
 
+  /* ✅ NEW: גובה סרגל הניווט התחתון (Tabs) כדי שהכפתור לא ייכנס מתחתיו */
+  --bottom-tabs-h: 64px; /* אם עדיין נחתך -> 72px או 80px */
+  --modal-pad: 16px;
+
   font-size: var(--font-size);
   background: var(--background);
   color: var(--foreground);
@@ -329,7 +333,7 @@ body.calendar-modal-open {
   display: flex;
   justify-content: flex-end;
   align-items: stretch;
-  z-index: 50;
+  z-index: 9999;
 
   /* ✅ מונע גלילה/פריצה מיותרת */
   overflow: hidden;
@@ -346,6 +350,10 @@ body.calendar-modal-open {
   box-shadow: -4px 0 24px rgba(15, 23, 42, 0.25);
   display: flex;
   flex-direction: column;
+
+  /* ✅ חשוב: כדי שלא "ידחף" את הכפתור מתחת למסך - רק התוכן יגלול */
+  overflow: hidden;
+
   padding: 16px 20px 18px; /* ✅ פחות padding למטה כדי לא ליצור overflow */
 }
 
@@ -411,6 +419,9 @@ body.calendar-modal-open {
   /* ✅ smooth + לא “מושך” את כל העמוד ב-iOS */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+
+  /* ✅ NEW: מרווח כדי שהתוכן האחרון לא ייכנס מתחת ל-footer sticky */
+  padding-bottom: calc(var(--modal-pad) + 84px);
 }
 
 .calendar-empty-hint {
@@ -547,10 +558,36 @@ body.calendar-modal-open {
   margin-bottom: 4px;
 }
 
+/* =========================
+   ✅ FIX: Footer sticky above bottom navigation tabs
+========================= */
+
 /* פוטר של המודאל */
 .calendar-modal-footer {
+  /* ✅ sticky בתחתית המודאל */
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+
   margin-top: 10px;
-  padding-bottom: 8px; /* ✅ במקום margin-bottom שיוצר גלילה */
+
+  /* רקע שקוף-לבן כדי שיראה מקצועי מעל התוכן */
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+  /* ✅ מבטל padding-bottom שהיה גורם לחישובים לא עקביים */
+  padding-bottom: 0;
+}
+
+/* ✅ אם הוספת ב-JSX wrapper (calendar-modal-footer-inner) - זה ייתן לנו padding חכם
+   ואם עדיין אין לך wrapper, לא יפריע - רק לא יופעל */
+.calendar-modal-footer-inner {
+  padding: 12px var(--modal-pad);
+  padding-bottom: calc(
+    12px + env(safe-area-inset-bottom) + var(--bottom-tabs-h)
+  );
 }
 
 .calendar-start-btn {
@@ -811,3 +848,5 @@ body.calendar-modal-open {
     max-width: 100%;
   }
 }
+
+

@@ -372,7 +372,6 @@ function WorkoutSelectorModal({
                 const summary = summarizeTargets(it.set_targets);
                 const isOpen = expandedId === it.id;
 
-                // ✅ Group of primary muscle, then primary muscle subgroup
                 const groupLabel = it?.primary_group_label || "Unknown";
                 const primarySubLabel = it?.primary_subgroup_label || "Unknown";
 
@@ -391,7 +390,6 @@ function WorkoutSelectorModal({
                       <div className="exercise-chevron">{isOpen ? "▴" : "▾"}</div>
                     </div>
 
-                    {/* ✅ Show: Group • Primary Subgroup (chips) */}
                     <div className="exercise-tag-row">
                       <span
                         className={
@@ -419,16 +417,19 @@ function WorkoutSelectorModal({
           )}
         </div>
 
+        {/* ✅ UPDATED: footer wrapper so we can pad above bottom tabs */}
         <div className="calendar-modal-footer">
-          <button
-            className={"calendar-start-btn" + (isDisabled ? " is-disabled" : "")}
-            disabled={isDisabled}
-            onClick={!isDisabled ? onPrimaryAction : undefined}
-          >
-            {buttonLabel}
-          </button>
+          <div className="calendar-modal-footer-inner">
+            <button
+              className={"calendar-start-btn" + (isDisabled ? " is-disabled" : "")}
+              disabled={isDisabled}
+              onClick={!isDisabled ? onPrimaryAction : undefined}
+            >
+              {buttonLabel}
+            </button>
 
-          {msg && <div className="calendar-error-msg">{msg}</div>}
+            {msg && <div className="calendar-error-msg">{msg}</div>}
+          </div>
         </div>
       </div>
     </div>
@@ -643,7 +644,6 @@ export default function CalendarPage() {
   }, [month]);
 
   // ✅ Load exercises + show: Primary Group + Primary Subgroup
-  // Source of truth for PRIMARY is exercises_catalog.primary_subgroup_id
   useEffect(() => {
     if (!chosenWorkoutId) {
       setChosenWorkoutItems([]);
@@ -672,13 +672,11 @@ export default function CalendarPage() {
         new Set(rows.map((r) => r.exercise_id).filter(Boolean))
       );
 
-      // Maps
-      const exerciseIdToPrimarySubId = new Map(); // exercise_id -> primary_subgroup_id
-      const primarySubIdToObj = new Map(); // subgroup_id -> {label, group_id}
-      const groupIdToLabel = new Map(); // group_id -> label
+      const exerciseIdToPrimarySubId = new Map();
+      const primarySubIdToObj = new Map();
+      const groupIdToLabel = new Map();
 
       if (exerciseIds.length > 0) {
-        // 1) exercises_catalog -> primary_subgroup_id
         const { data: exMeta, error: exErr } = await supabase
           .from("exercises_catalog")
           .select("id, primary_subgroup_id")
@@ -697,7 +695,6 @@ export default function CalendarPage() {
             )
           );
 
-          // 2) muscle_subgroups -> label + group_id
           if (primarySubIds.length > 0) {
             const { data: subs, error: subErr } = await supabase
               .from("muscle_subgroups")
@@ -715,7 +712,6 @@ export default function CalendarPage() {
                 new Set((subs || []).map((sg) => sg.group_id).filter(Boolean))
               );
 
-              // 3) muscle_groups -> label
               if (groupIds.length > 0) {
                 const { data: groups, error: gErr } = await supabase
                   .from("muscle_groups")
