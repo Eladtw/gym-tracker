@@ -11,6 +11,8 @@ import SessionPage from "./pages/SessionPage";
 import CalendarPage from "./pages/CalendarPage";
 import ProgressPage from "./pages/ProgressPage";
 import ExerciseLibrary from "./pages/ExerciseLibrary";
+import AdminUsers from "./pages/AdminUsers";
+
 import "./css/App.css";
 
 // טאב־בר תחתון – הגדרות של הראוטים
@@ -24,6 +26,11 @@ const TABS = [
 export default function App() {
   const [session, setSession] = useState(null);
   const [init, setInit] = useState(true);
+
+  // ✅ role gating
+  const [roleInit, setRoleInit] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -46,6 +53,46 @@ export default function App() {
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  // ✅ fetch role when session exists
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadRole() {
+      if (!session?.user?.id) {
+        if (!mounted) return;
+        setIsAdmin(false);
+        setRoleInit(false);
+        return;
+      }
+
+      setRoleInit(true);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      if (!mounted) return;
+
+      if (error) {
+        console.warn("[role] failed to load profile role:", error.message);
+        setIsAdmin(false);
+        setRoleInit(false);
+        return;
+      }
+
+      setIsAdmin(data?.role === "admin");
+      setRoleInit(false);
+    }
+
+    loadRole();
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.user?.id]);
 
   async function logout() {
     await supabase.auth.signOut();
@@ -74,6 +121,14 @@ export default function App() {
     <div className="app-shell">
       <header className="app-topbar">
         <span className="app-topbar-email">{session.user.email}</span>
+
+        {/* ✅ Admin-only button */}
+        {!roleInit && isAdmin && (
+          <button className="app-admin-btn" onClick={() => navigate("/admin/users")}>
+            User Management
+          </button>
+        )}
+
         <button className="app-logout-btn" onClick={logout}>
           Log out
         </button>
@@ -89,6 +144,9 @@ export default function App() {
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/progress/id/:exerciseId" element={<ProgressPage />} />
           <Route path="/exercises" element={<ExerciseLibrary />} />
+
+          {/* ✅ Admin route (UI gated + also server/RLS will enforce) */}
+          <Route path="/admin/users" element={<AdminUsers isAdmin={isAdmin} roleInit={roleInit} />} />
         </Routes>
       </main>
 

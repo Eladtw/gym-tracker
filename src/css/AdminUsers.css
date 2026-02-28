@@ -1,0 +1,390 @@
+/* src/css/AdminUsers.css */
+
+/* ===== Page ===== */
+.um-wrap {
+  padding: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.um-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.um-title h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.2px;
+}
+
+.um-title p {
+  margin: 6px 0 0;
+  opacity: 0.8;
+  font-size: 13px;
+}
+
+/* ===== Create User ===== */
+.um-createBtn {
+  width: auto;
+  border: none;
+  background: #1e5eff;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 10px 26px rgba(30, 94, 255, 0.22);
+}
+
+.um-createBtn:hover {
+  filter: brightness(1.05);
+}
+
+.um-createBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.um-plus {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.um-mobileBtn {
+  width: 100%;
+  margin: 0 0 12px;
+}
+
+/* ===== Section Card ===== */
+.um-card {
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+}
+
+.um-cardHead {
+  padding: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.um-cardHead h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+/* ===== Search ===== */
+.um-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px 12px;
+}
+
+.um-searchIcon {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.um-searchInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #111;
+  font-size: 13px;
+}
+
+/* ===== Error / Loading ===== */
+.um-error {
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 60, 60, 0.10);
+  border: 1px solid rgba(255, 60, 60, 0.18);
+  color: #111;
+  font-size: 13px;
+}
+
+.um-loading {
+  padding: 16px;
+  opacity: 0.75;
+  color: #111;
+}
+
+/* ===== Desktop table ===== */
+.um-tableWrap {
+  overflow: auto;
+}
+
+.um-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+  background: transparent;
+}
+
+.um-table th,
+.um-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  text-align: left;
+  color: #111;
+}
+
+.um-table th {
+  font-size: 12px;
+  opacity: 0.7;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.um-thActions {
+  width: 120px;
+}
+
+.um-empty {
+  padding: 18px 12px;
+  opacity: 0.7;
+  color: #111;
+}
+
+.um-actions {
+  white-space: nowrap;
+}
+
+.um-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 12px;
+}
+
+/* ===== Inputs / Selects ===== */
+.um-input,
+.um-select {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: #fff;
+  color: #111;
+  outline: none;
+  font-size: 13px;
+}
+
+.um-select {
+  margin: 0;
+}
+
+.um-input:focus,
+.um-select:focus {
+  border-color: rgba(30, 94, 255, 0.6);
+  box-shadow: 0 0 0 3px rgba(30, 94, 255, 0.16);
+}
+
+/* ===== Save button ===== */
+/* Default (enabled = dirty) => BLUE */
+.um-saveBtn {
+  width: 92px;
+  border: none;
+  background: #1e5eff;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 10px 22px rgba(30, 94, 255, 0.18);
+}
+
+.um-saveBtn:hover {
+  filter: brightness(1.05);
+}
+
+.um-saveBtn:disabled {
+  /* visible disabled like Figma */
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+  color: rgba(0, 0, 0, 0.35);
+  background: #f3f5f7;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* mobile full-width save */
+.um-saveBtnFull {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 12px;
+  border-radius: 10px;
+}
+
+/* ===== Mobile cards (Figma-like) ===== */
+.um-mobileList {
+  padding: 14px;
+  background: transparent;
+}
+
+.um-userCard {
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+  margin-bottom: 12px;
+}
+
+.um-userCard:last-child {
+  margin-bottom: 0;
+}
+
+.um-field {
+  margin-bottom: 12px;
+}
+
+.um-label {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  opacity: 0.65;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: #111;
+}
+
+.um-value {
+  font-size: 13px;
+  color: #111;
+}
+
+.um-twoCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.um-emptyCard {
+  padding: 14px 12px;
+  opacity: 0.75;
+  color: #111;
+}
+
+/* ===== Modal ===== */
+.um-modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.um-modal {
+  width: 100%;
+  max-width: 520px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  color: #111;
+}
+
+.um-modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.um-modalHead h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.um-x {
+  border: none;
+  background: transparent;
+  color: #111;
+  opacity: 0.75;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 6px 8px;
+}
+
+.um-x:hover {
+  opacity: 1;
+}
+
+.um-modalBody {
+  padding: 16px;
+}
+
+.um-inputLabel {
+  font-size: 12px;
+  opacity: 0.85;
+  display: block;
+  margin: 10px 0 6px;
+  color: #111;
+}
+
+.um-modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.um-secondaryBtn {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  color: #111;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.um-secondaryBtn:hover {
+  background: #f5f6f8;
+}
+
+/* ===== Responsive helpers ===== */
+.um-hide-mobile {
+  display: block;
+}
+.um-hide-desktop {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .um-hide-mobile {
+    display: none;
+  }
+  .um-hide-desktop {
+    display: block;
+  }
+
+  .um-title h2 {
+    font-size: 20px;
+  }
+}
