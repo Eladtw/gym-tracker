@@ -1,291 +1,227 @@
 /* src/css/calendar-theme.css */
-/* עיצוב לוח השנה – עובד בלי Tailwind, מוגבל רק בתוך .calendar-scope */
 
-/* ✅ חשוב: מונע “בריחה” ימינה במובייל */
-html,
-body {
-  width: 100%;
-  overflow-x: hidden;
-}
-
-/* ✅ Lock scroll when modal open (mobile fix) */
+/* ===== Scroll Lock for Modal ===== */
 body.calendar-modal-open {
   overflow: hidden !important;
   touch-action: none;
 }
 
-/* ✅ Box sizing – קריטי לגריד 7 עמודות */
-.calendar-scope,
+/* ===== Calendar Page Shell ===== */
+.calendar-page-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-4);
+  overflow-x: hidden;
+}
+
+/* ===== Calendar Scope Variables ===== */
+.calendar-scope {
+  --status-today: var(--color-primary);
+  --status-planned: var(--color-cyan);
+  --status-inprogress: var(--color-warning);
+  --status-completed: var(--color-success);
+
+  --workout-today-border: var(--color-primary);
+  --workout-today-bg: var(--color-primary-50);
+  --workout-future-border: var(--color-success);
+  --workout-future-bg: var(--color-success-50);
+  --workout-past-border: #64748b;
+  --workout-past-bg: var(--bg-input);
+
+  --bottom-tabs-h: 72px;
+  --modal-pad: 16px;
+}
+
 .calendar-scope *,
 .calendar-scope *::before,
 .calendar-scope *::after {
   box-sizing: border-box;
 }
 
-/* ===== מעטפת עמוד כמו במוקאפ ===== */
-.calendar-page-shell {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 16px;
-  background: #f3f4f6;
-
-  /* ✅ מונע גלילה אופקית אם משהו עדיין בורח */
-  overflow-x: hidden;
-}
-
-/* ===== משתני בסיס – חלים רק בתוך ה-wrapper של הקלנדר ===== */
-.calendar-scope {
-  --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
-  --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
-  --input: transparent;
-  --input-background: #f3f3f5;
-  --switch-background: #cbced4;
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
-
-  --radius: 0.625rem;
-
-  --status-today: #3b82f6;
-  --status-planned: #38bdf8;
-  --status-inprogress: #f59e0b;
-  --status-completed: #10b981;
-
-  --planned-bg: #f0f9ff;
-  --inprogress-bg: #fffbeb;
-  --completed-bg: #ecfdf5;
-
-  --workout-today-border: #3b82f6;
-  --workout-today-bg: #eaf2ff;
-
-  --workout-future-border: #22c55e;
-  --workout-future-bg: #ecfdf3;
-
-  --workout-past-border: #64748b;
-  --workout-past-bg: #f1f5f9;
-
-  /* ✅ NEW: גובה סרגל הניווט התחתון (Tabs) כדי שהכפתור לא ייכנס מתחתיו */
-  --bottom-tabs-h: 64px; /* אם עדיין נחתך -> 72px או 80px */
-  --modal-pad: 16px;
-
-  font-size: var(--font-size);
-  background: var(--background);
-  color: var(--foreground);
-}
-
-/* טיפוגרפיה בסיסית בתוך הקלנדר */
-.calendar-scope h1 {
-  font-size: 1.75rem;
-  font-weight: var(--font-weight-medium);
-  line-height: 1.4;
-}
-.calendar-scope h2 {
-  font-size: 1.5rem;
-  font-weight: var(--font-weight-medium);
-  line-height: 1.4;
-}
-.calendar-scope p,
-.calendar-scope label,
-.calendar-scope button,
-.calendar-scope input {
-  font-size: 1rem;
-  font-weight: var(--font-weight-normal);
-  line-height: 1.5;
-}
-
-/* ===== Layout של הקלנדר ===== */
+/* ===== Calendar Container ===== */
 .calendar-wrap {
   max-width: 960px;
   margin: 0 auto;
-  padding: 20px 18px 24px;
-  font-family: system-ui, sans-serif;
-  background: #ffffff;
-  border-radius: 32px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-
-  /* ✅ מונע “נשיכה” ימינה */
+  padding: var(--space-5) var(--space-4) var(--space-6);
+  background: var(--bg-card);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
   width: 100%;
   overflow-x: hidden;
 }
 
 .calendar-main-header {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-3);
 }
 
 .calendar-main-title {
   margin: 0;
-  font-size: 2rem;
+  font-size: var(--text-2xl);
   font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
 }
 
 .calendar-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin: 12px 0 16px;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 var(--space-4);
 }
 
 .calendar-title {
   margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
+/* ===== Calendar Grid ===== */
 .calendar-grid-7 {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-
-  /* ✅ חשוב במובייל */
+  gap: var(--space-2);
   width: 100%;
   max-width: 100%;
 }
 
 .calendar-weekdays-row {
-  margin-bottom: 6px;
+  margin-bottom: var(--space-2);
 }
 
-/* כפתורים רגילים בלוח שנה */
-.calendar-scope button {
-  border-radius: 0.5rem;
-  border: 1px solid var(--border);
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font-weight: var(--font-weight-medium);
-  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.calendar-scope button:hover {
-  background: #020015;
-  transform: translateY(-0.5px);
-}
-
-.calendar-nav-btn {
-  background: #f9fafb;
-  color: #111827;
-  border-radius: 14px;
-  padding: 6px 14px;
-  box-shadow: none;
-}
-
-.calendar-nav-btn:hover {
-  background: #e5e7eb;
-  transform: translateY(0);
-}
-
-/* קופסת הסיכום מתחת לקלנדר */
-.calendar-day-summary {
-  margin-top: 18px;
-  text-align: center;
-  font-size: 0.95rem;
-  color: #111827;
-}
-
-/* שורת הכותרת של ימי השבוע */
 .calendar-scope .weekday-header {
-  color: #6b7280;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
   font-weight: 600;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* תאי ימים */
+/* ===== Day Cells ===== */
 .day-cell {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px;
-  min-height: 60px;
-  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  min-height: 56px;
+  background: var(--bg-card);
   position: relative;
   cursor: pointer;
-  transition: box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s;
-
-  /* ✅ מוודא שאין פריצה מהגריד */
+  transition: all var(--transition-base);
   min-width: 0;
+}
+
+.day-cell:hover {
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
 }
 
 .day-cell-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 .day-cell.is-today {
-  outline: 2px solid var(--status-today);
-  outline-offset: 0;
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
 }
 
 .day-cell.is-selected {
-  background: #06b6d4;
-  border-color: #06b6d4;
-  color: #f9fafb;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--text-inverse);
 }
 
 .day-cell.workout-today {
   background: var(--workout-today-bg);
   box-shadow: inset 0 0 0 2px var(--workout-today-border);
-  border-color: rgba(59, 130, 246, 0.25);
+  border-color: transparent;
 }
 
 .day-cell.workout-future {
   background: var(--workout-future-bg);
   box-shadow: inset 0 0 0 2px var(--workout-future-border);
-  border-color: rgba(34, 197, 94, 0.25);
+  border-color: transparent;
 }
 
 .day-cell.workout-past {
   background: var(--workout-past-bg);
   box-shadow: inset 0 0 0 2px var(--workout-past-border);
-  border-color: rgba(100, 116, 139, 0.25);
+  border-color: transparent;
 }
 
 .day-cell.is-selected.workout-today,
 .day-cell.is-selected.workout-future,
 .day-cell.is-selected.workout-past {
-  background: #06b6d4;
-  border-color: #06b6d4;
-  color: #f9fafb;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: none;
 }
 
 .day-session-dot {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--status-completed);
 }
 
 .day-cell.has-planned .day-session-dot {
   color: var(--status-planned);
 }
+
 .day-cell.has-completed .day-session-dot {
   color: var(--status-completed);
 }
 
 .day-cell.is-selected .day-session-dot {
-  color: #e0f2fe;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== Nav Buttons ===== */
+.calendar-scope button {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  transition: all var(--transition-base);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.calendar-scope button:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-medium);
+}
+
+.calendar-nav-btn {
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+}
+
+.calendar-nav-btn:hover {
+  background: var(--bg-hover);
+}
+
+/* ===== Day Summary ===== */
+.calendar-day-summary {
+  margin-top: var(--space-4);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
 /* ===== Legend ===== */
 .calendar-legend {
-  margin-top: 10px;
+  margin-top: var(--space-4);
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 14px;
+  gap: var(--space-3) var(--space-4);
   justify-content: center;
   align-items: center;
 }
@@ -293,35 +229,30 @@ body.calendar-modal-open {
 .calendar-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  color: #111827;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 
 .calendar-legend-swatch {
   width: 14px;
   height: 14px;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
 }
 
 .calendar-legend-swatch--workout-today {
   background: var(--workout-today-bg);
-  border-color: rgba(59, 130, 246, 0.35);
   box-shadow: inset 0 0 0 2px var(--workout-today-border);
 }
 
 .calendar-legend-swatch--workout-future {
   background: var(--workout-future-bg);
-  border-color: rgba(34, 197, 94, 0.35);
   box-shadow: inset 0 0 0 2px var(--workout-future-border);
 }
 
 .calendar-legend-swatch--workout-past {
   background: var(--workout-past-bg);
-  border-color: rgba(100, 116, 139, 0.35);
   box-shadow: inset 0 0 0 2px var(--workout-past-border);
 }
 
@@ -329,326 +260,342 @@ body.calendar-modal-open {
 .calendar-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.35);
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: flex-end;
   align-items: stretch;
   z-index: 9999;
-
-  /* ✅ מונע גלילה/פריצה מיותרת */
   overflow: hidden;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .calendar-modal-panel {
   width: 100%;
   max-width: 420px;
-
-  /* ✅ 100dvh פותר בעיות vh במובייל */
   height: 100dvh;
-
-  background: #ffffff;
-  box-shadow: -4px 0 24px rgba(15, 23, 42, 0.25);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-xl);
   display: flex;
   flex-direction: column;
-
-  /* ✅ חשוב: כדי שלא "ידחף" את הכפתור מתחת למסך - רק התוכן יגלול */
   overflow: hidden;
+  padding: var(--space-4) var(--space-5);
+  animation: slideIn 0.2s ease;
+}
 
-  padding: 16px 20px 18px; /* ✅ פחות padding למטה כדי לא ליצור overflow */
+@keyframes slideIn {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 .calendar-modal-header {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 12px;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
 }
 
 .calendar-modal-toprow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .calendar-modal-date {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .calendar-modal-close {
+  width: 36px;
+  height: 36px;
   border: none;
+  border-radius: var(--radius-sm);
   background: transparent;
-  font-size: 18px;
+  font-size: var(--text-lg);
   cursor: pointer;
-  padding: 4px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.calendar-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .calendar-modal-title {
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 .calendar-modal-subtitle {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .calendar-modal-section {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-3);
 }
 
 .calendar-label {
   font-weight: 600;
-  margin-bottom: 4px;
-  font-size: 14px;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  display: block;
 }
 
 .calendar-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  color: #64748b;
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
+/* Exercises Container */
 .calendar-exercises-container {
-  margin-top: 12px;
   flex: 1;
   overflow-y: auto;
-  padding-right: 4px;
-
-  /* ✅ smooth + לא “מושך” את כל העמוד ב-iOS */
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-
-  /* ✅ NEW: מרווח כדי שהתוכן האחרון לא ייכנס מתחת ל-footer sticky */
-  padding-bottom: calc(var(--modal-pad) + 84px);
+  padding-right: var(--space-1);
+  padding-bottom: calc(var(--modal-pad) + 100px);
+  margin-top: var(--space-3);
 }
 
 .calendar-empty-hint {
-  margin-top: 32px;
+  margin-top: var(--space-8);
   text-align: center;
-  color: #9ca3af;
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }
 
 .calendar-exercises-count {
-  margin-top: 12px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  color: #6b7280;
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
-/* ✅ NEW: Workout overview card */
+/* Workout Overview Card */
 .calendar-workout-overview {
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 10px 12px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-  margin-top: 6px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-xs);
+  margin-top: var(--space-2);
 }
 
 .calendar-workout-name {
-  font-weight: 700;
-  font-size: 14.5px;
-  color: #0f172a;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
 }
 
 .calendar-workout-muscles {
-  margin-top: 6px;
+  margin-top: var(--space-2);
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-1);
 }
 
 .muscle-chip {
-  border-radius: 999px;
-  padding: 3px 8px;
-  border: 1px solid #e5e7eb;
-  font-size: 11px;
-  background: #f8fafc;
-  color: #0f172a;
+  border-radius: var(--radius-full);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border-light);
+  font-size: var(--text-xs);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .calendar-workout-muscles-empty {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
-/* כרטיס תרגיל */
+/* Exercise Card */
 .exercise-card {
-  border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  padding: 12px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-
-  /* ✅ שלא יגרום overflow */
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-input);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+  transition: all var(--transition-base);
   min-width: 0;
+}
+
+.exercise-card:hover {
+  border-color: var(--border-medium);
 }
 
 .exercise-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   cursor: pointer;
 }
 
 .exercise-title {
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
 }
 
 .exercise-summary {
-  font-size: 13px;
-  color: #6b7280;
-  margin-top: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
 }
 
 .exercise-chevron {
-  font-size: 18px;
+  font-size: var(--text-lg);
+  color: var(--text-muted);
   cursor: pointer;
 }
 
 .exercise-tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
 }
 
 .exercise-tag {
-  border-radius: 999px;
-  padding: 3px 8px;
-  border: 1px solid #e5e7eb;
-  font-size: 11px;
-  background: #ffffff;
-  color: #111827;
+  border-radius: var(--radius-full);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border-light);
+  font-size: var(--text-xs);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .exercise-tag.is-unknown {
-  background: #fff7ed;
-  border-color: #fed7aa;
+  background: var(--color-warning-50);
+  border-color: rgba(245, 158, 11, 0.3);
   color: #9a3412;
 }
 
-/* סטים בתצוגת פרטים */
+/* Set Details */
 .set-details-box {
-  margin-top: 10px;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 8px;
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--border-light);
+  padding-top: var(--space-2);
 }
 
 .set-details-title {
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
+  color: var(--text-secondary);
 }
 
 .set-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #e5e7eb33;
-  font-size: 12px;
-  margin-bottom: 4px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  font-size: var(--text-xs);
+  margin-bottom: var(--space-1);
 }
 
-/* =========================
-   ✅ FIX: Footer sticky above bottom navigation tabs
-========================= */
-
-/* פוטר של המודאל */
+/* ===== Modal Footer ===== */
 .calendar-modal-footer {
-  /* ✅ sticky בתחתית המודאל */
   position: sticky;
   bottom: 0;
   z-index: 5;
-
-  margin-top: 10px;
-
-  /* רקע שקוף-לבן כדי שיראה מקצועי מעל התוכן */
-  background: rgba(255, 255, 255, 0.92);
+  margin-top: var(--space-3);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-
-  /* ✅ מבטל padding-bottom שהיה גורם לחישובים לא עקביים */
-  padding-bottom: 0;
+  border-top: 1px solid var(--border-light);
+  padding: 0;
 }
 
-/* ✅ אם הוספת ב-JSX wrapper (calendar-modal-footer-inner) - זה ייתן לנו padding חכם
-   ואם עדיין אין לך wrapper, לא יפריע - רק לא יופעל */
 .calendar-modal-footer-inner {
-  padding: 12px var(--modal-pad);
-  padding-bottom: calc(
-    12px + env(safe-area-inset-bottom) + var(--bottom-tabs-h)
-  );
+  padding: var(--space-3) var(--modal-pad);
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom) + var(--bottom-tabs-h));
 }
 
 .calendar-start-btn {
   width: 100%;
-  border-radius: 12px;
-  padding: 10px 14px;
-  background: #020617;
-  color: #ffffff;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: var(--text-inverse);
   border: 0;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  box-shadow: var(--shadow-primary);
+  transition: all var(--transition-base);
+}
+
+.calendar-start-btn:hover:not(.is-disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
 }
 
 .calendar-start-btn.is-disabled {
-  background: #94a3b8;
+  background: var(--text-muted);
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .calendar-error-msg {
-  margin-top: 6px;
-  color: #ef4444;
-  font-size: 13px;
+  margin-top: var(--space-2);
+  color: var(--color-danger);
+  font-size: var(--text-xs);
 }
 
-/* ===== Custom workout select (Figma style) ===== */
+/* ===== Workout Select ===== */
 .wk-select {
   position: relative;
   width: 100%;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .wk-select-trigger {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-input);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 14px;
-  color: #4b5563;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  transition: all var(--transition-base);
 }
 
 .wk-select-trigger:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  background: var(--bg-hover);
+  border-color: var(--border-medium);
 }
 
 .wk-select-trigger:focus-visible {
-  outline: 2px solid #4f46e5;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 .wk-select-arrow {
-  margin-left: 8px;
-  font-size: 12px;
-  color: #9ca3af;
+  margin-left: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .wk-select-menu {
@@ -656,52 +603,55 @@ body.calendar-modal-open {
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: #ffffff;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
-  padding: 6px 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-1) 0;
   z-index: 999;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .wk-select-option {
-  padding: 8px 12px;
-  font-size: 14px;
-  color: #111827;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background var(--transition-fast);
 }
 
 .wk-select-option:hover {
-  background: #f3f4f6;
+  background: var(--bg-hover);
 }
 
 .wk-select-option.is-selected {
-  background: #eef2ff;
-  color: #3730a3;
+  background: var(--color-primary-50);
+  color: var(--color-primary);
+  font-weight: 500;
 }
 
-/* ===== Planned list (PRO UI v2) ===== */
+/* ===== Planned List ===== */
 .calendar-planned-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .calendar-planned-count {
-  font-size: 11px;
-  color: #6b7280;
-  background: #f8fafc;
-  border: 1px solid #eef2f7;
-  padding: 2px 8px;
-  border-radius: 999px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
 }
 
 .calendar-planned-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .calendar-planned-card {
@@ -709,28 +659,25 @@ body.calendar-modal-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-
-  padding: 10px 12px 10px 14px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-
-  min-width: 0; /* ✅ */
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-xs);
+  transition: all var(--transition-base);
+  min-width: 0;
 }
 
 .calendar-planned-card:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-sm);
 }
 
 .calendar-planned-card.is-active {
-  border-color: #0ea5b7;
-  box-shadow: 0 0 0 2px rgba(14, 165, 183, 0.12);
-  background: #fbfdff;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-100);
+  background: var(--color-primary-50);
 }
 
 .calendar-planned-accent {
@@ -739,29 +686,29 @@ body.calendar-modal-open {
   top: 8px;
   bottom: 8px;
   width: 3px;
-  border-radius: 999px;
-  background: #e5e7eb;
+  border-radius: var(--radius-full);
+  background: var(--border-light);
 }
 
 .calendar-planned-accent.accent-today {
-  background: var(--status-today);
+  background: var(--color-primary);
 }
 
 .calendar-planned-accent.accent-planned {
-  background: var(--status-planned);
+  background: var(--color-cyan);
 }
 
 .calendar-planned-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
   min-width: 0;
 }
 
 .calendar-planned-radio {
-  width: 16px;
-  height: 16px;
-  accent-color: #0ea5b7;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
   cursor: pointer;
   flex: 0 0 auto;
 }
@@ -774,79 +721,78 @@ body.calendar-modal-open {
 }
 
 .calendar-planned-name {
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 240px;
+  max-width: 200px;
 }
 
 .calendar-planned-sub {
-  font-size: 11.5px;
-  color: #6b7280;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
 .calendar-planned-delete-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #64748b;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: all var(--transition-fast);
 }
 
 .calendar-planned-delete-icon:hover {
-  background: #f8fafc;
-  border-color: #d1d5db;
-  color: #0f172a;
+  background: var(--color-danger-50);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 .calendar-planned-empty {
-  border: 1px dashed #e5e7eb;
-  background: #fafafa;
-  border-radius: 12px;
-  padding: 14px 12px;
+  border: 2px dashed var(--border-light);
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-3);
+  text-align: center;
 }
 
 .calendar-planned-empty-title {
-  font-size: 13.5px;
+  font-size: var(--text-sm);
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .calendar-planned-empty-sub {
-  margin-top: 2px;
-  font-size: 11.5px;
-  color: #6b7280;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .calendar-wrap {
-    padding: 16px 12px 20px;
-    border-radius: 24px;
+    padding: var(--space-4) var(--space-3) var(--space-5);
+    border-radius: var(--radius-xl);
   }
 
   .calendar-main-title {
-    font-size: 1.6rem;
+    font-size: var(--text-xl);
   }
 
   .day-cell {
-    min-height: 52px;
-    padding: 9px; /* ✅ קצת פחות כדי להבטיח שלא יפרוץ */
+    min-height: 48px;
+    padding: var(--space-2);
   }
 
   .calendar-modal-panel {
     max-width: 100%;
   }
 }
-
-

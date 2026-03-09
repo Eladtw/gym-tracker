@@ -1,386 +1,444 @@
 /* src/css/workouts-page.css */
 
-/* בסיס לעמוד האימונים */
 .workouts-page-root {
-  padding: 16px;
+  padding: var(--space-4);
   max-width: 960px;
   margin: 0 auto;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
 }
 
-/* כותרת ודסקריפשן */
+/* ===== Header ===== */
+
 .workouts-header {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-5);
 }
 
 .workouts-title {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .workouts-subtitle {
-  margin: 4px 0 0;
-  font-size: 0.9rem;
-  color: #6b7280;
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
-/* אזור הכפתור העליון */
+/* ===== Top Actions ===== */
+
 .workouts-top-actions {
   max-width: 480px;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .workouts-message {
-  margin-top: 8px;
-  font-size: 0.9rem;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
 }
 
-/* כפתור ראשי */
 .workouts-primary-btn {
   width: 100%;
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
   border: 0;
-  background: #030712;
-  color: #ffffff;
-  font-weight: 500;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: var(--text-inverse);
+  font-size: var(--text-base);
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease,
-    box-shadow 0.15s ease;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
 }
 
 .workouts-primary-btn:hover {
-  background: #020617;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
-  transform: translateY(-0.5px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
 }
 
 .workouts-primary-btn:active {
   transform: translateY(0);
-  box-shadow: none;
 }
 
-/* רשימת האימונים */
+/* ===== Workout List ===== */
+
 .workouts-list-section {
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 
 .workouts-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
-/* כרטיס אימון */
+/* ===== Workout Card ===== */
+
 .workouts-item {
-  border-radius: 16px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
-  margin-bottom: 14px;
-  padding: 18px 16px 12px;
-  transition: box-shadow 0.15s ease, transform 0.08s ease,
-    border-color 0.15s ease;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
+  transition: all var(--transition-base);
 }
 
 .workouts-item:hover {
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-  border-color: #0ea5e9;
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-100);
 }
 
-/* header של הכרטיס */
+/* Card Header */
 .workouts-item-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   cursor: pointer;
 }
 
 .workouts-item-main {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   flex: 1;
+  min-width: 0;
 }
 
 .workouts-item-name-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .workouts-item-name {
   font-weight: 600;
-  color: #111827;
-  font-size: 1.08rem;
+  color: var(--text-primary);
+  font-size: var(--text-lg);
 }
 
-/* תאריך יצירה */
 .workouts-item-meta {
-  font-size: 0.8rem;
-  color: #9ca3af;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 
-/* צד ימין של ה-header – רק חץ */
+/* Card Actions */
 .workouts-item-actions {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
 }
 
-/* אייקונים */
 .workouts-icon-btn {
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  transition: background 0.12s ease, transform 0.08s ease;
-  min-width: 32px;
-  min-height: 32px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  transition: all var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-secondary);
 }
 
 .workouts-icon-btn:hover {
-  background: #f3f4f6;
-  transform: translateY(-1px);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .workouts-icon-danger {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
-/* חץ */
+.workouts-icon-danger:hover {
+  background: var(--color-danger-50);
+  color: var(--color-danger);
+}
+
 .workouts-chevron-btn {
-  font-size: 0.9rem;
+  color: var(--text-muted);
 }
 
-/* שורת סטטוס מתחת לשם האימון – כמות תרגילים וסטים */
+/* Stats Pills */
 .workouts-item-stats {
-  margin-top: 4px;
+  margin-top: var(--space-2);
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  font-size: 0.8rem;
+  gap: var(--space-1);
 }
 
 .workouts-item-stats-pill {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #f3f4f6;
-  color: #4b5563;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
 }
 
-/* קבוצות השריר שעובד האימון */
+/* Muscle Chips */
 .workouts-item-muscles {
-  margin-top: 4px;
+  margin-top: var(--space-2);
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .workouts-muscle-chip {
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  background: #eef2ff;
-  color: #3730a3;
-  border: 1px solid rgba(129, 140, 248, 0.7);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  background: var(--color-primary-50);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-100);
   white-space: nowrap;
 }
 
-/* אזור התרגילים בכרטיס (כאשר הכרטיס פתוח) */
+/* ===== Expanded Exercises ===== */
+
 .workouts-exercises {
-  margin-top: 10px;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 8px;
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--border-light);
+  padding-top: var(--space-3);
 }
 
 .workouts-empty-ex {
-  font-size: 0.85rem;
-  color: #6b7280;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin: 0;
 }
 
-/* שורה של תרגיל */
 .workouts-ex-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 0;
-  font-size: 0.9rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  margin-bottom: var(--space-2);
+}
+
+.workouts-ex-row:last-child {
+  margin-bottom: 0;
 }
 
 .workouts-ex-name {
-  color: #111827;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 .workouts-ex-summary {
-  color: #6b7280;
-  margin-left: 12px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  margin-left: var(--space-3);
 }
 
-/* שורת אקשנים בתחתית הכרטיס */
+/* Card Footer */
 .workouts-item-footer {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid #e5e7eb;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-light);
   display: flex;
   justify-content: flex-end;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
-/* טקסט כשאין אימונים */
+/* Empty State */
 .workouts-empty {
-  margin-top: 8px;
-  font-size: 0.9rem;
-  color: #6b7280;
+  text-align: center;
+  padding: var(--space-10) var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
 }
 
-/* ===== Modal כללי (יצירה + מחיקה) ===== */
+/* ===== Modal ===== */
 
 .workouts-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.35);
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-4);
   z-index: 50;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .workouts-modal {
   width: 100%;
-  max-width: 420px;
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px 20px 18px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  max-width: 400px;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-xl);
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .workouts-modal-title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .workouts-modal-subtitle {
-  margin: 4px 0 14px;
-  font-size: 0.9rem;
-  color: #6b7280;
+  margin: var(--space-2) 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
 }
 
-/* label + input */
 .workouts-label {
   display: block;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 4px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
 }
 
 .workouts-input {
   width: 100%;
-  padding: 10px;
-  margin: 8px 0 4px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  font-size: 0.95rem;
+  padding: var(--space-3) var(--space-4);
+  margin: 0 0 var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-input);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  transition: all var(--transition-base);
 }
 
 .workouts-input:focus {
-  outline: 2px solid #4f46e5;
-  outline-offset: 1px;
+  outline: none;
+  background: var(--bg-card);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
 }
 
-/* כפתורי המודל */
+.workouts-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Modal Actions */
 .workouts-modal-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 14px;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
 }
 
 .workouts-modal-confirm {
   flex: 1;
-  padding: 9px 12px;
-  border-radius: 10px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
   border: 0;
-  background: #030712;
-  color: #ffffff;
-  font-weight: 500;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: var(--text-inverse);
+  font-weight: 600;
+  font-size: var(--text-sm);
   cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-primary);
 }
 
 .workouts-modal-confirm:hover {
-  background: #020617;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
 }
 
 .workouts-modal-cancel {
   flex: 1;
-  padding: 9px 12px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #374151;
-  font-weight: 500;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: var(--text-sm);
   cursor: pointer;
+  transition: all var(--transition-base);
 }
 
 .workouts-modal-cancel:hover {
-  background: #f9fafb;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
-/* ===== עיצוב מיוחד למודל מחיקה ===== */
-
+/* Delete Modal */
 .workouts-modal-danger {
-  border: 1px solid #fee2e2;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .workouts-modal-delete-title {
-  color: #b91c1c;
+  color: var(--color-danger);
 }
 
 .workouts-modal-delete-confirm {
   flex: 1;
-  padding: 9px 12px;
-  border-radius: 10px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
   border: 0;
-  background: #dc2626;
-  color: #ffffff;
-  font-weight: 500;
+  background: linear-gradient(135deg, var(--color-danger) 0%, #dc2626 100%);
+  color: var(--text-inverse);
+  font-weight: 600;
+  font-size: var(--text-sm);
   cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-danger);
 }
 
-.workouts-modal-delete-confirm:hover {
-  background: #b91c1c;
+.workouts-modal-delete-confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
 }
 
 .workouts-modal-delete-confirm:disabled {
-  opacity: 0.7;
-  cursor: default;
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
-/* ===== רספונסיביות ===== */
+/* ===== Responsive ===== */
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .workouts-page-root {
-    padding: 12px;
+    padding: var(--space-3);
   }
 
-  .workouts-item-header {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .workouts-item-actions {
-    align-self: flex-start;
-  }
-
-  .workouts-item-footer {
-    justify-content: flex-end;
+  .workouts-modal {
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
   }
 }
