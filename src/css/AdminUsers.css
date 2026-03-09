@@ -134,7 +134,7 @@
 .um-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 860px;
+  min-width: 980px;
   background: transparent;
 }
 
@@ -155,7 +155,7 @@
 }
 
 .um-thActions {
-  width: 120px;
+  width: 360px;
 }
 
 .um-empty {
@@ -198,7 +198,6 @@
 }
 
 /* ===== Save button ===== */
-/* Default (enabled = dirty) => BLUE */
 .um-saveBtn {
   width: 92px;
   border: none;
@@ -217,7 +216,6 @@
 }
 
 .um-saveBtn:disabled {
-  /* visible disabled like Figma */
   box-shadow: none;
   opacity: 1;
   cursor: not-allowed;
@@ -234,7 +232,7 @@
   border-radius: 10px;
 }
 
-/* ===== Mobile cards (Figma-like) ===== */
+/* ===== Mobile cards ===== */
 .um-mobileList {
   padding: 14px;
   background: transparent;
@@ -282,6 +280,99 @@
   padding: 14px 12px;
   opacity: 0.75;
   color: #111;
+}
+
+/* ===== New: Status badge + top row + actions ===== */
+.um-cardRowTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.um-badge {
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: #f3f5f7;
+  color: #111;
+}
+
+.um-badge--active {
+  background: rgba(20, 180, 90, 0.12);
+  border-color: rgba(20, 180, 90, 0.24);
+}
+
+.um-badge--inactive {
+  background: rgba(255, 170, 0, 0.14);
+  border-color: rgba(255, 170, 0, 0.26);
+}
+
+.um-cardActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.um-toggleBtn {
+  width: auto;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: #ffffff;
+  color: #111;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.um-toggleBtn:hover {
+  background: #f5f6f8;
+}
+
+.um-toggleBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.um-toggleBtnFull {
+  width: 100%;
+  padding: 12px 12px;
+}
+
+/* ===== Delete button ===== */
+.um-dangerBtn {
+  border: 1px solid rgba(255, 60, 60, 0.30);
+  background: transparent;
+  color: rgba(255, 60, 60, 1);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.um-dangerBtn:hover {
+  background: rgba(255, 60, 60, 0.08);
+}
+
+.um-dangerBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.um-dangerBtn--solid {
+  background: rgba(255, 60, 60, 1);
+  color: #fff;
+  border: none;
+}
+
+.um-dangerBtn--solid:hover {
+  filter: brightness(1.05);
 }
 
 /* ===== Modal ===== */
