@@ -1,6 +1,6 @@
 // src/pages/ExerciseLibrary.jsx
 import "../css/exercise-library.css";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 function getImageUrl(imagePath) {
@@ -18,6 +18,53 @@ function getImageUrl(imagePath) {
 // עוזר: בדיקת מספר חיובי
 const isPosNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) > 0;
 
+// Image Viewer Modal Component
+function ImageViewerModal({ open, imageUrl, title, onClose }) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div 
+      className="el-image-viewer-overlay" 
+      role="dialog" 
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div className="el-image-viewer-content" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className="el-image-viewer-close"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        
+        {imageUrl ? (
+          <img 
+            className="el-image-viewer-img" 
+            src={imageUrl} 
+            alt={title || "Exercise image"} 
+          />
+        ) : (
+          <div className="el-image-viewer-empty">No image available</div>
+        )}
+        
+        {title && <div className="el-image-viewer-title">{title}</div>}
+      </div>
+    </div>
+  );
+}
+
 export default function ExerciseLibrary() {
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState([]);
@@ -31,6 +78,23 @@ export default function ExerciseLibrary() {
 
   const [selectedExercise, setSelectedExercise] = useState(null);
 
+  // Image Viewer state
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [imageViewerUrl, setImageViewerUrl] = useState("");
+  const [imageViewerTitle, setImageViewerTitle] = useState("");
+
+  const openImageViewer = useCallback((imageUrl, title) => {
+    setImageViewerUrl(imageUrl);
+    setImageViewerTitle(title);
+    setImageViewerOpen(true);
+  }, []);
+
+  const closeImageViewer = useCallback(() => {
+    setImageViewerOpen(false);
+    setImageViewerUrl("");
+    setImageViewerTitle("");
+  }, []);
+
   const [workouts, setWorkouts] = useState([]);
   const [selectedWorkoutId, setSelectedWorkoutId] = useState(null);
 
@@ -39,6 +103,15 @@ export default function ExerciseLibrary() {
   const [planSetsCount, setPlanSetsCount] = useState("");
   const [planSetRows, setPlanSetRows] = useState([{ reps: "", weight: "" }]);
   const [savingPlan, setSavingPlan] = useState(false);
+
+  // Create new exercise state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newExerciseName, setNewExerciseName] = useState("");
+  const [newYoutubeUrl, setNewYoutubeUrl] = useState("");
+  const [newPrimarySubgroupId, setNewPrimarySubgroupId] = useState("");
+  const [newEquipmentId, setNewEquipmentId] = useState("");
+  const [creatingExercise, setCreatingExercise] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   // ------------------------------------------------
   // טענת כל הדאטה מה־DB
@@ -306,6 +379,179 @@ export default function ExerciseLibrary() {
   }
 
   // ------------------------------------------------
+  // Create New Exercise functions
+  // ------------------------------------------------
+
+  // Group subgroups by muscle group for better display
+  const subgroupsByGroup = useMemo(() => {
+    const map = new Map();
+    for (const sg of muscleSubgroups) {
+      const groupObj = muscleGroups.find(g => g.id === sg.groupId);
+      const gLabel = groupObj?.label || "Other";
+      if (!map.has(gLabel)) map.set(gLabel, []);
+      map.get(gLabel).push(sg);
+    }
+    return Array.from(map.entries()).sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  }, [muscleSubgroups, muscleGroups]);
+
+  function resetCreateState() {
+    setNewExerciseName("");
+    setNewYoutubeUrl("");
+    setNewPrimarySubgroupId("");
+    setNewEquipmentId("");
+    setCreatingExercise(false);
+    setCreateError("");
+  }
+
+  function openCreateModal() {
+    resetCreateState();
+    setIsCreateModalOpen(true);
+  }
+
+  function closeCreateModal() {
+    setIsCreateModalOpen(false);
+    resetCreateState();
+  }
+
+  async function handleCreateExercise() {
+    setCreateError("");
+
+    const name = newExerciseName.trim();
+    if (!name) {
+      setCreateError("Please enter an exercise name");
+      return;
+    }
+    if (!newPrimarySubgroupId) {
+      setCreateError("Please select a primary muscle");
+      return;
+    }
+
+    setCreatingExercise(true);
+
+    try {
+      // Get current user
+      const { data: s } = await supabase.auth.getSession();
+      const uid = s?.session?.user?.id;
+      if (!uid) {
+        setCreateError("You must be logged in to create exercises");
+        setCreatingExercise(false);
+        return;
+      }
+
+      // Check for duplicates
+      const { data: existed, error: eDup } = await supabase
+        .from("exercises_catalog")
+        .select("id, name")
+        .eq("owner_id", uid)
+        .ilike("name", name)
+        .limit(5);
+
+      if (eDup) {
+        setCreateError(eDup.message);
+        setCreatingExercise(false);
+        return;
+      }
+
+      if ((existed || []).some(
+        (x) => (x.name || "").trim().toLowerCase() === name.toLowerCase()
+      )) {
+        setCreateError("You already have an exercise with this name");
+        setCreatingExercise(false);
+        return;
+      }
+
+      // Create exercise
+      const { data: ex, error: e1 } = await supabase
+        .from("exercises_catalog")
+        .insert({
+          owner_id: uid,
+          name: name,
+          youtube_url: newYoutubeUrl || null,
+          primary_subgroup_id: newPrimarySubgroupId,
+          equipment_id: newEquipmentId || null,
+        })
+        .select("id, name")
+        .single();
+
+      if (e1) {
+        setCreateError(e1.code === "23505" ? "Exercise already exists" : e1.message);
+        setCreatingExercise(false);
+        return;
+      }
+
+      // Create muscle target mapping
+      const { error: eTarget } = await supabase
+        .from("exercise_muscle_targets")
+        .insert({
+          exercise_id: ex.id,
+          subgroup_id: newPrimarySubgroupId,
+          role: "primary",
+        });
+
+      if (eTarget) {
+        // Rollback exercise creation
+        try {
+          await supabase.from("exercises_catalog").delete().eq("id", ex.id);
+        } catch {
+          // ignore
+        }
+        setCreateError("Failed to save muscle mapping: " + eTarget.message);
+        setCreatingExercise(false);
+        return;
+      }
+
+      // Success - reload exercises and close modal
+      closeCreateModal();
+      
+      // Reload exercises to include the new one
+      const { data: newExData } = await supabase
+        .from("exercises_catalog")
+        .select(`
+          id,
+          name,
+          youtube_url,
+          image_path,
+          primary_subgroup_id,
+          equipment_id,
+          equipment:equipment_id (
+            id,
+            key,
+            label
+          )
+        `)
+        .eq("id", ex.id)
+        .single();
+
+      if (newExData) {
+        const primarySub = muscleSubgroups.find(s => s.id === newExData.primary_subgroup_id);
+        const primaryGroup = primarySub ? muscleGroups.find(g => g.id === primarySub.groupId) : null;
+
+        const newEx = {
+          id: newExData.id,
+          name: newExData.name,
+          youtubeUrl: newExData.youtube_url,
+          equipmentKey: newExData.equipment?.key || "other",
+          equipmentLabel: newExData.equipment?.label || "Other",
+          imagePath: newExData.image_path,
+          imageUrl: getImageUrl(newExData.image_path),
+          primaryGroupKey: primaryGroup?.key || null,
+          primaryGroupLabel: primaryGroup?.label || "",
+          primarySubKey: primarySub?.key || null,
+          primarySubLabel: primarySub?.label || "",
+          secondaryMuscles: [],
+        };
+
+        setExercises(prev => [newEx, ...prev]);
+      }
+
+    } catch (err) {
+      console.error("Unexpected error creating exercise:", err);
+      setCreateError("An unexpected error occurred");
+      setCreatingExercise(false);
+    }
+  }
+
+  // ------------------------------------------------
   // Modal: Add to workout – שלב 1: בחירת אימון
   // ------------------------------------------------
 
@@ -371,10 +617,25 @@ export default function ExerciseLibrary() {
   return (
     <div className="el-page">
       <header className="el-header">
-        <h1 className="el-title">Exercise Library</h1>
-        <p className="el-subtitle">
-          Discover and explore exercises for your training goals.
-        </p>
+        <div className="el-header-top">
+          <div>
+            <h1 className="el-title">Exercise Library</h1>
+            <p className="el-subtitle">
+              Discover and explore exercises for your training goals.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="el-create-btn"
+            onClick={openCreateModal}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Create Exercise</span>
+          </button>
+        </div>
       </header>
 
       <div className="el-layout">
@@ -532,7 +793,16 @@ export default function ExerciseLibrary() {
                 <img
                   src={selectedExercise.imageUrl}
                   alt={selectedExercise.name}
-                  className="el-modal-image"
+                  className="el-modal-image el-modal-image-clickable"
+                  onClick={() => openImageViewer(selectedExercise.imageUrl, selectedExercise.name)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openImageViewer(selectedExercise.imageUrl, selectedExercise.name);
+                    }
+                  }}
                 />
               )}
 
@@ -684,21 +954,43 @@ export default function ExerciseLibrary() {
         </div>
       )}
 
-      {/* מודאל שלב 2 – סטים / חזרות / משקל */}
+      {/* מודאל שלב 2 – סטים / חזרות / משקל - עיצוב משופר */}
       {selectedExercise && isPlanModalOpen && (
         <div className="el-modal-overlay">
-          <div className="el-modal">
-            <div className="el-plan-header">
+          <div className="el-modal el-plan-modal">
+            {/* Header עם תמונה קטנה של התרגיל */}
+            <div className="el-plan-header-new">
               <button
                 type="button"
-                className="el-plan-back"
+                className="el-plan-back-new"
                 onClick={() => setIsPlanModalOpen(false)}
+                aria-label="Back"
               >
-                ← Back
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="15,18 9,12 15,6"></polyline>
+                </svg>
               </button>
+              
+              <div className="el-plan-header-info">
+                {selectedExercise.imageUrl && (
+                  <div className="el-plan-header-thumb">
+                    <img src={selectedExercise.imageUrl} alt="" />
+                  </div>
+                )}
+                <div className="el-plan-header-text">
+                  <h2 className="el-plan-exercise-name">{selectedExercise.name}</h2>
+                  <p className="el-plan-workout-name">
+                    Adding to{" "}
+                    <strong>
+                      {(workouts.find((w) => w.id === selectedWorkoutId) || {}).name}
+                    </strong>
+                  </p>
+                </div>
+              </div>
+
               <button
                 type="button"
-                className="el-modal-close"
+                className="el-plan-close-new"
                 aria-label="Close"
                 onClick={() => {
                   setSelectedExercise(null);
@@ -706,96 +998,98 @@ export default function ExerciseLibrary() {
                   resetPlanState();
                 }}
               >
-                ✕
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
 
-            <div className="el-modal-body el-plan-body">
-              <h2 className="el-plan-title">Plan sets for exercise</h2>
-              <p className="el-plan-subtitle">
-                {selectedExercise.name}
-                {selectedWorkoutId && (
-                  <>
-                    {" "}
-                    • in workout{" "}
-                    <strong>
-                      {
-                        (workouts.find((w) => w.id === selectedWorkoutId) || {})
-                          .name
-                      }
-                    </strong>
-                  </>
-                )}
-              </p>
+            <div className="el-plan-body-new">
+              {/* Quick set selector */}
+              <div className="el-plan-quick-sets">
+                <span className="el-plan-quick-label">Quick select:</span>
+                <div className="el-plan-quick-buttons">
+                  {[3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      className={`el-plan-quick-btn ${planSetsCount === String(num) ? 'active' : ''}`}
+                      onClick={() => onPlanSetsChange(String(num))}
+                    >
+                      {num} sets
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {/* מספר הסטים */}
-              <section className="el-modal-section">
-                <label className="el-field-label">Number of sets</label>
+              {/* Custom sets input */}
+              <div className="el-plan-sets-input-wrap">
+                <label className="el-plan-sets-label">Number of sets</label>
                 <input
-                  className="el-input el-plan-input"
+                  className="el-plan-sets-input"
                   type="number"
                   min={1}
+                  max={10}
                   inputMode="numeric"
-                  placeholder="e.g., 3"
+                  placeholder="3"
                   value={planSetsCount}
                   onChange={(e) => onPlanSetsChange(e.target.value)}
                 />
-              </section>
+              </div>
 
-              {/* שורות הסטים */}
+              {/* Set cards */}
               {canBuildPlan && (
-                <section className="el-modal-section el-plan-sets-section">
+                <div className="el-plan-sets-grid">
+                  <div className="el-plan-sets-header">
+                    <span className="el-plan-col-set">Set</span>
+                    <span className="el-plan-col-reps">Reps</span>
+                    <span className="el-plan-col-weight">Weight (kg)</span>
+                  </div>
+                  
                   {planSetRows.map((row, idx) => (
-                    <div key={idx} className="el-plan-set-row">
-                      <div className="el-plan-set-label">Set {idx + 1}</div>
-                      <div className="el-plan-set-inputs">
+                    <div key={idx} className="el-plan-set-card">
+                      <div className="el-plan-set-number">{idx + 1}</div>
+                      <div className="el-plan-set-field">
                         <input
-                          className="el-input el-plan-input"
+                          className="el-plan-field-input"
                           type="number"
                           min={1}
                           inputMode="numeric"
-                          placeholder="Reps"
+                          placeholder="12"
                           value={row.reps}
-                          onChange={(e) =>
-                            updatePlanRow(idx, "reps", e.target.value)
-                          }
+                          onChange={(e) => updatePlanRow(idx, "reps", e.target.value)}
                         />
+                      </div>
+                      <div className="el-plan-set-field">
                         <input
-                          className="el-input el-plan-input"
+                          className="el-plan-field-input"
                           type="number"
-                          min={1}
-                          inputMode="numeric"
-                          placeholder="Weight (kg)"
+                          min={0}
+                          step="0.5"
+                          inputMode="decimal"
+                          placeholder="20"
                           value={row.weight}
-                          onChange={(e) =>
-                            updatePlanRow(idx, "weight", e.target.value)
-                          }
+                          onChange={(e) => updatePlanRow(idx, "weight", e.target.value)}
                         />
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
 
-                  {!allPlanRowsValid && (
-                    <p className="el-plan-error">
-                      Please fill reps and weight for every set.
-                    </p>
-                  )}
-                </section>
+              {!allPlanRowsValid && canBuildPlan && (
+                <p className="el-plan-error-new">
+                  Please fill in reps and weight for all sets
+                </p>
               )}
             </div>
 
-            <div className="el-plan-footer">
+            {/* Footer with CTA */}
+            <div className="el-plan-footer-new">
               <button
                 type="button"
-                className="el-plan-confirm"
-                disabled={!allPlanRowsValid || savingPlan}
-                onClick={handleSavePlanAndAttach}
-              >
-                {savingPlan ? "Adding…" : "Add Exercise to Workout"}
-              </button>
-              <button
-                type="button"
-                className="el-plan-cancel"
+                className="el-plan-cancel-new"
                 onClick={() => {
                   setSelectedExercise(null);
                   setSelectedWorkoutId(null);
@@ -804,10 +1098,38 @@ export default function ExerciseLibrary() {
               >
                 Cancel
               </button>
+              <button
+                type="button"
+                className="el-plan-confirm-new"
+                disabled={!allPlanRowsValid || savingPlan}
+                onClick={handleSavePlanAndAttach}
+              >
+                {savingPlan ? (
+                  <>
+                    <span className="el-plan-spinner"></span>
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                    Add to Workout
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Image Viewer Modal */}
+      <ImageViewerModal
+        open={imageViewerOpen}
+        imageUrl={imageViewerUrl}
+        title={imageViewerTitle}
+        onClose={closeImageViewer}
+      />
     </div>
   );
 }
