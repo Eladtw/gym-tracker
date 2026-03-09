@@ -1,6 +1,6 @@
 // src/pages/ExerciseLibrary.jsx
 import "../css/exercise-library.css";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 function getImageUrl(imagePath) {
@@ -39,6 +39,31 @@ export default function ExerciseLibrary() {
   const [planSetsCount, setPlanSetsCount] = useState("");
   const [planSetRows, setPlanSetRows] = useState([{ reps: "", weight: "" }]);
   const [savingPlan, setSavingPlan] = useState(false);
+
+  // Image viewer state
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+
+  // Create exercise modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newExerciseName, setNewExerciseName] = useState("");
+  const [newPrimarySubgroupId, setNewPrimarySubgroupId] = useState("");
+  const [newYoutubeUrl, setNewYoutubeUrl] = useState("");
+  const [creatingExercise, setCreatingExercise] = useState(false);
+
+  // ESC key handler for modals
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === "Escape") {
+      if (isImageViewerOpen) setIsImageViewerOpen(false);
+      if (isCreateModalOpen) setIsCreateModalOpen(false);
+    }
+  }, [isImageViewerOpen, isCreateModalOpen]);
+
+  useEffect(() => {
+    if (isImageViewerOpen || isCreateModalOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [isImageViewerOpen, isCreateModalOpen, handleKeyDown]);
 
   // ------------------------------------------------
   // טענת כל הדאטה מה־DB
@@ -263,6 +288,100 @@ export default function ExerciseLibrary() {
     setSavingPlan(false);
   }
 
+  function resetCreateState() {
+    setIsCreateModalOpen(false);
+    setNewExerciseName("");
+    setNewPrimarySubgroupId("");
+    setNewYoutubeUrl("");
+    setCreatingExercise(false);
+  }
+
+  // Group subgroups by their parent group for the select dropdown
+  const subgroupsByGroup = useMemo(() => {
+    const map = {};
+    muscleSubgroups.forEach((sg) => {
+      const groupLabel = sg.groupLabel || "Other";
+      if (!map[groupLabel]) map[groupLabel] = [];
+      map[groupLabel].push(sg);
+    });
+    return Object.entries(map).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [muscleSubgroups]);
+
+  async function handleCreateExercise() {
+    if (!newExerciseName.trim() || !newPrimarySubgroupId) return;
+
+    setCreatingExercise(true);
+
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const uid = session?.session?.user?.id;
+      if (!uid) {
+        alert("Please log in to create exercises");
+        setCreatingExercise(false);
+        return;
+      }
+
+      // Check for duplicates
+      const { data: existed } = await supabase
+        .from("exercises_catalog")
+        .select("id, name")
+        .eq("owner_id", uid)
+        .ilike("name", newExerciseName.trim())
+        .limit(5);
+
+      if ((existed || []).some(
+        (x) => (x.name || "").trim().toLowerCase() === newExerciseName.trim().toLowerCase()
+      )) {
+        alert("Exercise with the same name already exists in your catalog");
+        setCreatingExercise(false);
+        return;
+      }
+
+      // Create the exercise
+      const { data: ex, error } = await supabase
+        .from("exercises_catalog")
+        .insert({
+          owner_id: uid,
+          name: newExerciseName.trim(),
+          youtube_url: newYoutubeUrl || null,
+          primary_subgroup_id: newPrimarySubgroupId,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating exercise:", error);
+        alert("Failed to create exercise: " + error.message);
+        setCreatingExercise(false);
+        return;
+      }
+
+      // Add the new exercise to the local state
+      const primarySub = muscleSubgroups.find(sg => sg.id === newPrimarySubgroupId);
+      const newExercise = {
+        id: ex.id,
+        name: ex.name,
+        youtubeUrl: ex.youtube_url,
+        equipmentKey: "other",
+        equipmentLabel: "Other",
+        imagePath: null,
+        imageUrl: null,
+        primaryGroupKey: primarySub?.groupKey || null,
+        primaryGroupLabel: primarySub?.groupLabel || "",
+        primarySubKey: primarySub?.key || null,
+        primarySubLabel: primarySub?.label || "",
+        secondaryMuscles: [],
+      };
+
+      setExercises(prev => [newExercise, ...prev]);
+      resetCreateState();
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      alert("Failed to create exercise");
+      setCreatingExercise(false);
+    }
+  }
+
   function onPlanSetsChange(v) {
     setPlanSetsCount(v);
     const n = Math.max(0, Number(v) || 0);
@@ -464,6 +583,16 @@ export default function ExerciseLibrary() {
                 Showing {filteredCount} of {totalCount} exercises
               </span>
             )}
+            <button
+              type="button"
+              className="el-create-btn"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Create Exercise
+            </button>
           </div>
 
           <div className="el-grid">
@@ -529,11 +658,25 @@ export default function ExerciseLibrary() {
           <div className="el-modal">
             <div className="el-modal-image-header">
               {selectedExercise.imageUrl && (
-                <img
-                  src={selectedExercise.imageUrl}
-                  alt={selectedExercise.name}
-                  className="el-modal-image"
-                />
+                <button
+                  type="button"
+                  className="el-modal-image-btn"
+                  onClick={() => setIsImageViewerOpen(true)}
+                  aria-label="View full size image"
+                >
+                  <img
+                    src={selectedExercise.imageUrl}
+                    alt={selectedExercise.name}
+                    className="el-modal-image"
+                  />
+                  <span className="el-modal-image-zoom">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                      <path d="M11 8v6M8 11h6"/>
+                    </svg>
+                  </span>
+                </button>
               )}
 
               <button
@@ -687,18 +830,21 @@ export default function ExerciseLibrary() {
       {/* מודאל שלב 2 – סטים / חזרות / משקל */}
       {selectedExercise && isPlanModalOpen && (
         <div className="el-modal-overlay">
-          <div className="el-modal">
+          <div className="el-modal el-plan-modal">
             <div className="el-plan-header">
               <button
                 type="button"
                 className="el-plan-back"
                 onClick={() => setIsPlanModalOpen(false)}
               >
-                ← Back
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back
               </button>
               <button
                 type="button"
-                className="el-modal-close"
+                className="el-modal-close el-plan-close"
                 aria-label="Close"
                 onClick={() => {
                   setSelectedExercise(null);
@@ -706,81 +852,113 @@ export default function ExerciseLibrary() {
                   resetPlanState();
                 }}
               >
-                ✕
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
               </button>
             </div>
 
             <div className="el-modal-body el-plan-body">
-              <h2 className="el-plan-title">Plan sets for exercise</h2>
-              <p className="el-plan-subtitle">
-                {selectedExercise.name}
-                {selectedWorkoutId && (
-                  <>
-                    {" "}
-                    • in workout{" "}
-                    <strong>
-                      {
-                        (workouts.find((w) => w.id === selectedWorkoutId) || {})
-                          .name
-                      }
-                    </strong>
-                  </>
+              {/* Exercise info card */}
+              <div className="el-plan-exercise-card">
+                {selectedExercise.imageUrl && (
+                  <img 
+                    src={selectedExercise.imageUrl} 
+                    alt={selectedExercise.name}
+                    className="el-plan-exercise-thumb"
+                  />
                 )}
-              </p>
+                <div className="el-plan-exercise-info">
+                  <h2 className="el-plan-exercise-name">{selectedExercise.name}</h2>
+                  <p className="el-plan-workout-name">
+                    Adding to{" "}
+                    <strong>
+                      {(workouts.find((w) => w.id === selectedWorkoutId) || {}).name}
+                    </strong>
+                  </p>
+                </div>
+              </div>
 
-              {/* מספר הסטים */}
-              <section className="el-modal-section">
-                <label className="el-field-label">Number of sets</label>
-                <input
-                  className="el-input el-plan-input"
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  placeholder="e.g., 3"
-                  value={planSetsCount}
-                  onChange={(e) => onPlanSetsChange(e.target.value)}
-                />
-              </section>
+              {/* Sets configuration */}
+              <div className="el-plan-config-section">
+                <div className="el-plan-sets-header">
+                  <label className="el-plan-sets-label">Number of Sets</label>
+                  <div className="el-plan-sets-counter">
+                    <button
+                      type="button"
+                      className="el-plan-counter-btn"
+                      onClick={() => onPlanSetsChange(String(Math.max(1, (Number(planSetsCount) || 0) - 1)))}
+                      disabled={!planSetsCount || Number(planSetsCount) <= 1}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M5 12h14"/>
+                      </svg>
+                    </button>
+                    <input
+                      className="el-plan-sets-input"
+                      type="number"
+                      min={1}
+                      inputMode="numeric"
+                      placeholder="0"
+                      value={planSetsCount}
+                      onChange={(e) => onPlanSetsChange(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="el-plan-counter-btn"
+                      onClick={() => onPlanSetsChange(String((Number(planSetsCount) || 0) + 1))}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M12 5v14M5 12h14"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-              {/* שורות הסטים */}
+              {/* Set rows */}
               {canBuildPlan && (
-                <section className="el-modal-section el-plan-sets-section">
+                <div className="el-plan-sets-list">
+                  <div className="el-plan-sets-grid-header">
+                    <span className="el-plan-col-set">Set</span>
+                    <span className="el-plan-col-reps">Reps</span>
+                    <span className="el-plan-col-weight">Weight (kg)</span>
+                  </div>
                   {planSetRows.map((row, idx) => (
-                    <div key={idx} className="el-plan-set-row">
-                      <div className="el-plan-set-label">Set {idx + 1}</div>
-                      <div className="el-plan-set-inputs">
+                    <div key={idx} className="el-plan-set-card">
+                      <div className="el-plan-set-number">{idx + 1}</div>
+                      <div className="el-plan-set-field">
                         <input
-                          className="el-input el-plan-input"
+                          className="el-plan-field-input"
                           type="number"
                           min={1}
                           inputMode="numeric"
-                          placeholder="Reps"
+                          placeholder="0"
                           value={row.reps}
-                          onChange={(e) =>
-                            updatePlanRow(idx, "reps", e.target.value)
-                          }
+                          onChange={(e) => updatePlanRow(idx, "reps", e.target.value)}
                         />
+                      </div>
+                      <div className="el-plan-set-field">
                         <input
-                          className="el-input el-plan-input"
+                          className="el-plan-field-input"
                           type="number"
-                          min={1}
-                          inputMode="numeric"
-                          placeholder="Weight (kg)"
+                          min={0}
+                          step="0.5"
+                          inputMode="decimal"
+                          placeholder="0"
                           value={row.weight}
-                          onChange={(e) =>
-                            updatePlanRow(idx, "weight", e.target.value)
-                          }
+                          onChange={(e) => updatePlanRow(idx, "weight", e.target.value)}
                         />
                       </div>
                     </div>
                   ))}
 
-                  {!allPlanRowsValid && (
+                  {!allPlanRowsValid && planSetRows.some(r => r.reps || r.weight) && (
                     <p className="el-plan-error">
-                      Please fill reps and weight for every set.
+                      Please fill reps and weight for every set
                     </p>
                   )}
-                </section>
+                </div>
               )}
             </div>
 
@@ -791,18 +969,169 @@ export default function ExerciseLibrary() {
                 disabled={!allPlanRowsValid || savingPlan}
                 onClick={handleSavePlanAndAttach}
               >
-                {savingPlan ? "Adding…" : "Add Exercise to Workout"}
+                {savingPlan ? (
+                  <>
+                    <span className="el-plan-spinner"></span>
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Add to Workout
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Viewer Modal */}
+      {isImageViewerOpen && selectedExercise?.imageUrl && (
+        <div 
+          className="el-image-viewer-overlay"
+          onClick={() => setIsImageViewerOpen(false)}
+        >
+          <button
+            type="button"
+            className="el-image-viewer-close"
+            aria-label="Close image viewer"
+            onClick={() => setIsImageViewerOpen(false)}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+          <div 
+            className="el-image-viewer-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedExercise.imageUrl}
+              alt={selectedExercise.name}
+              className="el-image-viewer-img"
+            />
+            <div className="el-image-viewer-caption">
+              {selectedExercise.name}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Exercise Modal */}
+      {isCreateModalOpen && (
+        <div className="el-modal-overlay" onClick={() => resetCreateState()}>
+          <div className="el-modal el-create-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="el-create-header">
+              <div className="el-create-header-content">
+                <div className="el-create-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="el-create-title">Create New Exercise</h2>
+                  <p className="el-create-subtitle">Add a custom exercise to your private catalog</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="el-modal-close el-create-close"
+                aria-label="Close"
+                onClick={() => resetCreateState()}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <div className="el-create-body">
+              <div className="el-create-field">
+                <label className="el-create-label">
+                  Exercise Name
+                  <span className="el-create-required">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="el-create-input"
+                  placeholder="e.g., Barbell Hip Thrust"
+                  value={newExerciseName}
+                  onChange={(e) => setNewExerciseName(e.target.value)}
+                />
+              </div>
+
+              <div className="el-create-field">
+                <label className="el-create-label">
+                  Primary Muscle
+                  <span className="el-create-required">*</span>
+                </label>
+                <select
+                  className="el-create-input el-create-select"
+                  value={newPrimarySubgroupId}
+                  onChange={(e) => setNewPrimarySubgroupId(e.target.value)}
+                >
+                  <option value="">Choose a primary muscle...</option>
+                  {subgroupsByGroup.map(([groupLabel, subs]) => (
+                    <optgroup key={groupLabel} label={groupLabel}>
+                      {subs.map((sg) => (
+                        <option key={sg.id} value={sg.id}>
+                          {sg.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              <div className="el-create-field">
+                <label className="el-create-label">
+                  YouTube URL
+                  <span className="el-create-optional">(optional)</span>
+                </label>
+                <input
+                  type="url"
+                  className="el-create-input"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={newYoutubeUrl}
+                  onChange={(e) => setNewYoutubeUrl(e.target.value)}
+                />
+              </div>
+
+              <p className="el-create-note">
+                New exercises are saved to your private catalog and can be added to any workout.
+              </p>
+            </div>
+
+            <div className="el-create-footer">
+              <button
+                type="button"
+                className="el-create-cancel-btn"
+                onClick={() => resetCreateState()}
+              >
+                Cancel
               </button>
               <button
                 type="button"
-                className="el-plan-cancel"
-                onClick={() => {
-                  setSelectedExercise(null);
-                  setSelectedWorkoutId(null);
-                  resetPlanState();
-                }}
+                className="el-create-submit-btn"
+                disabled={!newExerciseName.trim() || !newPrimarySubgroupId || creatingExercise}
+                onClick={handleCreateExercise}
               >
-                Cancel
+                {creatingExercise ? (
+                  <>
+                    <span className="el-plan-spinner"></span>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Create Exercise
+                  </>
+                )}
               </button>
             </div>
           </div>
