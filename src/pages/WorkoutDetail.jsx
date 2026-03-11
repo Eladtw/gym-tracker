@@ -1,12 +1,13 @@
 // src/pages/WorkoutDetail.jsx
 import "../css/workout-detail.css";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import dayjs from "dayjs";
 import { supabase } from "../lib/supabaseClient";
 
 /* =======================
-   ✅ Strict numeric helpers
+   Strict numeric helpers
 ======================= */
 const toStr = (v) => (v == null ? "" : String(v));
 const parseIntStrict = (v) => {
@@ -14,25 +15,17 @@ const parseIntStrict = (v) => {
   if (s === "") return NaN;
   const n = Number(s);
   if (!Number.isFinite(n)) return NaN;
-  if (!Number.isInteger(n)) return NaN; // you said: integers only
+  if (!Number.isInteger(n)) return NaN;
   return n;
 };
-
 const isPosInt = (v) => {
   const n = parseIntStrict(v);
   return Number.isFinite(n) && n >= 1;
 };
 
-// ✅ weight can be 0 (bodyweight / warmup)
-const isNonNegInt = (v) => {
-  const n = parseIntStrict(v);
-  return Number.isFinite(n) && n >= 0;
-};
-
-// ✅ UPDATE THIS to your real Supabase Storage bucket name:
 const BUCKET = "exercise-images";
 
-// ---------- Toast system ----------
+/* ---------- Toast system ---------- */
 function Toasts({ toasts, onClose }) {
   if (!toasts.length) return null;
   return (
@@ -61,7 +54,6 @@ function Toasts({ toasts, onClose }) {
   );
 }
 
-// נרמול set_targets (JSONB)
 function normalizeTargets(t) {
   if (!Array.isArray(t)) return [];
   return [...t]
@@ -73,84 +65,199 @@ function normalizeTargets(t) {
     .sort((a, b) => a.set_index - b.set_index);
 }
 
-// סיכום סטים לתצוגה קצרה
 function summarizeExerciseTargets(setTargets) {
   const arr = normalizeTargets(setTargets);
   if (arr.length === 0) return "";
+  const repsArr = arr.map((s) => (s.reps == null ? null : Number(s.reps)));
+  const allRepsSame =
+    repsArr.every((v) => v != null && Number.isFinite(v)) &&
+    repsArr.every((v) => v === repsArr[0]);
 
-  const repsArr = arr.map((s) => Number(s.reps) || 0);
-  const allRepsSame = repsArr.every((v) => v === repsArr[0]);
-
-  if (allRepsSame) {
-    return `${arr.length} sets × ${repsArr[0]} reps`;
-  }
+  if (allRepsSame) return `${arr.length} sets × ${repsArr[0]} reps`;
   return `${arr.length} sets`;
 }
 
-// אם כל המשקלים זהים – מחזיר weight אחד, אחרת null
 function getUniformWeight(setTargets) {
   const arr = normalizeTargets(setTargets);
   if (!arr.length) return null;
-  const wgtArr = arr.map((s) =>
-    s.weight == null ? null : Number(s.weight)
-  );
+  const wgtArr = arr.map((s) => (s.weight == null ? null : Number(s.weight)));
   if (wgtArr.some((x) => x == null || !Number.isFinite(x))) return null;
-
   const allSame = wgtArr.every((v) => v === wgtArr[0]);
   if (!allSame) return null;
   return wgtArr[0];
 }
 
-/* ===== Modal תמונה (זהה ל-SessionPage) ===== */
-function ImageModal({ open, title, imageUrl, loading, onClose }) {
+/* ===== ExerciseLibrary-like Image Viewer (PORTAL) ===== */
+function ImageViewer({ open, title, imageUrl, onClose }) {
   useEffect(() => {
     if (!open) return;
+
     const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey);
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [open, onClose]);
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
-    <div className="img-modal-overlay" role="dialog" aria-modal="true">
-      <div className="img-modal-panel">
-        <div className="img-modal-header">
-          <div className="img-modal-title" title={title}>
-            {title || "Exercise image"}
-          </div>
-          <button
-            type="button"
-            className="img-modal-close"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        </div>
+  const node = (
+    <div
+      className="el-image-viewer-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <button
+        type="button"
+        className="el-image-viewer-close"
+        aria-label="Close image viewer"
+        onClick={onClose}
+      >
+        ✕
+      </button>
 
-        <div className="img-modal-body">
-          {loading && <div className="img-modal-loading">Loading image…</div>}
-
-          {!loading && !imageUrl && (
-            <div className="img-modal-empty">
-              No image found for this exercise.
-            </div>
-          )}
-
-          {!loading && imageUrl && (
-            <img className="img-modal-img" src={imageUrl} alt={title || ""} />
-          )}
-        </div>
-
-        <div className="img-modal-footer">
-          <button type="button" className="img-modal-btn" onClick={onClose}>
-            Close
-          </button>
-        </div>
+      <div
+        className="el-image-viewer-content"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={title || ""}
+            className="el-image-viewer-img"
+          />
+        ) : (
+          <div className="el-image-viewer-fallback">No image</div>
+        )}
+        <div className="el-image-viewer-caption">{title || "Exercise"}</div>
       </div>
     </div>
   );
+
+  return createPortal(node, document.body);
+}
+
+/* ===== Facet dropdown (with search) ===== */
+function FacetDropdown({
+  label,
+  value,
+  options,
+  placeholder,
+  onChange,
+  disabled,
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+
+  const selected = options.find((o) => o.value === value) || null;
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return options;
+    return options.filter((o) =>
+      (o.label || "").toLowerCase().includes(term)
+    );
+  }, [options, q]);
+
+  useEffect(() => {
+    if (!open) setQ("");
+  }, [open]);
+
+  return (
+    <div className={`wd-facet ${disabled ? "is-disabled" : ""}`}>
+      <div className="wd-facet-label">{label}</div>
+
+      <button
+        type="button"
+        className="wd-facet-btn"
+        onClick={() => !disabled && setOpen((v) => !v)}
+        disabled={disabled}
+      >
+        <span className={`wd-facet-btn-text ${!selected ? "is-muted" : ""}`}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <span className="wd-facet-caret" aria-hidden>
+          ▾
+        </span>
+      </button>
+
+      {open && !disabled && (
+        <div className="wd-facet-pop">
+          <input
+            className="wd-facet-search"
+            placeholder="Search..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            autoFocus
+          />
+
+          <div className="wd-facet-list">
+            <button
+              type="button"
+              className={`wd-facet-item ${value == null ? "is-active" : ""}`}
+              onClick={() => {
+                onChange(null);
+                setOpen(false);
+              }}
+            >
+              Clear
+            </button>
+
+            {filtered.length === 0 ? (
+              <div className="wd-facet-empty">No options</div>
+            ) : (
+              filtered.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  className={`wd-facet-item ${
+                    o.value === value ? "is-active" : ""
+                  }`}
+                  onClick={() => {
+                    onChange(o.value);
+                    setOpen(false);
+                  }}
+                >
+                  {o.label}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===== image url helper (public URL like ExerciseLibrary) ===== */
+function getPublicImageUrl(path) {
+  if (!path) return null;
+  if (typeof path === "string" && /^https?:\/\//i.test(path)) return path;
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return data?.publicUrl || null;
+}
+
+/* ===== targets from rows (null allowed) ===== */
+function buildTargetsFromRows(rows) {
+  return rows.map((r, i) => {
+    const reps = toStr(r.reps).trim();
+    const weight = toStr(r.weight).trim();
+
+    const repsVal = reps === "" ? null : Number(reps);
+    const weightVal = weight === "" ? null : Number(weight);
+
+    return {
+      set_index: i + 1,
+      reps: Number.isFinite(repsVal) ? repsVal : null,
+      weight: Number.isFinite(weightVal) ? weightVal : null,
+    };
+  });
 }
 
 export default function WorkoutDetail() {
@@ -175,132 +282,23 @@ export default function WorkoutDetail() {
       ...opts,
     };
     setToasts((prev) => [...prev, toast]);
-    setTimeout(() => removeToast(tid), 4000);
+    setTimeout(() => removeToast(tid), 4500);
   };
 
-  // ✅ Image modal state (כמו SessionPage)
-  const [imgOpen, setImgOpen] = useState(false);
-  const [imgUrl, setImgUrl] = useState("");
-  const [imgTitle, setImgTitle] = useState("");
-  const [imgLoading, setImgLoading] = useState(false);
+  // Image viewer
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerTitle, setViewerTitle] = useState("");
+  const [viewerUrl, setViewerUrl] = useState("");
 
-  // ✅ Open image (Signed URL if possible, fallback to Public)
-  const openExerciseImage = useCallback(async (exerciseId, exerciseName, imagePath) => {
-    const path = imagePath || null;
-
-    setImgTitle(exerciseName || "Exercise image");
-    setImgUrl("");
-    setImgOpen(true);
-
-    if (!path) return;
-
-    if (typeof path === "string" && /^https?:\/\//i.test(path)) {
-      setImgUrl(path);
-      setImgLoading(false);
-      return;
-    }
-
-    setImgLoading(true);
-
-    try {
-      const { data, error } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrl(path, 60 * 60);
-
-      if (!error && data?.signedUrl) {
-        setImgUrl(data.signedUrl);
-        setImgLoading(false);
-        return;
-      }
-
-      const pub = supabase.storage.from(BUCKET).getPublicUrl(path);
-      setImgUrl(pub?.data?.publicUrl || "");
-    } catch (e) {
-      console.error("openExerciseImage error:", e);
-      const pub = supabase.storage.from(BUCKET).getPublicUrl(path);
-      setImgUrl(pub?.data?.publicUrl || "");
-    } finally {
-      setImgLoading(false);
-    }
+  const openViewer = useCallback((title, imagePath) => {
+    setViewerTitle(title || "Exercise");
+    setViewerUrl(getPublicImageUrl(imagePath) || "");
+    setViewerOpen(true);
   }, []);
 
-  const closeImg = () => {
-    setImgOpen(false);
-    setImgUrl("");
-    setImgTitle("");
-    setImgLoading(false);
-  };
-
-  // אוטוקומפליט (Public + Yours)
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [selectedExercise, setSelectedExercise] = useState(null);
-
-  // ✅ Variations
-  const [variations, setVariations] = useState([]);
-  const [selectedVariationId, setSelectedVariationId] = useState("");
-  const [variationsLoading, setVariationsLoading] = useState(false);
-
-  // יצירת תרגיל חדש לקטלוג פרטי
-  const [newName, setNewName] = useState("");
-  const [youtubeUrl, setYoutubeUrl] = useState("");
-
-  // ✅ בחירת תת-קבוצת שריר עיקרית לתרגיל חדש
-  const [muscleSubgroups, setMuscleSubgroups] = useState([]);
-  const [newPrimarySubgroupId, setNewPrimarySubgroupId] = useState("");
-
-  // תוכנית סטים
-  const [setsCount, setSetsCount] = useState("");
-  const [setRows, setSetRows] = useState([{ reps: "", weight: "" }]);
-
-  const [creating, setCreating] = useState(false);
-  const [adding, setAdding] = useState(false);
-
-  // Modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("add");
-  const [editingItemId, setEditingItemId] = useState(null);
-
-  // ---------- Helpers: variations ----------
-  async function loadVariations(exerciseId) {
-    if (!exerciseId) {
-      setVariations([]);
-      setSelectedVariationId("");
-      return;
-    }
-
-    setVariationsLoading(true);
-    const { data, error } = await supabase
-      .from("exercise_variations")
-      .select("id,label,sort_order,is_active")
-      .eq("exercise_id", exerciseId)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true })
-      .order("label", { ascending: true });
-
-    setVariationsLoading(false);
-
-    if (error) {
-      console.error("Failed to load variations", error);
-      setVariations([]);
-      setSelectedVariationId("");
-      return;
-    }
-
-    const arr = (data || []).map((v) => ({ id: v.id, label: v.label }));
-    setVariations(arr);
-
-    if (arr.length > 0) {
-      setSelectedVariationId((prev) => {
-        if (prev && arr.some((x) => x.id === prev)) return prev;
-        return arr[0].id;
-      });
-    } else {
-      setSelectedVariationId("");
-    }
-  }
-
-  // ---------- Load workout + exercises ----------
+  /* =======================
+     Load workout + exercises
+  ======================= */
   async function loadAll() {
     const [{ data: w, error: wErr }, { data: ex, error: exErr }] =
       await Promise.all([
@@ -309,24 +307,26 @@ export default function WorkoutDetail() {
           .from("workout_exercises")
           .select(
             `
+          id,
+          exercise_name,
+          exercise_id,
+          variation_id,
+          set_targets,
+          order_index,
+          exercises_catalog (
             id,
-            exercise_name,
-            exercise_id,
-            variation_id,
-            set_targets,
-            order_index,
-            exercises_catalog (
+            name,
+            image_path,
+            primary_subgroup_id,
+            equipment_id,
+            primary_subgroup:muscle_subgroups!exercises_catalog_primary_subgroup_id_fkey (
               id,
-              name,
-              image_path,
-              primary_subgroup_id,
-              primary_subgroup:muscle_subgroups!exercises_catalog_primary_subgroup_id_fkey (
-                id,
-                label,
-                muscle_groups ( id, label )
-              )
-            )
-          `
+              label,
+              muscle_groups ( id, label )
+            ),
+            equipment:equipment ( id, label )
+          )
+        `
           )
           .eq("workout_id", id)
           .order("order_index"),
@@ -343,8 +343,9 @@ export default function WorkoutDetail() {
 
     const rawItems = ex || [];
 
-    // enrich variation labels
-    const varIds = Array.from(new Set(rawItems.map((it) => it.variation_id).filter(Boolean)));
+    const varIds = Array.from(
+      new Set(rawItems.map((it) => it.variation_id).filter(Boolean))
+    );
     let varMap = new Map();
     if (varIds.length > 0) {
       const { data: vData, error: vErr } = await supabase
@@ -355,38 +356,15 @@ export default function WorkoutDetail() {
       if (!vErr) (vData || []).forEach((v) => varMap.set(v.id, v.label));
     }
 
-    // ensure we have image_path fallback
-    const ids = Array.from(new Set(rawItems.map((it) => it.exercise_id).filter(Boolean)));
-    let metaMap = new Map();
-    if (ids.length > 0) {
-      const { data: exRows, error: metaErr } = await supabase
-        .from("exercises_catalog")
-        .select("id, image_path, primary_subgroup_id")
-        .in("id", ids);
-
-      if (metaErr) {
-        console.error("exercises_catalog meta error:", metaErr);
-      } else {
-        (exRows || []).forEach((r) =>
-          metaMap.set(r.id, { image_path: r.image_path || null })
-        );
-      }
-    }
-
-    const enriched = rawItems.map((it) => {
-      const joinedImage = it.exercises_catalog?.image_path ?? null;
-      const fallbackImage = it.exercise_id
-        ? metaMap.get(it.exercise_id)?.image_path ?? null
-        : null;
-
-      return {
+    setItems(
+      rawItems.map((it) => ({
         ...it,
-        variation_label: it.variation_id ? varMap.get(it.variation_id) || null : null,
-        image_path: joinedImage || fallbackImage || null,
-      };
-    });
-
-    setItems(enriched);
+        variation_label: it.variation_id
+          ? varMap.get(it.variation_id) || null
+          : null,
+        image_path: it.exercises_catalog?.image_path ?? null,
+      }))
+    );
   }
 
   useEffect(() => {
@@ -394,59 +372,49 @@ export default function WorkoutDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // Load muscle subgroups
-  useEffect(() => {
-    (async () => {
-      const { data, error } = await supabase.from("muscle_subgroups").select(`
-        id, label,
-        muscle_groups ( id, label )
-      `);
-
-      if (error) {
-        console.error("Failed to load muscle_subgroups", error);
-        return;
-      }
-
-      const arr = (data || [])
-        .map((x) => ({
-          id: x.id,
-          label: x.label,
-          muscle_groups: x.muscle_groups || null,
-        }))
-        .sort((a, b) => {
-          const ga = (a.muscle_groups?.label || "").toLowerCase();
-          const gb = (b.muscle_groups?.label || "").toLowerCase();
-          if (ga !== gb) return ga.localeCompare(gb);
-          return (a.label || "").toLowerCase().localeCompare((b.label || "").toLowerCase());
-        });
-
-      setMuscleSubgroups(arr);
-    })();
-  }, []);
-
-  const subgroupsByGroup = useMemo(() => {
-    const map = new Map();
-    for (const sg of muscleSubgroups) {
-      const gLabel = sg?.muscle_groups?.label || "Other";
-      if (!map.has(gLabel)) map.set(gLabel, []);
-      map.get(gLabel).push(sg);
-    }
-    return Array.from(map.entries()).sort((a, b) => String(a[0]).localeCompare(String(b[0])));
-  }, [muscleSubgroups]);
-
-  // Summary
   const exercisesCount = items.length;
-  const totalSets = items.reduce((acc, it) => acc + normalizeTargets(it.set_targets).length, 0);
+  const totalSets = items.reduce(
+    (acc, it) => acc + normalizeTargets(it.set_targets).length,
+    0
+  );
 
-  // Autocomplete
-  useEffect(() => {
-    const t = setTimeout(async () => {
-      const q = query.trim();
-      if (q.length < 2) {
-        setSuggestions([]);
-        return;
-      }
+  const alreadyInWorkoutMap = useMemo(() => {
+    const m = new Map();
+    for (const it of items) {
+      const key = `${it.exercise_id}::${it.variation_id ?? "null"}`;
+      m.set(key, true);
+    }
+    return m;
+  }, [items]);
 
+  const variationLabelForCard = (it) => {
+    if (!it.exercise_id) return null;
+    if (it.variation_id && it.variation_label) return it.variation_label;
+    if (it.variation_id && !it.variation_label) return "Selected";
+    return "None";
+  };
+
+  /* =======================
+     Bulk Add flow
+  ======================= */
+  const [addOpen, setAddOpen] = useState(false);
+  const [addStep, setAddStep] = useState("select"); // select | review
+  const addBodyRef = useRef(null);
+
+  const [libLoading, setLibLoading] = useState(false);
+  const [libAll, setLibAll] = useState([]);
+
+  const [searchQ, setSearchQ] = useState("");
+  const [fGroupId, setFGroupId] = useState(null);
+  const [fSubgroupId, setFSubgroupId] = useState(null);
+  const [fEquipmentId, setFEquipmentId] = useState(null);
+
+  const [cart, setCart] = useState([]);
+  const cartIds = useMemo(() => new Set(cart.map((c) => c.exercise.id)), [cart]);
+
+  async function loadLibrary() {
+    setLibLoading(true);
+    try {
       const { data: s } = await supabase.auth.getSession();
       const uid = s?.session?.user?.id ?? null;
 
@@ -454,371 +422,408 @@ export default function WorkoutDetail() {
         .from("exercises_catalog")
         .select(
           `
-          id, name, owner_id, image_path, primary_subgroup_id,
+          id, name, owner_id, image_path,
+          equipment_id,
+          equipment:equipment ( id, label ),
+          primary_subgroup_id,
           primary_subgroup:muscle_subgroups!exercises_catalog_primary_subgroup_id_fkey (
-            id, label, muscle_groups ( id, label )
+            id, label,
+            muscle_groups ( id, label )
           )
         `
         )
-        .ilike("name", `%${q}%`)
-        .limit(20);
+        .order("name", { ascending: true })
+        .limit(900);
 
-      qb = uid ? qb.or(`owner_id.is.null,owner_id.eq.${uid}`) : qb.is("owner_id", null);
+      qb = uid
+        ? qb.or(`owner_id.is.null,owner_id.eq.${uid}`)
+        : qb.is("owner_id", null);
 
       const { data, error } = await qb;
-      if (error) {
-        setSuggestions([]);
-        setMsg("❌ " + error.message);
-        return;
-      }
-      setSuggestions(data || []);
-    }, 200);
+      if (error) throw error;
 
-    return () => clearTimeout(t);
-  }, [query]);
-
-  // when exercise changes, load variations
-  useEffect(() => {
-    if (!selectedExercise?.id) {
-      setVariations([]);
-      setSelectedVariationId("");
-      return;
+      setLibAll(data || []);
+    } catch (e) {
+      console.error("loadLibrary error:", e);
+      pushToast(
+        "Failed to load exercise library: " + String(e?.message || e)
+      );
+      setLibAll([]);
+    } finally {
+      setLibLoading(false);
     }
-    loadVariations(selectedExercise.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedExercise?.id]);
-
-  function pickSuggestion(ex) {
-    setSelectedExercise(ex);
-    setQuery(ex.name);
-    setSuggestions([]);
   }
 
-  function resetForms() {
-    setSelectedExercise(null);
-    setQuery("");
-    setSuggestions([]);
-    setVariations([]);
-    setSelectedVariationId("");
-    setNewName("");
-    setYoutubeUrl("");
-    setNewPrimarySubgroupId("");
-    setSetsCount("");
-    setSetRows([{ reps: "", weight: "" }]);
-    setEditingItemId(null);
-  }
-
-  /* =======================
-     ✅ Plan validation (shared for Add + Edit)
-  ======================= */
-  const canBuildPlan = Number.isInteger(Number(setsCount)) && Number(setsCount) > 0;
-
-  const planValidation = useMemo(() => {
-    const missing = [];
-
-    if (!canBuildPlan) {
-      return { ok: false, missing: ["Number of sets (positive integer)"] };
-    }
-
-    const expected = Number(setsCount);
-    if (setRows.length !== expected) {
-      return { ok: false, missing: [`Mismatch: sets=${expected}, rows=${setRows.length}`] };
-    }
-
-    for (let i = 0; i < setRows.length; i++) {
-      const r = setRows[i];
-      if (!isPosInt(r.reps)) missing.push(`Set ${i + 1}: reps`);
-      if (!isNonNegInt(r.weight)) missing.push(`Set ${i + 1}: weight`);
-    }
-
-    return { ok: missing.length === 0, missing };
-  }, [canBuildPlan, setsCount, setRows]);
-
-  const allRowsValid = planValidation.ok;
-
-  const hasVariations = variations.length > 0;
-  const variationValue = selectedVariationId || null;
-
-  const alreadyInWorkout = selectedExercise?.id
-    ? items.some(
-        (it) =>
-          it.exercise_id === selectedExercise.id &&
-          (it.variation_id ?? null) === variationValue
-      )
-    : false;
-
-  const canAttach =
-    !!selectedExercise?.id &&
-    allRowsValid &&
-    !alreadyInWorkout &&
-    (!hasVariations || !!selectedVariationId);
-
-  const canCreateAndAttach =
-    newName.trim().length > 0 && !!newPrimarySubgroupId && allRowsValid;
-
-  const canSaveEdit = allRowsValid;
-
-  // Plan helpers
-  function onSetsCountChange(v) {
-    setSetsCount(v);
-    const n = Math.max(0, Number(v) || 0);
-    if (n <= 0) {
-      setSetRows([{ reps: "", weight: "" }]);
-      return;
-    }
-    setSetRows((prev) => {
-      const copy = prev.slice(0, n);
-      while (copy.length < n) copy.push({ reps: "", weight: "" });
-      return copy;
+  function openAddFlow() {
+    setAddOpen(true);
+    setAddStep("select");
+    setSearchQ("");
+    setFGroupId(null);
+    setFSubgroupId(null);
+    setFEquipmentId(null);
+    setCart([]);
+    loadLibrary();
+    requestAnimationFrame(() => {
+      if (addBodyRef.current) addBodyRef.current.scrollTop = 0;
     });
   }
 
-  function updateRow(idx, field, value) {
-    setSetRows((prev) =>
-      prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r))
-    );
+  function closeAddFlow() {
+    setAddOpen(false);
+    setAddStep("select");
   }
 
-  function toSetTargetsPayload() {
-    const n = Number(setsCount) || 0;
-    const arr = [];
-    for (let i = 0; i < n; i++) {
-      const r = setRows[i] || { reps: "", weight: "" };
-      arr.push({
-        set_index: i + 1,
-        reps: Number(toStr(r.reps).trim()),
-        weight: Number(toStr(r.weight).trim()),
-      });
+  function applyFilters(list, { searchQ, groupId, subgroupId, equipmentId }) {
+    const term = searchQ.trim().toLowerCase();
+    return (list || []).filter((ex) => {
+      if (term) {
+        const name = (ex.name || "").toLowerCase();
+        if (!name.includes(term)) return false;
+      }
+      const sg = ex.primary_subgroup || null;
+      const mgId = sg?.muscle_groups?.id || null;
+      const sgId = sg?.id || null;
+      const eqId = ex.equipment_id || null;
+
+      if (groupId && mgId !== groupId) return false;
+      if (subgroupId && sgId !== subgroupId) return false;
+      if (equipmentId && eqId !== equipmentId) return false;
+      return true;
+    });
+  }
+
+  const filteredExercises = useMemo(() => {
+    return applyFilters(libAll, {
+      searchQ,
+      groupId: fGroupId,
+      subgroupId: fSubgroupId,
+      equipmentId: fEquipmentId,
+    });
+  }, [libAll, searchQ, fGroupId, fSubgroupId, fEquipmentId]);
+
+  const groupOptions = useMemo(() => {
+    if (fSubgroupId) {
+      const match = libAll.find((x) => x.primary_subgroup?.id === fSubgroupId);
+      const gid = match?.primary_subgroup?.muscle_groups?.id || null;
+      const glabel = match?.primary_subgroup?.muscle_groups?.label || null;
+      return gid && glabel ? [{ value: gid, label: glabel }] : [];
     }
-    return arr;
-  }
-
-  // Modal open helpers
-  function openAddModal() {
-    resetForms();
-    setModalMode("add");
-    setIsModalOpen(true);
-  }
-
-  function openEditModal(item) {
-    resetForms();
-    setModalMode("edit");
-    setEditingItemId(item.id);
-
-    const st = normalizeTargets(item.set_targets);
-
-    setQuery(item.exercise_name || "");
-    if (item.exercise_id) {
-      setSelectedExercise({ id: item.exercise_id, name: item.exercise_name, owner_id: null });
+    const base = applyFilters(libAll, {
+      searchQ,
+      groupId: null,
+      subgroupId: null,
+      equipmentId: fEquipmentId,
+    });
+    const map = new Map();
+    for (const ex of base) {
+      const mg = ex.primary_subgroup?.muscle_groups || null;
+      if (mg?.id && mg?.label) map.set(mg.id, mg.label);
     }
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [libAll, searchQ, fEquipmentId, fSubgroupId]);
 
-    setSelectedVariationId(item.variation_id || "");
+  const subgroupOptions = useMemo(() => {
+    const base = applyFilters(libAll, {
+      searchQ,
+      groupId: fGroupId,
+      subgroupId: null,
+      equipmentId: fEquipmentId,
+    });
+    const map = new Map();
+    for (const ex of base) {
+      const sg = ex.primary_subgroup || null;
+      if (sg?.id && sg?.label) map.set(sg.id, sg.label);
+    }
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [libAll, searchQ, fGroupId, fEquipmentId]);
 
-    setSetsCount(st.length ? String(st.length) : "");
-    setSetRows(
-      st.length
-        ? st.map((s) => ({
-            reps: s.reps != null ? String(s.reps) : "",
-            weight: s.weight != null ? String(s.weight) : "",
-          }))
-        : [{ reps: "", weight: "" }]
-    );
+  const equipmentOptions = useMemo(() => {
+    const base = applyFilters(libAll, {
+      searchQ,
+      groupId: fGroupId,
+      subgroupId: fSubgroupId,
+      equipmentId: null,
+    });
+    const map = new Map();
+    for (const ex of base) {
+      const eq = ex.equipment || null;
+      if (eq?.id && eq?.label) map.set(eq.id, eq.label);
+    }
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [libAll, searchQ, fGroupId, fSubgroupId]);
 
-    setIsModalOpen(true);
-  }
+  useEffect(() => {
+    if (fGroupId && groupOptions.length > 0 && !groupOptions.some((o) => o.value === fGroupId))
+      setFGroupId(null);
+  }, [groupOptions, fGroupId]);
 
-  function closeModal() {
-    setIsModalOpen(false);
-  }
+  useEffect(() => {
+    if (fSubgroupId && subgroupOptions.length > 0 && !subgroupOptions.some((o) => o.value === fSubgroupId))
+      setFSubgroupId(null);
+  }, [subgroupOptions, fSubgroupId]);
 
-  // Actions
-  async function addExerciseFromCatalog() {
-    setMsg("");
+  useEffect(() => {
+    if (fEquipmentId && equipmentOptions.length > 0 && !equipmentOptions.some((o) => o.value === fEquipmentId))
+      setFEquipmentId(null);
+  }, [equipmentOptions, fEquipmentId]);
 
-    const missing = [];
-    if (!selectedExercise?.id) missing.push("Select an exercise from the list");
-    if (hasVariations && !selectedVariationId) missing.push("Choose a variation");
-    if (alreadyInWorkout) missing.push("This exercise + variation is already in this workout");
-    if (!planValidation.ok) missing.push(...planValidation.missing);
-
-    if (missing.length) {
-      pushToast("Please complete:\n• " + missing.join("\n• "));
+  function addToCart(ex) {
+    const key = `${ex.id}::null`;
+    if (alreadyInWorkoutMap.get(key)) {
+      pushToast("This exercise is already in the workout.");
       return;
     }
+    if (cartIds.has(ex.id)) return;
 
-    setAdding(true);
-
-    const payload = {
-      workout_id: id,
-      exercise_id: selectedExercise.id,
-      exercise_name: selectedExercise.name,
-      variation_id: selectedVariationId || null,
-      set_targets: toSetTargetsPayload(),
-      order_index: items.length || 0,
-    };
-
-    const { error } = await supabase.from("workout_exercises").insert(payload);
-    setAdding(false);
-
-    if (error) {
-      pushToast(error.message);
-      return;
-    }
-
-    resetForms();
-    setMsg("✅ Exercise added");
-    setIsModalOpen(false);
-    loadAll();
+    setCart((prev) => [
+      ...prev,
+      {
+        exercise: ex,
+        variationId: null,
+        variations: { loaded: false, loading: false, items: [] },
+        setsCount: "",
+        rows: [],
+        fillFromFirst: false,
+      },
+    ]);
   }
 
-  async function addNewExerciseToCatalogAndAttach() {
-    setMsg("");
+  function removeFromCart(exId) {
+    setCart((prev) => prev.filter((c) => c.exercise.id !== exId));
+  }
 
-    const missing = [];
-    if (!newName.trim()) missing.push("Exercise name");
-    if (!newPrimarySubgroupId) missing.push("Primary muscle subgroup");
-    if (!planValidation.ok) missing.push(...planValidation.missing);
+  function toggleCart(ex) {
+    if (cartIds.has(ex.id)) removeFromCart(ex.id);
+    else addToCart(ex);
+  }
 
-    if (missing.length) {
-      pushToast("Please complete:\n• " + missing.join("\n• "));
-      return;
-    }
-
-    setCreating(true);
-
-    const { data: s } = await supabase.auth.getSession();
-    const uid = s?.session?.user?.id;
-    if (!uid) {
-      setCreating(false);
-      pushToast("Not logged in");
-      return;
-    }
-
-    const desired = newName.trim();
-
-    const { data: existed, error: eDup } = await supabase
-      .from("exercises_catalog")
-      .select("id, name")
-      .eq("owner_id", uid)
-      .ilike("name", desired)
-      .limit(5);
-
-    if (eDup) {
-      setCreating(false);
-      pushToast(eDup.message);
-      return;
-    }
-
-    if (
-      (existed || []).some(
-        (x) => (x.name || "").trim().toLowerCase() === desired.toLowerCase()
+  async function loadVariationsFor(exerciseId) {
+    setCart((prev) =>
+      prev.map((c) =>
+        c.exercise.id === exerciseId
+          ? { ...c, variations: { ...c.variations, loading: true } }
+          : c
       )
-    ) {
-      setCreating(false);
-      pushToast("Exercise with the same name already exists in your catalog");
-      return;
+    );
+
+    try {
+      const { data, error } = await supabase
+        .from("exercise_variations")
+        .select("id,label,sort_order,is_active")
+        .eq("exercise_id", exerciseId)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+        .order("label", { ascending: true });
+
+      if (error) throw error;
+      const arr = (data || []).map((v) => ({ id: v.id, label: v.label }));
+
+      setCart((prev) =>
+        prev.map((c) =>
+          c.exercise.id === exerciseId
+            ? { ...c, variations: { loaded: true, loading: false, items: arr } }
+            : c
+        )
+      );
+    } catch (e) {
+      console.error("loadVariationsFor error:", e);
+      setCart((prev) =>
+        prev.map((c) =>
+          c.exercise.id === exerciseId
+            ? { ...c, variations: { loaded: true, loading: false, items: [] } }
+            : c
+        )
+      );
     }
-
-    const { data: ex, error: e1 } = await supabase
-      .from("exercises_catalog")
-      .insert({
-        owner_id: uid,
-        name: desired,
-        youtube_url: youtubeUrl || null,
-        primary_subgroup_id: newPrimarySubgroupId,
-      })
-      .select("id, name")
-      .single();
-
-    if (e1) {
-      setCreating(false);
-      pushToast(e1.code === "23505" ? "Exercise already exists. Pick it from the list." : e1.message);
-      return;
-    }
-
-    const { error: eTarget } = await supabase
-      .from("exercise_muscle_targets")
-      .insert({
-        exercise_id: ex.id,
-        subgroup_id: newPrimarySubgroupId,
-        role: "primary",
-      });
-
-    if (eTarget) {
-      try {
-        await supabase.from("exercises_catalog").delete().eq("id", ex.id);
-      } catch {
-        // ignore
-      }
-      setCreating(false);
-      pushToast("Failed to save muscle mapping: " + eTarget.message);
-      return;
-    }
-
-    const payload = {
-      workout_id: id,
-      exercise_id: ex.id,
-      exercise_name: ex.name,
-      variation_id: null,
-      set_targets: toSetTargetsPayload(),
-      order_index: items.length || 0,
-    };
-
-    const { error: e2 } = await supabase.from("workout_exercises").insert(payload);
-    setCreating(false);
-
-    if (e2) {
-      pushToast(e2.message);
-      return;
-    }
-
-    resetForms();
-    setMsg("✅ Exercise created & added");
-    setIsModalOpen(false);
-    loadAll();
   }
 
-  async function saveExistingExercise() {
-    if (!editingItemId) return;
-    setMsg("");
+  useEffect(() => {
+    if (!addOpen || addStep !== "review") return;
+    for (const c of cart) {
+      if (!c.variations.loaded && !c.variations.loading)
+        loadVariationsFor(c.exercise.id);
+    }
+    requestAnimationFrame(() => {
+      if (addBodyRef.current) addBodyRef.current.scrollTop = 0;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addOpen, addStep]);
 
-    if (!canSaveEdit) {
-      pushToast("Please complete:\n• " + planValidation.missing.join("\n• "));
+  function setSetsCount(exId, v) {
+    const n = parseIntStrict(v);
+    const bounded = Number.isFinite(n) ? Math.max(1, Math.min(10, n)) : NaN;
+
+    setCart((prev) =>
+      prev.map((c) => {
+        if (c.exercise.id !== exId) return c;
+
+        if (!Number.isFinite(bounded)) {
+          return { ...c, setsCount: v, rows: [], fillFromFirst: false };
+        }
+
+        let rows = Array.isArray(c.rows) ? [...c.rows] : [];
+        rows = rows.slice(0, bounded);
+        while (rows.length < bounded) rows.push({ reps: "", weight: "" });
+
+        if (c.fillFromFirst && rows.length > 0) {
+          const first = rows[0] || { reps: "", weight: "" };
+          rows = rows.map((r, idx) => (idx === 0 ? first : { ...first }));
+        }
+
+        return { ...c, setsCount: String(bounded), rows };
+      })
+    );
+  }
+
+  function updateSetRow(exId, idx, field, value) {
+    setCart((prev) =>
+      prev.map((c) => {
+        if (c.exercise.id !== exId) return c;
+
+        const rows = Array.isArray(c.rows) ? [...c.rows] : [];
+        if (!rows[idx]) return c;
+
+        rows[idx] = { ...rows[idx], [field]: value };
+
+        if (c.fillFromFirst && idx === 0) {
+          const first = rows[0];
+          for (let i = 1; i < rows.length; i++) rows[i] = { ...first };
+        }
+
+        return { ...c, rows };
+      })
+    );
+  }
+
+  function canEnableFillFromFirst(c) {
+    if (!c.rows || c.rows.length === 0) return false;
+    const first = c.rows[0] || {};
+    const reps = toStr(first.reps).trim();
+    const weight = toStr(first.weight).trim();
+    return reps !== "" || weight !== "";
+  }
+
+  function toggleFillFromFirst(exId) {
+    setCart((prev) =>
+      prev.map((c) => {
+        if (c.exercise.id !== exId) return c;
+
+        const canEnable = canEnableFillFromFirst(c);
+        if (!canEnable && !c.fillFromFirst) return c;
+
+        const next = !c.fillFromFirst;
+        let rows = Array.isArray(c.rows) ? [...c.rows] : [];
+        if (next && rows.length > 0) {
+          const first = rows[0] || { reps: "", weight: "" };
+          rows = rows.map((r, idx) => (idx === 0 ? first : { ...first }));
+        }
+
+        return { ...c, fillFromFirst: next, rows };
+      })
+    );
+  }
+
+  const cartCount = cart.length;
+  const canGoNext = cartCount > 0;
+
+  const reviewErrors = useMemo(() => {
+    const errors = [];
+    for (const c of cart) {
+      if (!isPosInt(c.setsCount))
+        errors.push(`${c.exercise.name}: sets required (1-10)`);
+      const hasVars =
+        c.variations.loaded && (c.variations.items?.length || 0) > 0;
+      if (hasVars && !c.variationId)
+        errors.push(`${c.exercise.name}: choose variation`);
+    }
+    return errors;
+  }, [cart]);
+
+  const canSubmitAdd = reviewErrors.length === 0 && cart.length > 0;
+  const [submitAdding, setSubmitAdding] = useState(false);
+
+  function apply3SetsToAll() {
+    setCart((prev) =>
+      prev.map((c) => {
+        const rows = [
+          { reps: "", weight: "" },
+          { reps: "", weight: "" },
+          { reps: "", weight: "" },
+        ];
+        return { ...c, setsCount: "3", rows, fillFromFirst: false };
+      })
+    );
+    requestAnimationFrame(() => {
+      if (addBodyRef.current) addBodyRef.current.scrollTop = 0;
+    });
+  }
+
+  async function submitAddToWorkout() {
+    setMsg("");
+    if (!canSubmitAdd) {
+      pushToast("Please complete:\n• " + reviewErrors.join("\n• "));
       return;
     }
 
-    if (selectedExercise?.id) {
-      const hasVarsNow = variations.length > 0;
-      if (hasVarsNow && !selectedVariationId) {
-        pushToast("Please choose a variation");
-        return;
+    const payloads = [];
+    let orderBase = items.length || 0;
+
+    for (const c of cart) {
+      const sets = Number(c.setsCount) || 0;
+      let rows = Array.isArray(c.rows) ? [...c.rows] : [];
+      if (rows.length !== sets) {
+        rows = rows.slice(0, sets);
+        while (rows.length < sets) rows.push({ reps: "", weight: "" });
       }
+
+      const targets = buildTargetsFromRows(rows);
+
+      const key = `${c.exercise.id}::${c.variationId ?? "null"}`;
+      if (alreadyInWorkoutMap.get(key)) continue;
+
+      payloads.push({
+        workout_id: id,
+        exercise_id: c.exercise.id,
+        exercise_name: c.exercise.name,
+        variation_id: c.variationId ?? null,
+        set_targets: targets,
+        order_index: orderBase++,
+      });
     }
 
-    const payload = {
-      set_targets: toSetTargetsPayload(),
-      variation_id: selectedVariationId || null,
-    };
+    if (payloads.length === 0) {
+      pushToast("Nothing to add (maybe duplicates).");
+      return;
+    }
 
-    const { error } = await supabase
-      .from("workout_exercises")
-      .update(payload)
-      .eq("id", editingItemId);
+    setSubmitAdding(true);
+    const { error } = await supabase.from("workout_exercises").insert(payloads);
+    setSubmitAdding(false);
 
     if (error) {
       pushToast(error.message);
       return;
     }
 
-    resetForms();
-    setMsg("✅ Exercise updated");
-    setIsModalOpen(false);
+    setAddOpen(false);
+    setAddStep("select");
+    setCart([]);
+    setMsg("✅ Exercises added");
     loadAll();
   }
 
   async function removeExercise(rowId) {
     setMsg("");
-    const { error } = await supabase.from("workout_exercises").delete().eq("id", rowId);
+    const { error } = await supabase
+      .from("workout_exercises")
+      .delete()
+      .eq("id", rowId);
     if (error) {
       pushToast(error.message);
       return;
@@ -861,7 +866,7 @@ export default function WorkoutDetail() {
           <div key={r.set_index} className="wd-ex-set-row">
             <span className="wd-ex-set-label">Set {r.set_index}</span>
             <span className="wd-ex-set-desc">
-              {r.reps ?? "?"} reps × {r.weight ?? "?"} kg
+              {r.reps ?? "—"} reps × {r.weight ?? "—"} kg
             </span>
           </div>
         ))}
@@ -869,25 +874,16 @@ export default function WorkoutDetail() {
     );
   }
 
-  const variationLabelForCard = (it) => {
-    if (!it.exercise_id) return null;
-    if (it.variation_id && it.variation_label) return it.variation_label;
-    if (it.variation_id && !it.variation_label) return "Selected";
-    return "None";
-  };
-
   return (
     <div className="wd-page">
       <Toasts toasts={toasts} onClose={removeToast} />
 
-      {/* top bar */}
       <header className="wd-header">
         <button className="wd-back-btn" onClick={() => navigate(-1)}>
           ← Back
         </button>
       </header>
 
-      {/* title + summary */}
       <section className="wd-title-block">
         <h1 className="wd-title">{workout.name}</h1>
         <div className="wd-subtitle">
@@ -902,16 +898,16 @@ export default function WorkoutDetail() {
         {msg && <p className="wd-message">{msg}</p>}
       </section>
 
-      {/* add exercise card */}
       <section className="wd-add-section">
-        <button className="wd-add-card" onClick={openAddModal}>
+        <button className="wd-add-card" onClick={openAddFlow}>
           + Add Exercise
         </button>
       </section>
 
-      {/* exercise cards */}
       <section className="wd-ex-list">
-        {items.length === 0 && <p className="wd-empty">No exercises yet for this workout.</p>}
+        {items.length === 0 && (
+          <p className="wd-empty">No exercises yet for this workout.</p>
+        )}
 
         {items.map((it, index) => {
           const summary = summarizeExerciseTargets(it.set_targets);
@@ -922,7 +918,7 @@ export default function WorkoutDetail() {
           const muscleGroupLabel = subgroup?.muscle_groups?.label || null;
           const primaryMuscleLabel = subgroup?.label || null;
 
-          const vLabel = variationLabelForCard(it);
+          const vLabel = it.exercise_id ? variationLabelForCard(it) : null;
           const canOpenImg = !!it.image_path;
 
           return (
@@ -937,20 +933,23 @@ export default function WorkoutDetail() {
 
                     <div className="wd-ex-meta-row">
                       {muscleGroupLabel && (
-                        <span className="wd-chip wd-chip-group">{muscleGroupLabel}</span>
+                        <span className="wd-chip wd-chip-group">
+                          {muscleGroupLabel}
+                        </span>
                       )}
-
                       {primaryMuscleLabel && (
                         <span className="wd-chip wd-chip-primary-muscle">
                           Primary: {primaryMuscleLabel}
                         </span>
                       )}
-
                       {it.exercise_id && (
-                        <span className="wd-chip wd-chip-variation">Var: {vLabel}</span>
+                        <span className="wd-chip wd-chip-variation">
+                          Var: {vLabel}
+                        </span>
                       )}
-
-                      {summary && <span className="wd-ex-summary">{summary}</span>}
+                      {summary && (
+                        <span className="wd-ex-summary">{summary}</span>
+                      )}
                     </div>
 
                     {uniformWeight != null && (
@@ -965,7 +964,8 @@ export default function WorkoutDetail() {
                     className="wd-img-icon-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      openExerciseImage(it.exercise_id, it.exercise_name, it.image_path);
+                      if (canOpenImg)
+                        openViewer(it.exercise_name, it.image_path);
                     }}
                     disabled={!canOpenImg}
                     title={canOpenImg ? "View exercise image" : "No image"}
@@ -975,14 +975,13 @@ export default function WorkoutDetail() {
                   </button>
 
                   {it.exercise_id && (
-                    <Link to={`/progress/id/${it.exercise_id}`} className="wd-ex-progress-link">
+                    <Link
+                      to={`/progress/id/${it.exercise_id}`}
+                      className="wd-ex-progress-link"
+                    >
                       Progress
                     </Link>
                   )}
-
-                  <button className="wd-icon-btn" title="Edit exercise" onClick={() => openEditModal(it)}>
-                    ✏
-                  </button>
 
                   <button
                     className="wd-icon-btn wd-icon-danger"
@@ -1000,65 +999,173 @@ export default function WorkoutDetail() {
         })}
       </section>
 
-      {/* Modal: Add / Edit exercise */}
-      {isModalOpen && (
-        <div className="wd-modal-overlay" role="dialog" aria-modal="true">
-          <div className="wd-modal">
-            <div className="wd-modal-header">
-              <h2 className="wd-modal-title">
-                {modalMode === "add" ? "Add Exercise" : "Edit Exercise"}
-              </h2>
-              <button className="wd-modal-close" onClick={closeModal} aria-label="Close">
+      {/* ===== Bulk Add Modal ===== */}
+      {addOpen && (
+        <div className="wd-add-overlay" role="dialog" aria-modal="true">
+          <div className="wd-add-modal">
+            <div className="wd-add-head">
+              <div className="wd-add-head-left">
+                <div className="wd-add-title">
+                  {addStep === "select" ? "Add exercises" : "Review & configure"}
+                </div>
+                <div className="wd-add-desc">
+                  {addStep === "select"
+                    ? "Search and filter, then add exercises to your selection."
+                    : "Sets required (max 10). Variations required only when available. Reps/weight can be empty (Saving data based on your first workout)."}
+                </div>
+              </div>
+
+              <button
+                className="wd-add-close"
+                onClick={closeAddFlow}
+                aria-label="Close"
+              >
                 ✕
               </button>
             </div>
 
-            <div className="wd-modal-body">
-              {/* ADD: search */}
-              {modalMode === "add" ? (
+            <div className="wd-add-body" ref={addBodyRef}>
+              {addStep === "select" ? (
                 <>
-                  <label className="wd-field-label">
-                    Search catalog… (2+ chars) — Public + Yours
+                  <div className="wd-add-searchRow">
                     <input
-                      className="wd-input"
-                      placeholder="e.g., Bench Press"
-                      value={query}
-                      onChange={(e) => {
-                        setQuery(e.target.value);
-                        setSelectedExercise(null);
-                        setVariations([]);
-                        setSelectedVariationId("");
-                      }}
+                      className="wd-add-search"
+                      placeholder="Search exercises..."
+                      value={searchQ}
+                      onChange={(e) => setSearchQ(e.target.value)}
                     />
-                  </label>
+                    <button
+                      className="wd-add-clear"
+                      type="button"
+                      onClick={() => {
+                        setSearchQ("");
+                        setFGroupId(null);
+                        setFSubgroupId(null);
+                        setFEquipmentId(null);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  </div>
 
-                  {suggestions.length > 0 && (
-                    <div className="wd-suggestions">
-                      {suggestions.map((ex) => {
+                  <div className="wd-add-filters">
+                    <FacetDropdown
+                      label="Muscle group"
+                      value={fGroupId}
+                      options={groupOptions}
+                      placeholder="All"
+                      onChange={(v) => setFGroupId(v)}
+                      disabled={groupOptions.length === 0}
+                    />
+                    <FacetDropdown
+                      label="Subgroup"
+                      value={fSubgroupId}
+                      options={subgroupOptions}
+                      placeholder="All"
+                      onChange={(v) => setFSubgroupId(v)}
+                      disabled={subgroupOptions.length === 0}
+                    />
+                    <FacetDropdown
+                      label="Equipment"
+                      value={fEquipmentId}
+                      options={equipmentOptions}
+                      placeholder="All"
+                      onChange={(v) => setFEquipmentId(v)}
+                      disabled={equipmentOptions.length === 0}
+                    />
+                  </div>
+
+                  <div className="wd-add-gridHead">
+                    <div className="wd-add-gridTitle">
+                      {libLoading
+                        ? "Loading…"
+                        : `${filteredExercises.length} exercises`}
+                    </div>
+                    <div className="wd-add-chip">
+                      Selected: <strong>{cartCount}</strong>
+                    </div>
+                  </div>
+
+                  {libLoading ? (
+                    <div className="wd-add-loading">Loading library…</div>
+                  ) : filteredExercises.length === 0 ? (
+                    <div className="wd-add-empty">
+                      No exercises match your filters.
+                    </div>
+                  ) : (
+                    <div className="wd-add-grid">
+                      {filteredExercises.map((ex) => {
                         const sg = ex.primary_subgroup || null;
-                        const mgLabel = sg?.muscle_groups?.label || null;
-                        const primaryLabel = sg?.label || null;
+                        const mgLabel = sg?.muscle_groups?.label || "";
+                        const sgLabel = sg?.label || "";
+                        const eqLabel = ex.equipment?.label || "";
+                        const selected = cartIds.has(ex.id);
+
+                        const alreadyKey = `${ex.id}::null`;
+                        const already = alreadyInWorkoutMap.get(alreadyKey);
+
+                        const thumbUrl = getPublicImageUrl(ex.image_path);
 
                         return (
                           <div
                             key={ex.id}
-                            className="wd-suggestion-item"
-                            onClick={() => pickSuggestion(ex)}
-                            onKeyDown={(ev) => {
-                              if (ev.key === "Enter") pickSuggestion(ex);
-                            }}
-                            tabIndex={0}
+                            className={`wd-add-cardEx ${
+                              selected ? "is-selected" : ""
+                            }`}
                           >
-                            <span>
-                              {ex.name}
-                              {mgLabel && <span className="wd-suggestion-mg"> · {mgLabel}</span>}
-                              {primaryLabel && (
-                                <span className="wd-suggestion-primary"> ({primaryLabel})</span>
-                              )}
-                            </span>
-                            <span className="wd-suggestion-owner">
-                              {ex.owner_id ? "yours" : "public"}
-                            </span>
+                            <button
+                              type="button"
+                              className="wd-add-imgBtn"
+                              onClick={() => openViewer(ex.name, ex.image_path)}
+                              title="Open image"
+                            >
+                              <div className="wd-add-imgWrap">
+                                {thumbUrl ? (
+                                  <img
+                                    className="wd-add-img"
+                                    src={thumbUrl}
+                                    alt={ex.name}
+                                  />
+                                ) : (
+                                  <div className="wd-add-imgFallback">
+                                    No image
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+
+                            <div className="wd-add-exBody">
+                              <div className="wd-add-exName">{ex.name}</div>
+                              <div className="wd-add-exMeta">
+                                {mgLabel && (
+                                  <span className="wd-add-pill">{mgLabel}</span>
+                                )}
+                                {sgLabel && (
+                                  <span className="wd-add-pill">{sgLabel}</span>
+                                )}
+                                {eqLabel && (
+                                  <span className="wd-add-pill">{eqLabel}</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              className={`wd-add-btn ${
+                                selected ? "is-remove" : ""
+                              }`}
+                              onClick={() => toggleCart(ex)}
+                              disabled={already}
+                              title={
+                                already
+                                  ? "Already in workout"
+                                  : selected
+                                  ? "Remove"
+                                  : "Add"
+                              }
+                            >
+                              {already ? "Added" : selected ? "Remove" : "Add"}
+                            </button>
                           </div>
                         );
                       })}
@@ -1067,199 +1174,334 @@ export default function WorkoutDetail() {
                 </>
               ) : (
                 <>
-                  {/* EDIT: locked exercise */}
-                  <div className="wd-locked-ex">
-                    <div className="wd-locked-label">Exercise</div>
-                    <div className="wd-locked-value">{query}</div>
-                  </div>
-                </>
-              )}
-
-              {/* Variations selector */}
-              {selectedExercise?.id && (
-                <div className="wd-variation-box">
-                  <div className="wd-variation-head">
-                    <div className="wd-variation-title">Variation</div>
-                    {variationsLoading && <span className="wd-mini-muted">Loading…</span>}
-                  </div>
-
-                  {variations.length > 0 ? (
-                    <select
-                      className="wd-input"
-                      value={selectedVariationId}
-                      onChange={(e) => setSelectedVariationId(e.target.value)}
+                  <div className="wd-review-topActions">
+                    <div className="wd-review-caption">
+                      Configure selected exercises (you can keep reps/weight
+                      empty).
+                    </div>
+                    <button
+                      type="button"
+                      className="wd-review-quickBtn"
+                      onClick={apply3SetsToAll}
                     >
-                      {variations.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <div className="wd-no-variations">No variations</div>
-                  )}
+                      Apply 3 sets to all
+                    </button>
+                  </div>
 
-                  {alreadyInWorkout && modalMode === "add" && (
-                    <div className="wd-inline-warn">
-                      This exercise + variation is already in this workout.
+                  <div className="wd-review-list">
+                    {cart.map((c) => {
+                      const ex = c.exercise;
+                      const hasVars =
+                        c.variations.loaded &&
+                        (c.variations.items?.length || 0) > 0;
+                      const thumbUrl = getPublicImageUrl(ex.image_path);
+
+                      return (
+                        <div
+                          key={ex.id}
+                          className="wd-review-card el-like-card"
+                        >
+                          <div className="wd-review-topRow">
+                            <button
+                              type="button"
+                              className="wd-review-thumbBtn"
+                              onClick={() => openViewer(ex.name, ex.image_path)}
+                              title="Open image"
+                            >
+                              <div className="wd-review-thumbWrap">
+                                {thumbUrl ? (
+                                  <img
+                                    className="wd-review-thumbImg"
+                                    src={thumbUrl}
+                                    alt={ex.name}
+                                  />
+                                ) : (
+                                  <div className="wd-review-thumbFallback">
+                                    No image
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+
+                            <div className="wd-review-titleCol">
+                              <div className="wd-review-nameRow">
+                                <div className="wd-review-name">{ex.name}</div>
+                                <button
+                                  type="button"
+                                  className="wd-review-removeInline"
+                                  onClick={() => removeFromCart(ex.id)}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+
+                              <div className="wd-review-meta">
+                                <span className="wd-review-muted">
+                                  {ex.primary_subgroup?.muscle_groups?.label ||
+                                    "—"}
+                                </span>
+                                {" · "}
+                                <span className="wd-review-muted">
+                                  {ex.primary_subgroup?.label || "—"}
+                                </span>
+                                {ex.equipment?.label ? (
+                                  <>
+                                    {" · "}
+                                    <span className="wd-review-muted">
+                                      {ex.equipment.label}
+                                    </span>
+                                  </>
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+
+                          {hasVars && (
+                            <div className="wd-review-fieldBlock">
+                              <div className="wd-review-fieldLabel">
+                                Variation (required)
+                              </div>
+
+                              {!c.variations.loaded ? (
+                                <button
+                                  type="button"
+                                  className="wd-review-loadVarsBtn"
+                                  onClick={() => loadVariationsFor(ex.id)}
+                                  disabled={c.variations.loading}
+                                >
+                                  {c.variations.loading
+                                    ? "Loading…"
+                                    : "Load variations"}
+                                </button>
+                              ) : (
+                                <select
+                                  className="wd-review-input"
+                                  value={c.variationId ?? ""}
+                                  onChange={(e) =>
+                                    setCart((prev) =>
+                                      prev.map((x) =>
+                                        x.exercise.id === ex.id
+                                          ? {
+                                              ...x,
+                                              variationId:
+                                                e.target.value || null,
+                                            }
+                                          : x
+                                      )
+                                    )
+                                  }
+                                >
+                                  <option value="">Choose…</option>
+                                  {c.variations.items.map((v) => (
+                                    <option key={v.id} value={v.id}>
+                                      {v.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+
+                              {c.variations.loaded && !c.variationId && (
+                                <div className="wd-review-warn">
+                                  Please choose variation
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="wd-review-fieldBlock">
+                            <div className="wd-review-fieldLabel">
+                              Sets (required, max 10)
+                            </div>
+                            <input
+                              className="wd-review-input"
+                              type="number"
+                              min={1}
+                              max={10}
+                              inputMode="numeric"
+                              placeholder="e.g., 3"
+                              value={c.setsCount}
+                              onChange={(e) =>
+                                setSetsCount(ex.id, e.target.value)
+                              }
+                            />
+                            {!isPosInt(c.setsCount) && (
+                              <div className="wd-review-warn">Sets required</div>
+                            )}
+                          </div>
+
+                          {isPosInt(c.setsCount) && (
+                            <div className="wd-setsBox">
+                              <div className="wd-setsBoxTop">
+                                <label
+                                  className={`wd-fillAll ${
+                                    canEnableFillFromFirst(c) ? "" : "is-disabled"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={!!c.fillFromFirst}
+                                    onChange={() => toggleFillFromFirst(ex.id)}
+                                    disabled={
+                                      (!canEnableFillFromFirst(c) && !c.fillFromFirst)
+                                    }
+                                  />
+                                  Fill all sets from Set 1
+                                </label>
+
+                                <div className="wd-setsHint">
+                                  Leave reps/weight blank to save the data based on your first workout.
+                                </div>
+                              </div>
+
+                              {/* ✅ single header row (NO ::before anywhere) */}
+                              <div className="wd-setsHeader">
+                                <span>SET</span>
+                                <span>REPS</span>
+                                <span>WEIGHT (KG)</span>
+                              </div>
+
+                              <div
+                                className={
+                                  "wd-setsRows " +
+                                  (Number(c.setsCount) > 3 ? "is-scroll" : "")
+                                }
+                              >
+                                {c.rows
+                                  .slice(0, Math.min(10, Number(c.setsCount)))
+                                  .map((row, idx) => (
+                                    <div key={idx} className="wd-setRow">
+                                      <div className="wd-setNum">{idx + 1}</div>
+
+                                      <div className="wd-setInputs">
+                                        <input
+                                          className="wd-setInput"
+                                          type="number"
+                                          min={1}
+                                          inputMode="numeric"
+                                          placeholder="0"
+                                          value={row.reps}
+                                          onChange={(e) =>
+                                            updateSetRow(
+                                              ex.id,
+                                              idx,
+                                              "reps",
+                                              e.target.value
+                                            )
+                                          }
+                                          disabled={c.fillFromFirst && idx !== 0}
+                                        />
+                                        <input
+                                          className="wd-setInput"
+                                          type="number"
+                                          min={0}
+                                          inputMode="numeric"
+                                          placeholder="0"
+                                          value={row.weight}
+                                          onChange={(e) =>
+                                            updateSetRow(
+                                              ex.id,
+                                              idx,
+                                              "weight",
+                                              e.target.value
+                                            )
+                                          }
+                                          disabled={c.fillFromFirst && idx !== 0}
+                                        />
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {reviewErrors.length > 0 && (
+                    <div className="wd-review-errors">
+                      <div className="wd-review-errorsTitle">
+                        Please complete:
+                      </div>
+                      <ul className="wd-review-errorsList">
+                        {reviewErrors.map((e, i) => (
+                          <li key={i}>{e}</li>
+                        ))}
+                      </ul>
                     </div>
                   )}
-                </div>
-              )}
-
-              {/* sets plan */}
-              <div className="wd-sets-section">
-                <label className="wd-field-label">
-                  Number of sets
-                  <input
-                    className="wd-input"
-                    type="number"
-                    min={1}
-                    inputMode="numeric"
-                    placeholder="e.g., 3"
-                    value={setsCount}
-                    onChange={(e) => onSetsCountChange(e.target.value)}
-                  />
-                </label>
-
-                {canBuildPlan && (
-                  <div className="wd-sets-grid">
-                    {setRows.map((row, idx) => (
-                      <div key={idx} className="wd-sets-row">
-                        <div className="wd-sets-row-label">Set {idx + 1}</div>
-                        <div className="wd-sets-row-inputs">
-                          <input
-                            className="wd-input"
-                            type="number"
-                            min={1}
-                            inputMode="numeric"
-                            placeholder="Reps"
-                            value={row.reps}
-                            onChange={(e) => updateRow(idx, "reps", e.target.value)}
-                          />
-                          <input
-                            className="wd-input"
-                            type="number"
-                            min={0} // ✅ FIX
-                            inputMode="numeric"
-                            placeholder="Weight (kg)"
-                            value={row.weight}
-                            onChange={(e) => updateRow(idx, "weight", e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-
-                    {!allRowsValid && (
-                      <p className="wd-error-text">
-                        {planValidation.missing.join(" • ")}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Create New Exercise – only add mode */}
-              {modalMode === "add" && (
-                <div className="wd-new-ex-section">
-                  <h3 className="wd-new-ex-title">Create New Exercise</h3>
-
-                  <label className="wd-field-label">
-                    New exercise name (for your private catalog)
-                    <input
-                      className="wd-input"
-                      placeholder="e.g., Barbell Hip Thrust"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                    />
-                  </label>
-
-                  <label className="wd-field-label">
-                    Primary muscle (required)
-                    <select
-                      className="wd-input"
-                      value={newPrimarySubgroupId}
-                      onChange={(e) => setNewPrimarySubgroupId(e.target.value)}
-                    >
-                      <option value="">Choose a primary muscle…</option>
-                      {subgroupsByGroup.map(([groupLabel, subs]) => (
-                        <optgroup key={groupLabel} label={groupLabel}>
-                          {subs.map((sg) => (
-                            <option key={sg.id} value={sg.id}>
-                              {sg.label}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="wd-field-label">
-                    YouTube URL (optional)
-                    <input
-                      className="wd-input"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                      value={youtubeUrl}
-                      onChange={(e) => setYoutubeUrl(e.target.value)}
-                    />
-                  </label>
-
-                  <p className="wd-help-text">
-                    Public results are read-only; new entries are saved to your private catalog.
-                  </p>
-                </div>
+                </>
               )}
             </div>
 
-            <div className="wd-modal-footer">
-              {modalMode === "add" ? (
-                <>
-                  <button
-                    className="wd-btn-primary"
-                    onClick={addExerciseFromCatalog}
-                    disabled={adding || !canAttach}
-                    title="Attach selected exercise from catalog"
-                  >
-                    {adding ? "Adding…" : "Add from catalog"}
-                  </button>
+            <div className="wd-add-foot">
+              <div className="wd-add-footLeft">
+                <div className="wd-add-footCount">
+                  Selected: <strong>{cartCount}</strong>
+                </div>
+              </div>
 
-                  <span className="wd-or-text">or</span>
-
-                  <button
-                    className="wd-btn-secondary"
-                    onClick={addNewExerciseToCatalogAndAttach}
-                    disabled={creating || !canCreateAndAttach}
-                    title="Create new private exercise & attach"
-                  >
-                    {creating ? "Creating…" : "Create in catalog + add"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="wd-btn-primary"
-                    onClick={saveExistingExercise}
-                    disabled={!canSaveEdit}
-                  >
-                    Save changes
-                  </button>
-                  <button className="wd-btn-ghost" onClick={closeModal}>
-                    Cancel
-                  </button>
-                </>
-              )}
+              <div className="wd-add-footRight">
+                {addStep === "select" ? (
+                  <>
+                    <button
+                      className="wd-foot-btnGhost"
+                      onClick={closeAddFlow}
+                      type="button"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="wd-foot-btnPrimary"
+                      onClick={() => {
+                        setAddStep("review");
+                        requestAnimationFrame(() => {
+                          if (addBodyRef.current)
+                            addBodyRef.current.scrollTop = 0;
+                        });
+                      }}
+                      disabled={!canGoNext}
+                      type="button"
+                    >
+                      Next
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="wd-foot-btnGhost"
+                      onClick={() => {
+                        setAddStep("select");
+                        requestAnimationFrame(() => {
+                          if (addBodyRef.current)
+                            addBodyRef.current.scrollTop = 0;
+                        });
+                      }}
+                      type="button"
+                    >
+                      Back
+                    </button>
+                    <button
+                      className="wd-foot-btnPrimary"
+                      onClick={submitAddToWorkout}
+                      disabled={submitAdding || !canSubmitAdd}
+                      type="button"
+                    >
+                      {submitAdding ? "Adding…" : "Add to workout"}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Image Modal */}
-      <ImageModal
-        open={imgOpen}
-        title={imgTitle}
-        imageUrl={imgUrl}
-        loading={imgLoading}
-        onClose={closeImg}
+      <ImageViewer
+        open={viewerOpen}
+        title={viewerTitle}
+        imageUrl={viewerUrl}
+        onClose={() => setViewerOpen(false)}
       />
     </div>
   );
