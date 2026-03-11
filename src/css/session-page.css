@@ -462,3 +462,139 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+
+
+
+/* =========================
+   Confirm plan update modal
+   ========================= */
+.planupd-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,.58);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 12000; /* above everything in SessionPage */
+}
+
+.planupd-card{
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.35);
+  overflow: hidden;
+}
+
+.planupd-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.planupd-title{
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.planupd-x{
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+}
+
+.planupd-body{
+  padding: 14px;
+}
+
+.planupd-sub{
+  font-size: .9rem;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.planupd-compare{
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.planupd-col{
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 10px;
+  background: #fff;
+}
+
+.planupd-coltitle{
+  font-size: .75rem;
+  font-weight: 800;
+  color: #64748b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+
+.planupd-pill{
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: .9rem;
+  color: #0f172a;
+  margin-top: 6px;
+}
+
+.planupd-note{
+  margin-top: 10px;
+  font-size: .8rem;
+  color: #64748b;
+}
+
+.planupd-foot{
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.planupd-btnGhost{
+  flex: 1;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #0f172a;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.planupd-btnPrimary{
+  flex: 1.2;
+  border: none;
+  background: #0f172a;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.planupd-btnGhost:disabled,
+.planupd-btnPrimary:disabled{
+  opacity: .6;
+  cursor: not-allowed;
+}

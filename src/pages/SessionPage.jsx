@@ -6,7 +6,9 @@ import { supabase } from "../lib/supabaseClient";
 
 const BUCKET = "exercise-images";
 
+// reps חייב להיות >0 אם הוזן, weight יכול להיות >=0 אם הוזן
 const isPosNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) > 0;
+const isNonNegNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) >= 0;
 
 // סידור סטים של תרגיל לפי set_index
 function sortTargets(st) {
@@ -75,6 +77,85 @@ function ImageModal({ open, title, imageUrl, loading, onClose }) {
   );
 }
 
+/* ===== Confirm Update Modal ===== */
+function ConfirmPlanUpdateModal({
+  open,
+  title,
+  setIndex,
+  oldReps,
+  oldWeight,
+  newReps,
+  newWeight,
+  onConfirm,
+  onCancel,
+  saving,
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && onCancel();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onCancel]);
+
+  if (!open) return null;
+
+  return (
+    <div className="planupd-overlay" role="dialog" aria-modal="true" onClick={onCancel}>
+      <div className="planupd-card" onClick={(e) => e.stopPropagation()}>
+        <div className="planupd-head">
+          <div className="planupd-title">Update planned set?</div>
+          <button className="planupd-x" type="button" onClick={onCancel} aria-label="Close">
+            ✕
+          </button>
+        </div>
+
+        <div className="planupd-body">
+          <div className="planupd-sub">
+            You logged different values for <strong>{title}</strong> — Set{" "}
+            <strong>{setIndex}</strong>. Save this change to the workout plan?
+          </div>
+
+          <div className="planupd-compare">
+            <div className="planupd-col">
+              <div className="planupd-coltitle">Planned</div>
+              <div className="planupd-pill">
+                Reps: <strong>{oldReps ?? "—"}</strong>
+              </div>
+              <div className="planupd-pill">
+                Weight: <strong>{oldWeight ?? "—"}</strong>
+              </div>
+            </div>
+
+            <div className="planupd-col">
+              <div className="planupd-coltitle">Logged</div>
+              <div className="planupd-pill">
+                Reps: <strong>{newReps ?? "—"}</strong>
+              </div>
+              <div className="planupd-pill">
+                Weight: <strong>{newWeight ?? "—"}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="planupd-note">
+            If you choose <strong>Update</strong>, the workout’s planned set_targets
+            will be updated for this set.
+          </div>
+        </div>
+
+        <div className="planupd-foot">
+          <button className="planupd-btnGhost" type="button" onClick={onCancel} disabled={saving}>
+            Keep plan
+          </button>
+          <button className="planupd-btnPrimary" type="button" onClick={onConfirm} disabled={saving}>
+            {saving ? "Updating…" : "Update plan"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ===== כרטיס תרגיל – אקורדיון + כפתור תמונה ===== */
 function ExerciseCard({
   exercise,
@@ -102,7 +183,7 @@ function ExerciseCard({
   const targetForNext =
     planned.find((r) => Number(r.set_index) === nextIndex) || null;
 
-  // אם אין סטים מתוכננים (plannedCount = 0) – לא מגבילים
+  // אם אין סטים מתוכננים – לא מגבילים
   const canLogMore = plannedCount === 0 ? true : nextIndex <= plannedCount;
 
   const progressPct =
@@ -131,7 +212,9 @@ function ExerciseCard({
 
   async function handleLog() {
     if (!canLogMore || isEnded) return;
-    if (!isPosNum(weight) || !isPosNum(reps)) return;
+
+    const hasAny = isPosNum(reps) || isNonNegNum(weight);
+    if (!hasAny) return;
 
     setLocalSaving(true);
     await onLogSet(
@@ -164,7 +247,6 @@ function ExerciseCard({
   return (
     <div className="session-ex-card">
       <div className="session-ex-header">
-        {/* אזור קליק לפתיחה/סגירה (בלי nested button) */}
         <button
           type="button"
           className="session-ex-toggle"
@@ -200,7 +282,6 @@ function ExerciseCard({
           </div>
         </button>
 
-        {/* פעולות בצד ימין */}
         <div className="session-ex-actions">
           <button
             type="button"
@@ -228,7 +309,6 @@ function ExerciseCard({
         </div>
       </div>
 
-      {/* Progress bar קטן גם כשסגור */}
       <div className="session-ex-progress">
         <div
           className="session-ex-progress-fill"
@@ -238,7 +318,6 @@ function ExerciseCard({
 
       {open && (
         <div className="session-ex-body">
-          {/* Planned Sets */}
           <div className="session-box">
             <div className="session-box-title">Planned Sets</div>
             {planned.length === 0 ? (
@@ -257,7 +336,6 @@ function ExerciseCard({
             )}
           </div>
 
-          {/* Log Set */}
           <div className="session-box">
             <div className="session-log-header">
               <div className="session-box-title">
@@ -307,8 +385,7 @@ function ExerciseCard({
                 !canLogMore ||
                 isSaving ||
                 localSaving ||
-                !isPosNum(weight) ||
-                !isPosNum(reps)
+                !(isPosNum(reps) || isNonNegNum(weight))
               }
             >
               {isEnded
@@ -321,7 +398,6 @@ function ExerciseCard({
             </button>
           </div>
 
-          {/* Completed Sets */}
           <div className="session-box">
             <div className="session-box-title">Completed Sets</div>
             {doneSets.length === 0 ? (
@@ -331,7 +407,7 @@ function ExerciseCard({
                 {doneSets.map((s) => (
                   <li key={s.id} className="session-completed-row">
                     <span>
-                      Set {s.set_index}: {s.reps} reps × {s.weight} kg
+                      Set {s.set_index}: {s.reps ?? "—"} reps × {s.weight ?? "—"} kg
                     </span>
                     <span className="session-timestamp">
                       {new Date(s.created_at).toLocaleTimeString(undefined, {
@@ -372,6 +448,13 @@ export default function SessionPage() {
   const [imgTitle, setImgTitle] = useState("");
   const [imgUrl, setImgUrl] = useState("");
   const [imgLoading, setImgLoading] = useState(false);
+
+  // ✅ confirm modal state
+  const [planUpdOpen, setPlanUpdOpen] = useState(false);
+  const [planUpdSaving, setPlanUpdSaving] = useState(false);
+  const [planUpdPayload, setPlanUpdPayload] = useState(null);
+  // payload shape:
+  // { planId, title, setIndex, oldReps, oldWeight, newReps, newWeight, patchReps, patchWeight }
 
   const fmtLocal = (iso) => {
     try {
@@ -644,6 +727,106 @@ export default function SessionPage() {
     }
   }
 
+  // ===== helpers to update plan set_targets =====
+  function buildUpdatedTargets(existingTargets, setIndex, patch) {
+    const base = Array.isArray(existingTargets) ? sortTargets(existingTargets) : [];
+    const idx = base.findIndex((x) => Number(x?.set_index) === Number(setIndex));
+    const current = idx >= 0 ? base[idx] : { set_index: setIndex, reps: null, weight: null };
+
+    const next = {
+      set_index: Number(setIndex),
+      reps: patch.reps !== undefined ? patch.reps : (current.reps ?? null),
+      weight: patch.weight !== undefined ? patch.weight : (current.weight ?? null),
+    };
+
+    const out = [...base];
+    if (idx >= 0) out[idx] = next;
+    else out.push(next);
+
+    return sortTargets(out);
+  }
+
+  async function updatePlanSetTargets(planRowId, setIndex, patch) {
+    const currentPlan = workoutItems.find((x) => x.id === planRowId);
+    if (!currentPlan) return { ok: false, error: "Plan row not found" };
+
+    const newTargets = buildUpdatedTargets(currentPlan.set_targets, setIndex, patch);
+
+    const { data, error } = await supabase
+      .from("workout_exercises")
+      .update({ set_targets: newTargets })
+      .eq("id", planRowId)
+      .select("id, set_targets")
+      .single();
+
+    if (error) return { ok: false, error: error.message };
+
+    // update local state so UI/autofill reflects immediately
+    setWorkoutItems((prev) =>
+      prev.map((x) => (x.id === planRowId ? { ...x, set_targets: data.set_targets } : x))
+    );
+
+    return { ok: true };
+  }
+
+  function shouldAutoUpdateMissingTarget(plannedTarget, logged) {
+    const missingReps = plannedTarget?.reps == null;
+    const missingWeight = plannedTarget?.weight == null;
+
+    const loggedReps = logged.reps;
+    const loggedWeight = logged.weight;
+
+    const hasLoggedAny = loggedReps != null || loggedWeight != null;
+    if (!hasLoggedAny) return { ok: false };
+
+    // אם חסר אחד מהם בתכנון — עדכן רק את מה שהוזן
+    if (missingReps || missingWeight) {
+      const patch = {};
+      if (missingReps && loggedReps != null) patch.reps = loggedReps;
+      if (missingWeight && loggedWeight != null) patch.weight = loggedWeight;
+      return { ok: Object.keys(patch).length > 0, patch };
+    }
+
+    return { ok: false };
+  }
+
+  function shouldPromptUpdateDifferent(plannedTarget, logged) {
+    if (!plannedTarget) return { ok: false };
+
+    const plannedReps = plannedTarget.reps;
+    const plannedWeight = plannedTarget.weight;
+
+    // נבקש פופאפ רק אם בתכנון יש ערכים (לא null) ושינו בפועל
+    const plannedHasBoth = plannedReps != null && plannedWeight != null;
+
+    const loggedReps = logged.reps;
+    const loggedWeight = logged.weight;
+
+    // אם המשתמש לא הכניס כלום — לא רלוונטי
+    const hasLoggedAny = loggedReps != null || loggedWeight != null;
+    if (!hasLoggedAny) return { ok: false };
+
+    // אם התכנון לא מלא — זה כבר ייפול על auto-update
+    if (!plannedHasBoth) return { ok: false };
+
+    const repsChanged = loggedReps != null && Number(loggedReps) !== Number(plannedReps);
+    const weightChanged = loggedWeight != null && Number(loggedWeight) !== Number(plannedWeight);
+
+    if (!repsChanged && !weightChanged) return { ok: false };
+
+    return {
+      ok: true,
+      oldReps: plannedReps,
+      oldWeight: plannedWeight,
+      newReps: loggedReps,
+      newWeight: loggedWeight,
+      patch: {
+        reps: loggedReps != null ? Number(loggedReps) : undefined,
+        weight: loggedWeight != null ? Number(loggedWeight) : undefined,
+      },
+    };
+  }
+
   async function logSetForExercise(exerciseId, variationId, weight, reps) {
     setMsg("");
 
@@ -651,10 +834,17 @@ export default function SessionPage() {
       setMsg("❌ Session already completed");
       return;
     }
-    if (!isPosNum(weight) || !isPosNum(reps)) {
-      setMsg("❌ Enter positive weight & reps");
+
+    // ✅ allow log if at least one is provided
+    const repsOk = isPosNum(reps);
+    const weightOk = isNonNegNum(weight);
+    if (!repsOk && !weightOk) {
+      setMsg("❌ Enter reps and/or weight");
       return;
     }
+
+    const repsVal = repsOk ? Number(reps) : null;
+    const weightVal = weightOk ? Number(weight) : null;
 
     const exIdStr = String(exerciseId);
     const vIdStr = variationId ? String(variationId) : null;
@@ -692,8 +882,8 @@ export default function SessionPage() {
         exercise_name: plan.exercise_name ?? "",
         variation_id: plan.variation_id ?? null,
         set_index: nextIndex,
-        weight: Number(weight),
-        reps: Number(reps),
+        weight: weightVal,
+        reps: repsVal,
       })
       .select("id, exercise_id, exercise_name, variation_id, set_index, weight, reps, created_at")
       .single();
@@ -707,6 +897,42 @@ export default function SessionPage() {
 
     setSets((prev) => [...prev, data]);
     setMsg("✅ Set logged");
+
+    // ===== NEW behavior: auto-update missing plan OR prompt on change =====
+    const plannedArr = sortTargets(plan.set_targets);
+    const plannedTarget = plannedArr.find((t) => Number(t?.set_index) === Number(nextIndex)) || null;
+
+    const logged = { reps: repsVal, weight: weightVal };
+
+    // A) Auto-update if missing target(s)
+    const auto = shouldAutoUpdateMissingTarget(plannedTarget, logged);
+    if (auto.ok) {
+      const res = await updatePlanSetTargets(plan.id, nextIndex, auto.patch);
+      if (!res.ok) console.warn("Auto update plan failed:", res.error);
+      return;
+    }
+
+    // B) Prompt if changed vs planned full target
+    const diff = shouldPromptUpdateDifferent(plannedTarget, logged);
+    if (diff.ok) {
+      const title =
+        plan.variation_label
+          ? `${plan.exercise_name} — ${plan.variation_label}`
+          : plan.exercise_name;
+
+      setPlanUpdPayload({
+        planId: plan.id,
+        title,
+        setIndex: nextIndex,
+        oldReps: diff.oldReps,
+        oldWeight: diff.oldWeight,
+        newReps: diff.newReps,
+        newWeight: diff.newWeight,
+        patchReps: diff.patch.reps,
+        patchWeight: diff.patch.weight,
+      });
+      setPlanUpdOpen(true);
+    }
   }
 
   async function finishSession() {
@@ -781,6 +1007,33 @@ export default function SessionPage() {
     }
   }, []);
 
+  async function confirmPlanUpdate() {
+    if (!planUpdPayload) return;
+    setPlanUpdSaving(true);
+
+    const patch = {
+      reps: planUpdPayload.patchReps,
+      weight: planUpdPayload.patchWeight,
+    };
+
+    const res = await updatePlanSetTargets(planUpdPayload.planId, planUpdPayload.setIndex, patch);
+    setPlanUpdSaving(false);
+
+    if (!res.ok) {
+      setMsg("❌ Failed to update plan: " + res.error);
+    } else {
+      setMsg("✅ Plan updated");
+    }
+
+    setPlanUpdOpen(false);
+    setPlanUpdPayload(null);
+  }
+
+  function cancelPlanUpdate() {
+    setPlanUpdOpen(false);
+    setPlanUpdPayload(null);
+  }
+
   if (loading) return <p>Loading…</p>;
 
   const dateLabel =
@@ -815,7 +1068,7 @@ export default function SessionPage() {
 
           <div className="session-header-sub">
             <span>{workoutItems.length} exercises</span>
-            <span>• {totalLoggedSets} / {totalPlannedSets || 0} sets logged</span>
+            <span>• {sets.length} / {totalPlannedSets || 0} sets logged</span>
             <span>• {progressPct}%</span>
           </div>
 
@@ -861,13 +1114,12 @@ export default function SessionPage() {
           })}
         </section>
 
-        {/* סיכום סשן */}
         <section className="session-card session-summary-card">
           <h3 className="session-card-title">Session summary</h3>
           <div className="session-summary-grid">
             <div className="session-summary-item">
               <div className="session-summary-label">Total sets</div>
-              <div className="session-summary-value">{totalLoggedSets}</div>
+              <div className="session-summary-value">{sets.length}</div>
             </div>
             <div className="session-summary-item">
               <div className="session-summary-label">Planned sets</div>
@@ -889,7 +1141,6 @@ export default function SessionPage() {
           )}
         </section>
 
-        {/* ✅ הכפתור עכשיו חלק מה-flow ונמצא מתחת ל-Session summary */}
         <div className="session-finish-wrap">
           <button
             className="session-finish-btn"
@@ -898,8 +1149,6 @@ export default function SessionPage() {
           >
             {isEnded ? "Session completed" : ending ? "Finishing…" : "Finish Session"}
           </button>
-
-          {/* ספייס קטן למובייל כדי שלא “ידבק” לסרגל התחתון */}
         </div>
       </div>
 
@@ -913,6 +1162,19 @@ export default function SessionPage() {
           setImgUrl("");
           setImgTitle("");
         }}
+      />
+
+      <ConfirmPlanUpdateModal
+        open={planUpdOpen}
+        title={planUpdPayload?.title || ""}
+        setIndex={planUpdPayload?.setIndex || 1}
+        oldReps={planUpdPayload?.oldReps ?? null}
+        oldWeight={planUpdPayload?.oldWeight ?? null}
+        newReps={planUpdPayload?.newReps ?? null}
+        newWeight={planUpdPayload?.newWeight ?? null}
+        onConfirm={confirmPlanUpdate}
+        onCancel={cancelPlanUpdate}
+        saving={planUpdSaving}
       />
     </div>
   );
