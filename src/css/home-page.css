@@ -1,0 +1,380 @@
+/* src/css/home-page.css */
+
+.home-page {
+  padding: 8px 16px 24px;
+  max-width: 960px;
+  margin: 0 auto;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.home-loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* ===== Welcome ===== */
+.home-welcome {
+  padding: 12px 0 20px;
+}
+
+.home-welcome-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+.home-welcome-sub {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* ===== Section ===== */
+.home-section {
+  margin-bottom: 24px;
+}
+
+.home-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.home-section-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.home-section-desc {
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: #9ca3af;
+}
+
+.home-section-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ===== Card scroll container ===== */
+.home-card-scroll {
+  max-height: 264px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.home-card-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.home-card-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.home-card-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+/* ===== Workout row (shared) ===== */
+.home-workout-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.12s ease;
+}
+
+.home-workout-row:last-child {
+  border-bottom: none;
+}
+
+.home-workout-row:hover {
+  background: #f8fafc;
+}
+
+.home-workout-row--detail {
+  cursor: pointer;
+}
+
+.home-workout-row--detail:active {
+  background: #f1f5f9;
+}
+
+.home-workout-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-workout-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-workout-muscles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.home-muscle-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  white-space: nowrap;
+}
+
+.home-muscle-chip--empty {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+}
+
+.home-workout-meta {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+/* ===== Play button ===== */
+.home-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: none;
+  background: #020617;
+  color: #ffffff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.2);
+}
+
+.home-play-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(2, 6, 23, 0.3);
+  background: #0f172a;
+}
+
+.home-play-btn:active {
+  transform: translateY(0) scale(0.95);
+  box-shadow: 0 2px 6px rgba(2, 6, 23, 0.2);
+}
+
+/* ===== Chevron icon ===== */
+.home-chevron-icon {
+  flex-shrink: 0;
+  color: #9ca3af;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.home-workout-row:hover .home-chevron-icon {
+  color: #6b7280;
+  transform: translateX(2px);
+}
+
+/* ===== History ===== */
+.home-history-list {
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+.home-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.home-history-row:last-child {
+  border-bottom: none;
+}
+
+.home-history-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-history-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.home-history-date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.home-history-duration {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ===== Statistics Grid ===== */
+.home-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.home-stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.home-stat-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.home-stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+}
+
+.home-stat-icon--week {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.home-stat-icon--month {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.home-stat-icon--streak {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.home-stat-icon--avg {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.home-stat-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+}
+
+.home-stat-label {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* ===== Empty state ===== */
+.home-empty-state {
+  padding: 24px 16px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.home-empty-state p {
+  margin: 0 0 12px;
+}
+
+.home-empty-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: #020617;
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.home-empty-btn:hover {
+  background: #0f172a;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .home-page {
+    padding: 4px 10px 20px;
+  }
+
+  .home-welcome-title {
+    font-size: 1.3rem;
+  }
+
+  .home-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .home-stat-card {
+    padding: 14px 10px;
+  }
+}

@@ -2,9 +2,12 @@
 import { useEffect, useState } from "react";
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./lib/supabaseClient";
+import { Menu, Dumbbell } from "lucide-react";
 
-// מסכים
+// Pages
 import Login from "./components/Login";
+import Sidebar from "./components/Sidebar";
+import HomePage from "./pages/HomePage";
 import Workouts from "./pages/Workouts";
 import WorkoutDetail from "./pages/WorkoutDetail";
 import SessionPage from "./pages/SessionPage";
@@ -14,9 +17,11 @@ import ExerciseLibrary from "./pages/ExerciseLibrary";
 import AdminUsers from "./pages/AdminUsers";
 
 import "./css/App.css";
+import "./css/sidebar.css";
 
-// טאב־בר תחתון – הגדרות של הראוטים
+// Bottom tab bar items
 const TABS = [
+  { to: "/home", label: "Home", icon: "🏠" },
   { to: "/calendar", label: "Calendar", icon: "📅" },
   { to: "/workouts", label: "Workouts", icon: "🏋️" },
   { to: "/progress", label: "Progress", icon: "📈" },
@@ -27,9 +32,12 @@ export default function App() {
   const [session, setSession] = useState(null);
   const [init, setInit] = useState(true);
 
-  // ✅ role gating
+  // Role gating
   const [roleInit, setRoleInit] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +62,7 @@ export default function App() {
     };
   }, []);
 
-  // ✅ fetch role when session exists
+  // Fetch role when session exists
   useEffect(() => {
     let mounted = true;
 
@@ -105,7 +113,7 @@ export default function App() {
     return (
       <Login
         onSuccess={() => {
-          navigate("/calendar");
+          navigate("/home");
         }}
       />
     );
@@ -113,30 +121,42 @@ export default function App() {
 
   const pathname = location.pathname;
   const isTabActive = (to) => {
-    if (to === "/calendar") return pathname === "/" || pathname.startsWith("/calendar");
+    if (to === "/home") return pathname === "/home" || pathname === "/";
+    if (to === "/calendar") return pathname.startsWith("/calendar");
     return pathname.startsWith(to);
   };
 
   return (
     <div className="app-shell">
-      <header className="app-topbar">
-        <span className="app-topbar-email">{session.user.email}</span>
+      {/* Sidebar */}
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        isAdmin={!roleInit && isAdmin}
+        onLogout={logout}
+      />
 
-        {/* ✅ Admin-only button */}
-        {!roleInit && isAdmin && (
-          <button className="app-admin-btn" onClick={() => navigate("/admin/users")}>
-            User Management
-          </button>
-        )}
-
-        <button className="app-logout-btn" onClick={logout}>
-          Log out
+      {/* New top bar with hamburger + branding */}
+      <header className="app-topbar-new">
+        <button
+          className="app-menu-btn"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
         </button>
+        <div className="app-topbar-brand">
+          <div className="app-topbar-brand-icon">
+            <Dumbbell size={16} strokeWidth={2.5} />
+          </div>
+          <span className="app-topbar-brand-name">FitTracker</span>
+        </div>
       </header>
 
       <main className="app-main">
         <Routes>
-          <Route path="/" element={<CalendarPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/workouts" element={<Workouts />} />
           <Route path="/workouts/:id" element={<WorkoutDetail />} />
@@ -145,7 +165,7 @@ export default function App() {
           <Route path="/progress/id/:exerciseId" element={<ProgressPage />} />
           <Route path="/exercises" element={<ExerciseLibrary />} />
 
-          {/* ✅ Admin route (UI gated + also server/RLS will enforce) */}
+          {/* Admin route (UI gated + also server/RLS will enforce) */}
           <Route path="/admin/users" element={<AdminUsers isAdmin={isAdmin} roleInit={roleInit} />} />
         </Routes>
       </main>
