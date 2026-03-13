@@ -598,3 +598,190 @@
   opacity: .6;
   cursor: not-allowed;
 }
+
+
+
+
+/* ===== Skeleton loading ===== */
+.session-content-ready {
+  animation: sessionContentFadeIn 0.22s ease;
+}
+
+@keyframes sessionContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.session-skeleton-fade {
+  animation: sessionSkeletonFadeIn 0.18s ease;
+}
+
+@keyframes sessionSkeletonFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.session-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%,
+    #e5e7eb 100%
+  );
+  background-size: 200% 100%;
+  animation: sessionShimmer 1.35s linear infinite;
+  border-radius: 12px;
+}
+
+@keyframes sessionShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.session-skeleton-exit {
+  width: 72px;
+  height: 18px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.session-skeleton-date {
+  width: 116px;
+  height: 14px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.session-skeleton-title {
+  width: min(250px, 72%);
+  height: 24px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.session-skeleton-sub {
+  width: min(280px, 88%);
+  height: 16px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.session-skeleton-progress-fill {
+  width: 38%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.session-skeleton-chip {
+  width: 124px;
+  height: 24px;
+  border-radius: 999px;
+  margin-top: 8px;
+}
+
+.session-skeleton-card-title {
+  width: 92px;
+  height: 18px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.session-skeleton-ex-name {
+  width: min(200px, 72%);
+  height: 16px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.session-skeleton-chip-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.session-skeleton-mini-chip {
+  width: 88px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.session-skeleton-mini-chip--wide {
+  width: 112px;
+}
+
+.session-skeleton-chevron {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  flex: none;
+}
+
+.session-skeleton-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+}
+
+.session-skeleton-mark-btn {
+  width: 72px;
+  height: 34px;
+  border-radius: 999px;
+}
+
+.session-skeleton-ex-progress-fill {
+  width: 46%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.session-skeleton-summary-label {
+  width: 64px;
+  height: 12px;
+  border-radius: 6px;
+  margin: 0 auto 8px;
+}
+
+.session-skeleton-summary-value {
+  width: 42px;
+  height: 18px;
+  border-radius: 8px;
+  margin: 0 auto;
+}
+
+.session-skeleton-finish-btn {
+  width: 100%;
+  height: 46px;
+  border-radius: 999px;
+}
+
+@media (max-width: 420px) {
+  .session-skeleton-title {
+    width: 82%;
+  }
+
+  .session-skeleton-sub {
+    width: 92%;
+  }
+
+  .session-skeleton-mark-btn {
+    width: 64px;
+  }
+}

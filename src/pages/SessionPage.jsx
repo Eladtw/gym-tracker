@@ -25,6 +25,78 @@ function makeKey(exerciseId, variationId) {
   return `${ex}:${v}`;
 }
 
+/* ===== Session skeleton ===== */
+function SessionPageSkeleton() {
+  return (
+    <div className="session-page-root">
+      <div className="session-page-shell session-content-ready">
+        <header className="session-header session-skeleton-fade">
+          <div className="session-skeleton session-skeleton-exit" />
+          <div className="session-skeleton session-skeleton-date" />
+          <div className="session-skeleton session-skeleton-title" />
+          <div className="session-skeleton session-skeleton-sub" />
+          <div className="session-progress">
+            <div className="session-skeleton session-skeleton-progress-fill" />
+          </div>
+          <div className="session-skeleton session-skeleton-chip" />
+        </header>
+
+        <section className="session-card session-skeleton-fade">
+          <div className="session-skeleton session-skeleton-card-title" />
+
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="session-ex-card">
+              <div className="session-ex-header">
+                <div className="session-ex-toggle" style={{ cursor: "default" }}>
+                  <div className="session-ex-header-main">
+                    <div className="session-skeleton session-skeleton-ex-name" />
+                    <div className="session-skeleton-chip-row">
+                      <div className="session-skeleton session-skeleton-mini-chip" />
+                      <div className="session-skeleton session-skeleton-mini-chip session-skeleton-mini-chip--wide" />
+                    </div>
+                  </div>
+                  <div className="session-skeleton session-skeleton-chevron" />
+                </div>
+
+                <div className="session-ex-actions">
+                  <div className="session-skeleton session-skeleton-icon-btn" />
+                  <div className="session-skeleton session-skeleton-mark-btn" />
+                </div>
+              </div>
+
+              <div className="session-ex-progress">
+                <div className="session-skeleton session-skeleton-ex-progress-fill" />
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="session-card session-summary-card session-skeleton-fade">
+          <div className="session-skeleton session-skeleton-card-title" />
+          <div className="session-summary-grid">
+            <div className="session-summary-item">
+              <div className="session-skeleton session-skeleton-summary-label" />
+              <div className="session-skeleton session-skeleton-summary-value" />
+            </div>
+            <div className="session-summary-item">
+              <div className="session-skeleton session-skeleton-summary-label" />
+              <div className="session-skeleton session-skeleton-summary-value" />
+            </div>
+            <div className="session-summary-item">
+              <div className="session-skeleton session-skeleton-summary-label" />
+              <div className="session-skeleton session-skeleton-summary-value" />
+            </div>
+          </div>
+        </section>
+
+        <div className="session-finish-wrap session-skeleton-fade">
+          <div className="session-skeleton session-skeleton-finish-btn" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ===== Modal תמונה ===== */
 function ImageModal({ open, title, imageUrl, loading, onClose }) {
   useEffect(() => {
@@ -329,7 +401,7 @@ function ExerciseCard({
                     Set {r.set_index || "?"}
                   </span>
                   <span className="session-row-value">
-                    {r.reps ?? 0} reps × {r.weight ?? 0} kg
+                    : {r.reps ?? 0} reps × {r.weight ?? 0} kg
                   </span>
                 </div>
               ))
@@ -453,8 +525,6 @@ export default function SessionPage() {
   const [planUpdOpen, setPlanUpdOpen] = useState(false);
   const [planUpdSaving, setPlanUpdSaving] = useState(false);
   const [planUpdPayload, setPlanUpdPayload] = useState(null);
-  // payload shape:
-  // { planId, title, setIndex, oldReps, oldWeight, newReps, newWeight, patchReps, patchWeight }
 
   const fmtLocal = (iso) => {
     try {
@@ -727,7 +797,6 @@ export default function SessionPage() {
     }
   }
 
-  // ===== helpers to update plan set_targets =====
   function buildUpdatedTargets(existingTargets, setIndex, patch) {
     const base = Array.isArray(existingTargets) ? sortTargets(existingTargets) : [];
     const idx = base.findIndex((x) => Number(x?.set_index) === Number(setIndex));
@@ -761,7 +830,6 @@ export default function SessionPage() {
 
     if (error) return { ok: false, error: error.message };
 
-    // update local state so UI/autofill reflects immediately
     setWorkoutItems((prev) =>
       prev.map((x) => (x.id === planRowId ? { ...x, set_targets: data.set_targets } : x))
     );
@@ -779,7 +847,6 @@ export default function SessionPage() {
     const hasLoggedAny = loggedReps != null || loggedWeight != null;
     if (!hasLoggedAny) return { ok: false };
 
-    // אם חסר אחד מהם בתכנון — עדכן רק את מה שהוזן
     if (missingReps || missingWeight) {
       const patch = {};
       if (missingReps && loggedReps != null) patch.reps = loggedReps;
@@ -795,18 +862,14 @@ export default function SessionPage() {
 
     const plannedReps = plannedTarget.reps;
     const plannedWeight = plannedTarget.weight;
-
-    // נבקש פופאפ רק אם בתכנון יש ערכים (לא null) ושינו בפועל
     const plannedHasBoth = plannedReps != null && plannedWeight != null;
 
     const loggedReps = logged.reps;
     const loggedWeight = logged.weight;
 
-    // אם המשתמש לא הכניס כלום — לא רלוונטי
     const hasLoggedAny = loggedReps != null || loggedWeight != null;
     if (!hasLoggedAny) return { ok: false };
 
-    // אם התכנון לא מלא — זה כבר ייפול על auto-update
     if (!plannedHasBoth) return { ok: false };
 
     const repsChanged = loggedReps != null && Number(loggedReps) !== Number(plannedReps);
@@ -835,7 +898,6 @@ export default function SessionPage() {
       return;
     }
 
-    // ✅ allow log if at least one is provided
     const repsOk = isPosNum(reps);
     const weightOk = isNonNegNum(weight);
     if (!repsOk && !weightOk) {
@@ -898,13 +960,11 @@ export default function SessionPage() {
     setSets((prev) => [...prev, data]);
     setMsg("✅ Set logged");
 
-    // ===== NEW behavior: auto-update missing plan OR prompt on change =====
     const plannedArr = sortTargets(plan.set_targets);
     const plannedTarget = plannedArr.find((t) => Number(t?.set_index) === Number(nextIndex)) || null;
 
     const logged = { reps: repsVal, weight: weightVal };
 
-    // A) Auto-update if missing target(s)
     const auto = shouldAutoUpdateMissingTarget(plannedTarget, logged);
     if (auto.ok) {
       const res = await updatePlanSetTargets(plan.id, nextIndex, auto.patch);
@@ -912,7 +972,6 @@ export default function SessionPage() {
       return;
     }
 
-    // B) Prompt if changed vs planned full target
     const diff = shouldPromptUpdateDifferent(plannedTarget, logged);
     if (diff.ok) {
       const title =
@@ -1034,7 +1093,7 @@ export default function SessionPage() {
     setPlanUpdPayload(null);
   }
 
-  if (loading) return <p>Loading…</p>;
+  if (loading) return <SessionPageSkeleton />;
 
   const dateLabel =
     session?.session_date || dateISO
@@ -1050,7 +1109,7 @@ export default function SessionPage() {
 
   return (
     <div className="session-page-root">
-      <div className="session-page-shell">
+      <div className="session-page-shell session-content-ready">
         <header className="session-header">
           <button
             type="button"

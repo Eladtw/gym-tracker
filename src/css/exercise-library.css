@@ -160,12 +160,20 @@
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
   display: flex;
   flex-direction: column;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease;
+  will-change: transform;
 }
 
 .el-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.07);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.09);
+}
+
+.el-card:active {
+  transform: scale(0.985);
 }
 
 .el-card-image-wrap {
@@ -245,22 +253,42 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  z-index: 40;
+  z-index: 2147483647;
+  animation: elOverlayFadeIn 0.4s ease;
+}
+
+@keyframes elOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .el-modal {
   width: 100%;
   max-width: 420px;
-
-  /* ✅ תיקון למובייל: 100dvh במקום 100vh */
   max-height: calc(100dvh - 40px);
-
   background: #ffffff;
   border-radius: 24px;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.6);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: elModalIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: center center;
+}
+
+@keyframes elModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* top image */
@@ -734,6 +762,18 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  animation: elViewerIn 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes elViewerIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .el-image-viewer-img {
@@ -1268,4 +1308,173 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+
+
+/* ===== Skeleton loading ===== */
+.el-content-ready {
+  animation: elContentFadeIn 0.22s ease;
+}
+
+@keyframes elContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.el-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%,
+    #e5e7eb 100%
+  );
+  background-size: 200% 100%;
+  animation: elShimmer 1.35s linear infinite;
+  border-radius: 12px;
+}
+
+@keyframes elShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.el-skeleton-title {
+  width: min(220px, 60%);
+  height: 30px;
+  border-radius: 10px;
+}
+
+.el-skeleton-subtitle {
+  width: min(340px, 88%);
+  height: 16px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.el-skeleton-filter-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.el-skeleton-filter-title {
+  width: 110px;
+  height: 16px;
+  border-radius: 8px;
+}
+
+.el-skeleton-reset-btn {
+  width: 74px;
+  height: 28px;
+  border-radius: 999px;
+}
+
+.el-skeleton-label {
+  width: 96px;
+  height: 14px;
+  border-radius: 8px;
+}
+
+.el-skeleton-select {
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.el-skeleton-list-caption {
+  width: 170px;
+  height: 14px;
+  border-radius: 8px;
+}
+
+.el-skeleton-create-btn {
+  width: 138px;
+  height: 38px;
+  border-radius: 12px;
+}
+
+.el-skeleton-card {
+  cursor: default;
+}
+
+.el-skeleton-card-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.el-skeleton-card-title {
+  width: 72%;
+  height: 18px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.el-skeleton-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.el-skeleton-tag {
+  width: 74px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.el-skeleton-tag--wide {
+  width: 108px;
+}
+
+
+
+
+
+
+
+.el-modal-overlay.is-closing {
+  animation: elOverlayFadeOut 0.22s ease forwards;
+}
+
+@keyframes elOverlayFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.el-modal.is-closing {
+  animation: elModalOut 0.22s ease forwards;
+}
+
+@keyframes elModalOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+.el-modal-overlay.is-closing {
+  pointer-events: none;
 }

@@ -260,6 +260,62 @@ function buildTargetsFromRows(rows) {
   });
 }
 
+/* ===== Skeleton ===== */
+function WorkoutDetailSkeleton() {
+  return (
+    <div className="wd-page">
+      <header className="wd-header">
+        <div className="wd-back-btn wd-skeleton wd-skeleton-btn" />
+      </header>
+
+      <section className="wd-title-block wd-skeleton-fade">
+        <div className="wd-skeleton wd-skeleton-title" />
+        <div className="wd-skeleton wd-skeleton-subtitle" />
+        <div className="wd-skeleton wd-skeleton-start-btn" />
+      </section>
+
+      <section className="wd-add-section">
+        <div className="wd-add-card wd-skeleton wd-skeleton-add-card" />
+      </section>
+
+      <section className="wd-ex-list">
+        {[1, 2, 3].map((n) => (
+          <article key={n} className="wd-ex-card wd-skeleton-fade">
+            <div className="wd-ex-header">
+              <div className="wd-ex-left">
+                <div className="wd-skeleton wd-skeleton-handle" />
+                <div className="wd-skeleton wd-skeleton-index" />
+
+                <div className="wd-ex-main" style={{ flex: 1 }}>
+                  <div className="wd-skeleton wd-skeleton-ex-name" />
+                  <div className="wd-skeleton-chip-row">
+                    <div className="wd-skeleton wd-skeleton-chip" />
+                    <div className="wd-skeleton wd-skeleton-chip wd-skeleton-chip--wide" />
+                    <div className="wd-skeleton wd-skeleton-chip" />
+                  </div>
+                  <div className="wd-skeleton wd-skeleton-weightline" />
+                </div>
+              </div>
+
+              <div className="wd-ex-actions">
+                <div className="wd-skeleton wd-skeleton-icon-btn" />
+                <div className="wd-skeleton wd-skeleton-progress-btn" />
+                <div className="wd-skeleton wd-skeleton-icon-btn" />
+              </div>
+            </div>
+
+            <div className="wd-ex-sets">
+              <div className="wd-skeleton wd-skeleton-set-row" />
+              <div className="wd-skeleton wd-skeleton-set-row" />
+              <div className="wd-skeleton wd-skeleton-set-row wd-skeleton-set-row--short" />
+            </div>
+          </article>
+        ))}
+      </section>
+    </div>
+  );
+}
+
 export default function WorkoutDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -267,6 +323,7 @@ export default function WorkoutDetail() {
   const [workout, setWorkout] = useState(null);
   const [items, setItems] = useState([]);
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
 
   // Toasts
   const [toasts, setToasts] = useState([]);
@@ -300,6 +357,9 @@ export default function WorkoutDetail() {
      Load workout + exercises
   ======================= */
   async function loadAll() {
+    setLoading(true);
+    setMsg("");
+
     const [{ data: w, error: wErr }, { data: ex, error: exErr }] =
       await Promise.all([
         supabase.from("workouts").select("id, name").eq("id", id).single(),
@@ -332,12 +392,20 @@ export default function WorkoutDetail() {
           .order("order_index"),
       ]);
 
-    if (wErr) setMsg("❌ " + wErr.message);
+    if (wErr) {
+      setMsg("❌ " + wErr.message);
+      setWorkout(null);
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
     setWorkout(w || null);
 
     if (exErr) {
       setMsg("❌ " + exErr.message);
       setItems([]);
+      setLoading(false);
       return;
     }
 
@@ -346,6 +414,7 @@ export default function WorkoutDetail() {
     const varIds = Array.from(
       new Set(rawItems.map((it) => it.variation_id).filter(Boolean))
     );
+
     let varMap = new Map();
     if (varIds.length > 0) {
       const { data: vData, error: vErr } = await supabase
@@ -353,7 +422,9 @@ export default function WorkoutDetail() {
         .select("id,label")
         .in("id", varIds);
 
-      if (!vErr) (vData || []).forEach((v) => varMap.set(v.id, v.label));
+      if (!vErr) {
+        (vData || []).forEach((v) => varMap.set(v.id, v.label));
+      }
     }
 
     setItems(
@@ -365,6 +436,8 @@ export default function WorkoutDetail() {
         image_path: it.exercises_catalog?.image_path ?? null,
       }))
     );
+
+    setLoading(false);
   }
 
   useEffect(() => {
@@ -855,8 +928,6 @@ export default function WorkoutDetail() {
     navigate(`/session/${data.id}`);
   }
 
-  if (!workout) return <p className="wd-loading">Loading…</p>;
-
   function renderSetsDetailed(st) {
     const arr = normalizeTargets(st);
     if (!arr.length) return null;
@@ -874,8 +945,20 @@ export default function WorkoutDetail() {
     );
   }
 
+  if (loading) {
+    return <WorkoutDetailSkeleton />;
+  }
+
+  if (!workout) {
+    return (
+      <div className="wd-page">
+        <p className="wd-loading">Workout not found.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="wd-page">
+    <div className="wd-page wd-content-ready">
       <Toasts toasts={toasts} onClose={removeToast} />
 
       <header className="wd-header">
@@ -964,8 +1047,7 @@ export default function WorkoutDetail() {
                     className="wd-img-icon-btn"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (canOpenImg)
-                        openViewer(it.exercise_name, it.image_path);
+                      if (canOpenImg) openViewer(it.exercise_name, it.image_path);
                     }}
                     disabled={!canOpenImg}
                     title={canOpenImg ? "View exercise image" : "No image"}
@@ -999,7 +1081,6 @@ export default function WorkoutDetail() {
         })}
       </section>
 
-      {/* ===== Bulk Add Modal ===== */}
       {addOpen && (
         <div className="wd-add-overlay" role="dialog" aria-modal="true">
           <div className="wd-add-modal">
@@ -1077,9 +1158,7 @@ export default function WorkoutDetail() {
 
                   <div className="wd-add-gridHead">
                     <div className="wd-add-gridTitle">
-                      {libLoading
-                        ? "Loading…"
-                        : `${filteredExercises.length} exercises`}
+                      {libLoading ? "Loading…" : `${filteredExercises.length} exercises`}
                     </div>
                     <div className="wd-add-chip">
                       Selected: <strong>{cartCount}</strong>
@@ -1109,9 +1188,7 @@ export default function WorkoutDetail() {
                         return (
                           <div
                             key={ex.id}
-                            className={`wd-add-cardEx ${
-                              selected ? "is-selected" : ""
-                            }`}
+                            className={`wd-add-cardEx ${selected ? "is-selected" : ""}`}
                           >
                             <button
                               type="button"
@@ -1127,9 +1204,7 @@ export default function WorkoutDetail() {
                                     alt={ex.name}
                                   />
                                 ) : (
-                                  <div className="wd-add-imgFallback">
-                                    No image
-                                  </div>
+                                  <div className="wd-add-imgFallback">No image</div>
                                 )}
                               </div>
                             </button>
@@ -1151,9 +1226,7 @@ export default function WorkoutDetail() {
 
                             <button
                               type="button"
-                              className={`wd-add-btn ${
-                                selected ? "is-remove" : ""
-                              }`}
+                              className={`wd-add-btn ${selected ? "is-remove" : ""}`}
                               onClick={() => toggleCart(ex)}
                               disabled={already}
                               title={
@@ -1237,8 +1310,7 @@ export default function WorkoutDetail() {
 
                               <div className="wd-review-meta">
                                 <span className="wd-review-muted">
-                                  {ex.primary_subgroup?.muscle_groups?.label ||
-                                    "—"}
+                                  {ex.primary_subgroup?.muscle_groups?.label || "—"}
                                 </span>
                                 {" · "}
                                 <span className="wd-review-muted">
@@ -1342,7 +1414,7 @@ export default function WorkoutDetail() {
                                     checked={!!c.fillFromFirst}
                                     onChange={() => toggleFillFromFirst(ex.id)}
                                     disabled={
-                                      (!canEnableFillFromFirst(c) && !c.fillFromFirst)
+                                      !canEnableFillFromFirst(c) && !c.fillFromFirst
                                     }
                                   />
                                   Fill all sets from Set 1
@@ -1353,7 +1425,6 @@ export default function WorkoutDetail() {
                                 </div>
                               </div>
 
-                              {/* ✅ single header row (NO ::before anywhere) */}
                               <div className="wd-setsHeader">
                                 <span>SET</span>
                                 <span>REPS</span>
@@ -1456,8 +1527,7 @@ export default function WorkoutDetail() {
                       onClick={() => {
                         setAddStep("review");
                         requestAnimationFrame(() => {
-                          if (addBodyRef.current)
-                            addBodyRef.current.scrollTop = 0;
+                          if (addBodyRef.current) addBodyRef.current.scrollTop = 0;
                         });
                       }}
                       disabled={!canGoNext}
@@ -1473,8 +1543,7 @@ export default function WorkoutDetail() {
                       onClick={() => {
                         setAddStep("select");
                         requestAnimationFrame(() => {
-                          if (addBodyRef.current)
-                            addBodyRef.current.scrollTop = 0;
+                          if (addBodyRef.current) addBodyRef.current.scrollTop = 0;
                         });
                       }}
                       type="button"

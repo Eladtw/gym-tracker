@@ -1,4 +1,3 @@
-// src/pages/HomePage.jsx
 import "../css/home-page.css";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -42,6 +41,94 @@ function formatDate(dateStr) {
   });
 }
 
+function HomePageSkeleton() {
+  return (
+    <div className="home-page">
+      <div className="home-skeleton-shell">
+        <section className="home-welcome">
+          <div className="home-skeleton home-skeleton-title" />
+          <div className="home-skeleton home-skeleton-subtitle" />
+        </section>
+
+        <section className="home-section">
+          <div className="home-section-header">
+            <div className="home-skeleton-header-copy">
+              <div className="home-skeleton home-skeleton-section-title" />
+              <div className="home-skeleton home-skeleton-section-desc" />
+            </div>
+            <div className="home-skeleton home-skeleton-badge" />
+          </div>
+
+          <div className="home-card-scroll home-card-scroll--workouts">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="home-workout-row home-workout-row--combined">
+                <div className="home-workout-info">
+                  <div className="home-skeleton home-skeleton-row-title" />
+                  <div className="home-workout-muscles">
+                    <div className="home-skeleton home-skeleton-chip" />
+                    <div className="home-skeleton home-skeleton-chip home-skeleton-chip--wide" />
+                    <div className="home-skeleton home-skeleton-chip" />
+                  </div>
+                  <div className="home-skeleton home-skeleton-row-meta" />
+                </div>
+
+                <div className="home-workout-actions">
+                  <div className="home-skeleton home-skeleton-icon-btn" />
+                  <div className="home-skeleton home-skeleton-icon-btn" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="home-section">
+          <div className="home-section-header">
+            <div className="home-skeleton-header-copy">
+              <div className="home-skeleton home-skeleton-section-title" />
+              <div className="home-skeleton home-skeleton-section-desc" />
+            </div>
+          </div>
+
+          <div className="home-history-list">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="home-history-row">
+                <div className="home-history-info">
+                  <div className="home-skeleton home-skeleton-row-title" />
+                  <div className="home-workout-muscles">
+                    <div className="home-skeleton home-skeleton-chip" />
+                    <div className="home-skeleton home-skeleton-chip" />
+                  </div>
+                  <div className="home-skeleton home-skeleton-date" />
+                </div>
+                <div className="home-skeleton home-skeleton-duration" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="home-section home-section--stats">
+          <div className="home-section-header">
+            <div className="home-skeleton-header-copy">
+              <div className="home-skeleton home-skeleton-section-title" />
+              <div className="home-skeleton home-skeleton-section-desc" />
+            </div>
+          </div>
+
+          <div className="home-stats-grid">
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className="home-stat-card">
+                <div className="home-skeleton home-skeleton-stat-icon" />
+                <div className="home-skeleton home-skeleton-stat-value" />
+                <div className="home-skeleton home-skeleton-stat-label" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
 
@@ -68,7 +155,6 @@ export default function HomePage() {
       return;
     }
 
-    // Get display name from profile or fallback to email
     const { data: profile } = await supabase
       .from("profiles")
       .select("display_name")
@@ -78,7 +164,6 @@ export default function HomePage() {
     const displayName = profile?.display_name || email.split("@")[0] || "Athlete";
     setUserName(displayName);
 
-    // Load workouts, exercises, and sessions in parallel
     const [workoutsRes, exercisesRes, sessionsRes] = await Promise.all([
       supabase
         .from("workouts")
@@ -113,9 +198,9 @@ export default function HomePage() {
     setLoading(false);
   }
 
-  // Build enriched workouts with exercises & muscle groups
   const enrichedWorkouts = useMemo(() => {
     const byWorkout = new Map();
+
     (workoutExercises || []).forEach((ex) => {
       if (!byWorkout.has(ex.workout_id)) byWorkout.set(ex.workout_id, []);
       byWorkout.get(ex.workout_id).push(ex);
@@ -131,7 +216,6 @@ export default function HomePage() {
     });
   }, [workouts, workoutExercises]);
 
-  // Build enriched recent sessions
   const enrichedSessions = useMemo(() => {
     return (recentSessions || []).map((s) => {
       const workout = enrichedWorkouts.find((w) => w.id === s.workout_id);
@@ -144,13 +228,11 @@ export default function HomePage() {
     });
   }, [recentSessions, enrichedWorkouts]);
 
-  // Statistics
   const stats = useMemo(() => {
     const now = new Date();
     const sessions = allSessions || [];
 
-    // Workouts this week (Mon-Sun)
-    const dayOfWeek = now.getDay(); // 0=Sun
+    const dayOfWeek = now.getDay();
     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const monday = new Date(now);
     monday.setDate(now.getDate() - mondayOffset);
@@ -161,14 +243,12 @@ export default function HomePage() {
       return d >= monday;
     }).length;
 
-    // Workouts this month
     const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const thisMonth = sessions.filter((s) => {
       const d = new Date(s.session_date || s.started_at);
       return d >= firstOfMonth;
     }).length;
 
-    // Streak: consecutive days with a workout (looking backwards from today)
     let streak = 0;
     if (sessions.length > 0) {
       const uniqueDates = new Set(
@@ -181,11 +261,17 @@ export default function HomePage() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Check if today or yesterday has a workout to start the streak
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(today.getDate()).padStart(2, "0")}`;
+
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
+
+      const yesterdayStr = `${yesterday.getFullYear()}-${String(
+        yesterday.getMonth() + 1
+      ).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
 
       let checkDate;
       if (uniqueDates.has(todayStr)) {
@@ -198,7 +284,10 @@ export default function HomePage() {
 
       if (checkDate) {
         while (true) {
-          const dateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, "0")}-${String(checkDate.getDate()).padStart(2, "0")}`;
+          const dateStr = `${checkDate.getFullYear()}-${String(
+            checkDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(checkDate.getDate()).padStart(2, "0")}`;
+
           if (uniqueDates.has(dateStr)) {
             streak++;
             checkDate.setDate(checkDate.getDate() - 1);
@@ -209,21 +298,27 @@ export default function HomePage() {
       }
     }
 
-    // Average workout duration
     let avgDuration = "--";
     const sessionsWithDuration = sessions.filter((s) => s.started_at && s.ended_at);
+
     if (sessionsWithDuration.length > 0) {
       const totalMs = sessionsWithDuration.reduce((acc, s) => {
-        return acc + (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime());
+        return (
+          acc +
+          (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime())
+        );
       }, 0);
+
       const avgMins = Math.round(totalMs / sessionsWithDuration.length / 60000);
-      avgDuration = avgMins < 60 ? `${avgMins}m` : `${Math.floor(avgMins / 60)}h ${avgMins % 60}m`;
+      avgDuration =
+        avgMins < 60
+          ? `${avgMins}m`
+          : `${Math.floor(avgMins / 60)}h ${avgMins % 60}m`;
     }
 
     return { thisWeek, thisMonth, streak, avgDuration };
   }, [allSessions]);
 
-  // Start workout handler
   async function handleStartWorkout(workoutId) {
     const { data: sessionData } = await supabase.auth.getSession();
     const uid = sessionData?.session?.user?.id;
@@ -231,7 +326,6 @@ export default function HomePage() {
 
     const todayISO = new Date().toISOString().split("T")[0];
 
-    // Check for existing session today for this workout
     const { data: existing } = await supabase
       .from("sessions")
       .select("id")
@@ -266,16 +360,11 @@ export default function HomePage() {
   }
 
   if (loading) {
-    return (
-      <div className="home-page">
-        <div className="home-loading">Loading...</div>
-      </div>
-    );
+    return <HomePageSkeleton />;
   }
 
   return (
     <div className="home-page">
-      {/* Welcome section */}
       <section className="home-welcome">
         <h1 className="home-welcome-title">Welcome back, {userName}</h1>
         <p className="home-welcome-sub">
@@ -283,17 +372,18 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* Start Training */}
       <section className="home-section">
         <div className="home-section-header">
           <div>
-            <h2 className="home-section-title">Start Training</h2>
-            <p className="home-section-desc">Pick a workout and get started</p>
+            <h2 className="home-section-title">Your Training Plans</h2>
+            <p className="home-section-desc">
+              Start a workout or open its details to review and manage your plan
+            </p>
           </div>
           <span className="home-section-badge">{workouts.length} workouts</span>
         </div>
 
-        <div className="home-card-scroll">
+        <div className="home-card-scroll home-card-scroll--workouts">
           {enrichedWorkouts.length === 0 ? (
             <div className="home-empty-state">
               <p>No workouts yet. Create one to get started!</p>
@@ -303,78 +393,56 @@ export default function HomePage() {
             </div>
           ) : (
             enrichedWorkouts.map((w) => (
-              <div key={w.id} className="home-workout-row home-workout-row--start">
+              <div key={w.id} className="home-workout-row home-workout-row--combined">
                 <div className="home-workout-info">
                   <div className="home-workout-name">{w.name}</div>
-                  <div className="home-workout-muscles">
-                    {w.muscleGroups.length > 0
-                      ? w.muscleGroups.map((mg) => (
-                          <span key={mg} className="home-muscle-chip">{mg}</span>
-                        ))
-                      : <span className="home-muscle-chip home-muscle-chip--empty">No muscle groups</span>
-                    }
-                  </div>
-                </div>
-                <button
-                  className="home-play-btn"
-                  onClick={() => handleStartWorkout(w.id)}
-                  aria-label={`Start ${w.name}`}
-                  title="Start workout"
-                >
-                  <Play size={18} fill="currentColor" />
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
 
-      {/* Your Workouts */}
-      <section className="home-section">
-        <div className="home-section-header">
-          <div>
-            <h2 className="home-section-title">Your Workouts</h2>
-            <p className="home-section-desc">View and manage your workout plans</p>
-          </div>
-        </div>
-
-        <div className="home-card-scroll">
-          {enrichedWorkouts.length === 0 ? (
-            <div className="home-empty-state">
-              <p>No workouts created yet.</p>
-            </div>
-          ) : (
-            enrichedWorkouts.map((w) => (
-              <div
-                key={w.id}
-                className="home-workout-row home-workout-row--detail"
-                onClick={() => navigate(`/workouts/${w.id}`)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && navigate(`/workouts/${w.id}`)}
-              >
-                <div className="home-workout-info">
-                  <div className="home-workout-name">{w.name}</div>
                   <div className="home-workout-muscles">
-                    {w.muscleGroups.length > 0
-                      ? w.muscleGroups.map((mg) => (
-                          <span key={mg} className="home-muscle-chip">{mg}</span>
-                        ))
-                      : <span className="home-muscle-chip home-muscle-chip--empty">No muscle groups</span>
-                    }
+                    {w.muscleGroups.length > 0 ? (
+                      w.muscleGroups.map((mg) => (
+                        <span key={mg} className="home-muscle-chip">
+                          {mg}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="home-muscle-chip home-muscle-chip--empty">
+                        No muscle groups
+                      </span>
+                    )}
                   </div>
+
                   <div className="home-workout-meta">
                     {w.exercises.length} {w.exercises.length === 1 ? "exercise" : "exercises"}
                   </div>
                 </div>
-                <ChevronRight size={20} className="home-chevron-icon" />
+
+                <div className="home-workout-actions">
+                  <button
+                    className="home-icon-btn home-detail-btn"
+                    onClick={() => navigate(`/workouts/${w.id}`)}
+                    aria-label={`Open details for ${w.name}`}
+                    title="Workout details"
+                    type="button"
+                  >
+                    <ChevronRight size={20} className="home-chevron-icon" />
+                  </button>
+
+                  <button
+                    className="home-icon-btn home-play-btn"
+                    onClick={() => handleStartWorkout(w.id)}
+                    aria-label={`Start ${w.name}`}
+                    title="Start workout"
+                    type="button"
+                  >
+                    <Play size={18} fill="currentColor" />
+                  </button>
+                </div>
               </div>
             ))
           )}
         </div>
       </section>
 
-      {/* Workout History */}
       <section className="home-section">
         <div className="home-section-header">
           <div>
@@ -396,10 +464,11 @@ export default function HomePage() {
                   <div className="home-workout-muscles">
                     {s.muscleGroups.length > 0
                       ? s.muscleGroups.map((mg) => (
-                          <span key={mg} className="home-muscle-chip">{mg}</span>
+                          <span key={mg} className="home-muscle-chip">
+                            {mg}
+                          </span>
                         ))
-                      : null
-                    }
+                      : null}
                   </div>
                   <div className="home-history-date">
                     <Calendar size={13} />
@@ -416,7 +485,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Statistics */}
       <section className="home-section home-section--stats">
         <div className="home-section-header">
           <div>

@@ -206,3 +206,10 @@ a {
   cursor: not-allowed;
   box-shadow: none;
 }
+
+
+.page-transition-shell {
+  width: 100%;
+  min-height: 100%;
+  will-change: opacity, transform;
+}

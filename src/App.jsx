@@ -1,8 +1,10 @@
 // src/App.jsx
 import { useEffect, useState } from "react";
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "motion/react";
 import { supabase } from "./lib/supabaseClient";
 import { Menu, Dumbbell } from "lucide-react";
+import { useAppDataCache } from "./context/AppDataCacheContext";
 
 // Pages
 import Login from "./components/Login";
@@ -28,9 +30,27 @@ const TABS = [
   { to: "/exercises", label: "Exercises", icon: "📚" },
 ];
 
+function PageTransition({ children, pathname }) {
+  return (
+    <AnimatePresence mode="wait" initial={true}>
+      <motion.div
+        key={pathname}
+        className="page-transition-shell"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 export default function App() {
   const [session, setSession] = useState(null);
   const [init, setInit] = useState(true);
+  const { clearCache } = useAppDataCache();
 
   // Role gating
   const [roleInit, setRoleInit] = useState(true);
@@ -62,7 +82,6 @@ export default function App() {
     };
   }, []);
 
-  // Fetch role when session exists
   useEffect(() => {
     let mounted = true;
 
@@ -103,8 +122,9 @@ export default function App() {
   }, [session?.user?.id]);
 
   async function logout() {
-    await supabase.auth.signOut();
-    navigate("/");
+  clearCache();
+  await supabase.auth.signOut();
+  navigate("/");
   }
 
   if (init) return null;
@@ -120,6 +140,7 @@ export default function App() {
   }
 
   const pathname = location.pathname;
+
   const isTabActive = (to) => {
     if (to === "/home") return pathname === "/home" || pathname === "/";
     if (to === "/calendar") return pathname.startsWith("/calendar");
@@ -128,7 +149,6 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {/* Sidebar */}
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -136,7 +156,6 @@ export default function App() {
         onLogout={logout}
       />
 
-      {/* New top bar with hamburger + branding */}
       <header className="app-topbar-new">
         <button
           className="app-menu-btn"
@@ -145,6 +164,7 @@ export default function App() {
         >
           <Menu size={20} />
         </button>
+
         <div className="app-topbar-brand">
           <div className="app-topbar-brand-icon">
             <Dumbbell size={16} strokeWidth={2.5} />
@@ -154,20 +174,23 @@ export default function App() {
       </header>
 
       <main className="app-main">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/workouts" element={<Workouts />} />
-          <Route path="/workouts/:id" element={<WorkoutDetail />} />
-          <Route path="/session/:sessionId" element={<SessionPage />} />
-          <Route path="/progress" element={<ProgressPage />} />
-          <Route path="/progress/id/:exerciseId" element={<ProgressPage />} />
-          <Route path="/exercises" element={<ExerciseLibrary />} />
-
-          {/* Admin route (UI gated + also server/RLS will enforce) */}
-          <Route path="/admin/users" element={<AdminUsers isAdmin={isAdmin} roleInit={roleInit} />} />
-        </Routes>
+        <PageTransition pathname={pathname}>
+          <Routes location={location}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/workouts" element={<Workouts />} />
+            <Route path="/workouts/:id" element={<WorkoutDetail />} />
+            <Route path="/session/:sessionId" element={<SessionPage />} />
+            <Route path="/progress" element={<ProgressPage />} />
+            <Route path="/progress/id/:exerciseId" element={<ProgressPage />} />
+            <Route path="/exercises" element={<ExerciseLibrary />} />
+            <Route
+              path="/admin/users"
+              element={<AdminUsers isAdmin={isAdmin} roleInit={roleInit} />}
+            />
+          </Routes>
+        </PageTransition>
       </main>
 
       <nav className="app-bottom-nav" aria-label="Bottom navigation">

@@ -1,5 +1,3 @@
-/* src/css/home-page.css */
-
 .home-page {
   padding: 8px 16px 24px;
   max-width: 960px;
@@ -7,11 +5,151 @@
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+
+
 .home-loading {
   text-align: center;
   padding: 40px 0;
   color: #6b7280;
   font-size: 0.95rem;
+}
+
+/* ===== Skeleton ===== */
+.home-skeleton-shell {
+  animation: homeSkeletonFadeIn 0.18s ease;
+}
+
+@keyframes homeSkeletonFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.home-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 0%,
+    #f3f4f6 25%,
+    #e5e7eb 50%,
+    #f3f4f6 75%,
+    #e5e7eb 100%
+  );
+  background-size: 200% 100%;
+  animation: homeShimmer 1.3s linear infinite;
+  border-radius: 12px;
+}
+
+@keyframes homeShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.home-skeleton-title {
+  width: min(240px, 70%);
+  height: 30px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.home-skeleton-subtitle {
+  width: min(340px, 90%);
+  height: 16px;
+  border-radius: 8px;
+}
+
+.home-skeleton-header-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.home-skeleton-section-title {
+  width: 140px;
+  height: 20px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.home-skeleton-section-desc {
+  width: min(360px, 92%);
+  height: 14px;
+  border-radius: 8px;
+}
+
+.home-skeleton-badge {
+  width: 84px;
+  height: 28px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.home-skeleton-row-title {
+  width: 160px;
+  height: 18px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.home-skeleton-row-meta {
+  width: 96px;
+  height: 14px;
+  border-radius: 8px;
+  margin-top: 2px;
+}
+
+.home-skeleton-chip {
+  width: 68px;
+  height: 22px;
+  border-radius: 999px;
+}
+
+.home-skeleton-chip--wide {
+  width: 96px;
+}
+
+.home-skeleton-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.home-skeleton-date {
+  width: 112px;
+  height: 14px;
+  border-radius: 8px;
+  margin-top: 2px;
+}
+
+.home-skeleton-duration {
+  width: 72px;
+  height: 30px;
+  border-radius: 999px;
+}
+
+.home-skeleton-stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.home-skeleton-stat-value {
+  width: 58px;
+  height: 22px;
+  border-radius: 8px;
+}
+
+.home-skeleton-stat-label {
+  width: 76px;
+  height: 14px;
+  border-radius: 8px;
 }
 
 /* ===== Welcome ===== */
@@ -58,6 +196,8 @@
   margin: 2px 0 0;
   font-size: 0.82rem;
   color: #9ca3af;
+  line-height: 1.4;
+  max-width: 520px;
 }
 
 .home-section-badge {
@@ -81,6 +221,10 @@
   border: 1px solid #e5e7eb;
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+
+.home-card-scroll--workouts {
+  max-height: 310px;
 }
 
 .home-card-scroll::-webkit-scrollbar {
@@ -121,6 +265,11 @@
 
 .home-workout-row--detail:active {
   background: #f1f5f9;
+}
+
+.home-workout-row--combined {
+  align-items: center;
+  gap: 14px;
 }
 
 .home-workout-info {
@@ -168,7 +317,54 @@
   color: #9ca3af;
 }
 
-/* ===== Play button ===== */
+/* ===== Workout actions ===== */
+.home-workout-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.home-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.home-icon-btn:hover {
+  transform: translateY(-1px);
+  background: #f8fafc;
+  color: #111827;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.home-icon-btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.home-detail-btn {
+  background: #ffffff;
+  color: #64748b;
+}
+
+.home-detail-btn:hover {
+  color: #0f172a;
+}
+
 .home-play-btn {
   width: 40px;
   height: 40px;
@@ -185,9 +381,10 @@
 }
 
 .home-play-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.06);
   box-shadow: 0 6px 16px rgba(2, 6, 23, 0.3);
-  background: #0f172a;
+  background: #020617;
+  color: #ffffff;
 }
 
 .home-play-btn:active {
@@ -198,12 +395,11 @@
 /* ===== Chevron icon ===== */
 .home-chevron-icon {
   flex-shrink: 0;
-  color: #9ca3af;
-  transition: transform 0.15s ease, color 0.15s ease;
+  color: currentColor;
+  transition: transform 0.15s ease;
 }
 
-.home-workout-row:hover .home-chevron-icon {
-  color: #6b7280;
+.home-detail-btn:hover .home-chevron-icon {
   transform: translateX(2px);
 }
 
@@ -360,6 +556,29 @@
 }
 
 /* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .home-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home-section-badge {
+    align-self: flex-start;
+  }
+
+  .home-card-scroll--workouts {
+    max-height: 336px;
+  }
+
+  .home-workout-row--combined {
+    align-items: flex-start;
+  }
+
+  .home-workout-actions {
+    align-self: center;
+  }
+}
+
 @media (max-width: 480px) {
   .home-page {
     padding: 4px 10px 20px;
@@ -376,5 +595,64 @@
 
   .home-stat-card {
     padding: 14px 10px;
+  }
+
+  .home-workout-row {
+    padding: 13px 12px;
+  }
+
+  .home-workout-actions {
+    gap: 6px;
+  }
+
+  .home-icon-btn,
+  .home-play-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .home-workout-name {
+    font-size: 0.92rem;
+  }
+
+  .home-workout-meta {
+    font-size: 0.76rem;
+  }
+
+  .home-muscle-chip {
+    font-size: 0.68rem;
+    padding: 2px 7px;
+  }
+
+  .home-history-row {
+    padding: 13px 12px;
+  }
+
+  .home-history-duration {
+    padding: 5px 10px;
+    font-size: 0.76rem;
+  }
+
+  .home-skeleton-title {
+    width: min(200px, 72%);
+    height: 26px;
+  }
+
+  .home-skeleton-subtitle {
+    width: min(280px, 88%);
+  }
+
+  .home-skeleton-row-title {
+    width: 130px;
+  }
+
+  .home-skeleton-chip {
+    height: 20px;
+  }
+
+  .home-skeleton-duration {
+    width: 64px;
+    height: 28px;
   }
 }
