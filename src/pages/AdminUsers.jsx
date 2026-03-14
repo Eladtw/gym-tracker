@@ -1,6 +1,7 @@
 // src/pages/AdminUsers.jsx
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useModal } from "../components/ModalProvider";
 import "../css/AdminUsers.css";
 
 function fmtDate(ts) {
@@ -16,36 +17,250 @@ function fmtDate(ts) {
   });
 }
 
-export default function AdminUsers({ isAdmin, roleInit }) {
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-  const [users, setUsers] = useState([]);
-
-  // search
-  const [q, setQ] = useState("");
-
-  // create modal
-  const [open, setOpen] = useState(false);
+function CreateUserModal({ baseUrl, getToken, onCreated, onClose }) {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState("member");
   const [creating, setCreating] = useState(false);
   const [createErr, setCreateErr] = useState("");
 
-  // role edits
-  const [pendingRole, setPendingRole] = useState({});
-  const [savingIds, setSavingIds] = useState({});
+  async function createUser() {
+    setCreateErr("");
 
-  // active toggle
-  const [togglingIds, setTogglingIds] = useState({});
+    const email = newEmail.trim().toLowerCase();
+    const password = newPassword;
+    const role = newRole;
 
-  // delete confirm modal
-  const [delOpen, setDelOpen] = useState(false);
-  const [delTarget, setDelTarget] = useState(null);
+    if (!email || !email.includes("@")) {
+      setCreateErr("Please enter a valid email.");
+      return;
+    }
+    if (!password || password.length < 8) {
+      setCreateErr("Password must be at least 8 characters.");
+      return;
+    }
+    if (role !== "admin" && role !== "member") {
+      setCreateErr("Invalid role.");
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      const token = await getToken();
+      if (!token) {
+        setCreateErr("Missing session token. Please re-login.");
+        setCreating(false);
+        return;
+      }
+
+      const res = await fetch(`${baseUrl}/functions/v1/admin_create_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email, password, role }),
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        setCreateErr(`Failed: ${res.status} ${text}`);
+        setCreating(false);
+        return;
+      }
+
+      await onCreated();
+      setCreating(false);
+      onClose();
+    } catch (e) {
+      setCreateErr(String(e));
+      setCreating(false);
+    }
+  }
+
+  return (
+    <div
+      className="um-modalBackdrop"
+      role="dialog"
+      aria-modal="true"
+      onMouseDown={onClose}
+    >
+      <div className="um-modal" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="um-modalHead">
+          <h3>Create User</h3>
+          <button
+            className="um-x"
+            onClick={onClose}
+            aria-label="Close"
+            disabled={creating}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="um-modalBody">
+          <label className="um-inputLabel">Email</label>
+          <input
+            className="um-input"
+            type="email"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="user@example.com"
+            disabled={creating}
+            autoFocus
+          />
+
+          <label className="um-inputLabel">Password</label>
+          <input
+            className="um-input"
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="At least 8 characters"
+            disabled={creating}
+          />
+
+          <label className="um-inputLabel">Role</label>
+          <select
+            className="um-select"
+            value={newRole}
+            onChange={(e) => setNewRole(e.target.value)}
+            disabled={creating}
+          >
+            <option value="member">member</option>
+            <option value="admin">admin</option>
+          </select>
+
+          {createErr && <div className="um-error">{createErr}</div>}
+        </div>
+
+        <div className="um-modalActions">
+          <button
+            className="um-secondaryBtn"
+            onClick={onClose}
+            disabled={creating}
+          >
+            Cancel
+          </button>
+          <button
+            className="um-createBtn"
+            onClick={createUser}
+            disabled={creating}
+          >
+            {creating ? "Creating…" : "Create"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteUserModal({ user, baseUrl, getToken, onDeleted, onClose }) {
   const [deleting, setDeleting] = useState(false);
   const [deleteErr, setDeleteErr] = useState("");
 
+  async function confirmDelete() {
+    if (!user?.id) return;
+
+    setDeleting(true);
+    setDeleteErr("");
+
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Missing session token. Please re-login.");
+
+      const res = await fetch(`${baseUrl}/functions/v1/admin_delete_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+
+      const text = await res.text();
+      if (!res.ok) throw new Error(`Failed: ${res.status} ${text}`);
+
+      await onDeleted();
+      setDeleting(false);
+      onClose();
+    } catch (e) {
+      setDeleteErr(String(e));
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div
+      className="um-modalBackdrop"
+      role="dialog"
+      aria-modal="true"
+      onMouseDown={deleting ? undefined : onClose}
+    >
+      <div className="um-modal" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="um-modalHead">
+          <h3>Delete user</h3>
+          <button
+            className="um-x"
+            onClick={onClose}
+            aria-label="Close"
+            disabled={deleting}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="um-modalBody">
+          <p style={{ margin: 0 }}>
+            This will permanently delete the user and all their data (workouts,
+            sessions, sets, metrics, etc.).
+          </p>
+          <p style={{ margin: "10px 0 0", fontWeight: 800 }}>
+            {user?.email}
+          </p>
+          <p style={{ margin: "10px 0 0", opacity: 0.8 }}>
+            Tip: Deactivate first, then Delete.
+          </p>
+
+          {deleteErr && <div className="um-error">{deleteErr}</div>}
+        </div>
+
+        <div className="um-modalActions">
+          <button
+            className="um-secondaryBtn"
+            onClick={onClose}
+            disabled={deleting}
+          >
+            Cancel
+          </button>
+          <button
+            className="um-dangerBtn um-dangerBtn--solid"
+            onClick={confirmDelete}
+            disabled={deleting}
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminUsers({ isAdmin, roleInit }) {
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [users, setUsers] = useState([]);
+
+  const [q, setQ] = useState("");
+
+  const [pendingRole, setPendingRole] = useState({});
+  const [savingIds, setSavingIds] = useState({});
+
+  const [togglingIds, setTogglingIds] = useState({});
+
   const baseUrl = useMemo(() => import.meta.env.VITE_SUPABASE_URL, []);
+  const { openModal, closeModal } = useModal();
 
   async function getToken() {
     const { data } = await supabase.auth.getSession();
@@ -101,7 +316,10 @@ export default function AdminUsers({ isAdmin, roleInit }) {
     setSavingIds((p) => ({ ...p, [userId]: true }));
     setErr("");
 
-    const { error } = await supabase.from("profiles").update({ role: nextRole }).eq("id", userId);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ role: nextRole })
+      .eq("id", userId);
 
     if (error) {
       setErr(error.message);
@@ -109,7 +327,9 @@ export default function AdminUsers({ isAdmin, roleInit }) {
       return;
     }
 
-    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: nextRole } : u)));
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, role: nextRole } : u))
+    );
 
     setPendingRole((p) => {
       const cp = { ...p };
@@ -130,14 +350,21 @@ export default function AdminUsers({ isAdmin, roleInit }) {
 
       const res = await fetch(`${baseUrl}/functions/v1/admin_set_user_active`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ user_id: userId, is_active: nextActive }),
       });
 
       const text = await res.text();
       if (!res.ok) throw new Error(`Failed: ${res.status} ${text}`);
 
-      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, is_active: nextActive } : u)));
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, is_active: nextActive } : u
+        )
+      );
     } catch (e) {
       setErr(String(e));
     } finally {
@@ -145,87 +372,39 @@ export default function AdminUsers({ isAdmin, roleInit }) {
     }
   }
 
-  function openDelete(u) {
-    setDeleteErr("");
-    setDelTarget(u);
-    setDelOpen(true);
+  function openCreateUserModal() {
+    let modalId = null;
+
+    modalId = openModal(
+      <CreateUserModal
+        baseUrl={baseUrl}
+        getToken={getToken}
+        onCreated={loadUsers}
+        onClose={() => closeModal(modalId)}
+      />,
+      {
+        closeOnBackdrop: true,
+        closeOnEsc: true,
+      }
+    );
   }
 
-  async function confirmDelete() {
-    if (!delTarget?.id) return;
+  function openDelete(user) {
+    let modalId = null;
 
-    setDeleting(true);
-    setDeleteErr("");
-
-    try {
-      const token = await getToken();
-      if (!token) throw new Error("Missing session token. Please re-login.");
-
-      const res = await fetch(`${baseUrl}/functions/v1/admin_delete_user`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ user_id: delTarget.id }),
-      });
-
-      const text = await res.text();
-      if (!res.ok) throw new Error(`Failed: ${res.status} ${text}`);
-
-      setDelOpen(false);
-      setDelTarget(null);
-      setDeleting(false);
-
-      await loadUsers();
-    } catch (e) {
-      setDeleteErr(String(e));
-      setDeleting(false);
-    }
-  }
-
-  async function createUser() {
-    setCreateErr("");
-
-    const email = newEmail.trim().toLowerCase();
-    const password = newPassword;
-    const role = newRole;
-
-    if (!email || !email.includes("@")) return setCreateErr("Please enter a valid email.");
-    if (!password || password.length < 8) return setCreateErr("Password must be at least 8 characters.");
-    if (role !== "admin" && role !== "member") return setCreateErr("Invalid role.");
-
-    setCreating(true);
-
-    try {
-      const token = await getToken();
-      if (!token) {
-        setCreateErr("Missing session token. Please re-login.");
-        setCreating(false);
-        return;
+    modalId = openModal(
+      <DeleteUserModal
+        user={user}
+        baseUrl={baseUrl}
+        getToken={getToken}
+        onDeleted={loadUsers}
+        onClose={() => closeModal(modalId)}
+      />,
+      {
+        closeOnBackdrop: true,
+        closeOnEsc: true,
       }
-
-      const res = await fetch(`${baseUrl}/functions/v1/admin_create_user`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email, password, role }),
-      });
-
-      const text = await res.text();
-      if (!res.ok) {
-        setCreateErr(`Failed: ${res.status} ${text}`);
-        setCreating(false);
-        return;
-      }
-
-      setOpen(false);
-      setNewEmail("");
-      setNewPassword("");
-      setNewRole("member");
-      setCreating(false);
-
-      await loadUsers();
-    } catch (e) {
-      setCreateErr(String(e));
-      setCreating(false);
-    }
+    );
   }
 
   return (
@@ -236,13 +415,13 @@ export default function AdminUsers({ isAdmin, roleInit }) {
           <p>View users, last login, manage roles, and control access.</p>
         </div>
 
-        <button className="um-createBtn um-hide-mobile" onClick={() => setOpen(true)}>
+        <button className="um-createBtn um-hide-mobile" onClick={openCreateUserModal}>
           <span className="um-plus" aria-hidden>+</span>
           Create User
         </button>
       </div>
 
-      <button className="um-createBtn um-mobileBtn um-hide-desktop" onClick={() => setOpen(true)}>
+      <button className="um-createBtn um-mobileBtn um-hide-desktop" onClick={openCreateUserModal}>
         <span className="um-plus" aria-hidden>+</span>
         Create User
       </button>
@@ -268,7 +447,6 @@ export default function AdminUsers({ isAdmin, roleInit }) {
           <div className="um-loading">Loading users…</div>
         ) : (
           <>
-            {/* Desktop / Tablet table */}
             <div className="um-tableWrap um-hide-mobile">
               <table className="um-table">
                 <thead>
@@ -290,7 +468,8 @@ export default function AdminUsers({ isAdmin, roleInit }) {
                   ) : (
                     filtered.map((u) => {
                       const selected = pendingRole[u.id] ?? u.role;
-                      const dirty = pendingRole[u.id] && pendingRole[u.id] !== u.role;
+                      const dirty =
+                        pendingRole[u.id] && pendingRole[u.id] !== u.role;
                       const saving = !!savingIds[u.id];
                       const toggling = !!togglingIds[u.id];
 
@@ -302,7 +481,12 @@ export default function AdminUsers({ isAdmin, roleInit }) {
                             <select
                               className="um-select"
                               value={selected}
-                              onChange={(e) => setPendingRole((p) => ({ ...p, [u.id]: e.target.value }))}
+                              onChange={(e) =>
+                                setPendingRole((p) => ({
+                                  ...p,
+                                  [u.id]: e.target.value,
+                                }))
+                              }
                               disabled={saving}
                             >
                               <option value="member">member</option>
@@ -310,7 +494,14 @@ export default function AdminUsers({ isAdmin, roleInit }) {
                             </select>
                           </td>
                           <td>
-                            <span className={"um-badge " + (u.is_active ? "um-badge--active" : "um-badge--inactive")}>
+                            <span
+                              className={
+                                "um-badge " +
+                                (u.is_active
+                                  ? "um-badge--active"
+                                  : "um-badge--inactive")
+                              }
+                            >
                               {u.is_active ? "Active" : "Inactive"}
                             </span>
                           </td>
@@ -331,15 +522,23 @@ export default function AdminUsers({ isAdmin, roleInit }) {
                               onClick={() => toggleActive(u.id, !u.is_active)}
                               style={{ marginLeft: 10 }}
                             >
-                              {toggling ? "Updating…" : (u.is_active ? "Deactivate" : "Activate")}
+                              {toggling
+                                ? "Updating…"
+                                : u.is_active
+                                ? "Deactivate"
+                                : "Activate"}
                             </button>
 
                             <button
                               className="um-dangerBtn"
-                              disabled={u.is_active} /* safe: delete only if inactive */
+                              disabled={u.is_active}
                               onClick={() => openDelete(u)}
                               style={{ marginLeft: 10 }}
-                              title={u.is_active ? "Deactivate user first" : "Delete user permanently"}
+                              title={
+                                u.is_active
+                                  ? "Deactivate user first"
+                                  : "Delete user permanently"
+                              }
                             >
                               Delete
                             </button>
@@ -352,21 +551,28 @@ export default function AdminUsers({ isAdmin, roleInit }) {
               </table>
             </div>
 
-            {/* Mobile cards */}
             <div className="um-mobileList um-hide-desktop">
               {filtered.length === 0 ? (
                 <div className="um-emptyCard">No users found.</div>
               ) : (
                 filtered.map((u) => {
                   const selected = pendingRole[u.id] ?? u.role;
-                  const dirty = pendingRole[u.id] && pendingRole[u.id] !== u.role;
+                  const dirty =
+                    pendingRole[u.id] && pendingRole[u.id] !== u.role;
                   const saving = !!savingIds[u.id];
                   const toggling = !!togglingIds[u.id];
 
                   return (
                     <div className="um-userCard" key={u.id}>
                       <div className="um-cardRowTop">
-                        <span className={"um-badge " + (u.is_active ? "um-badge--active" : "um-badge--inactive")}>
+                        <span
+                          className={
+                            "um-badge " +
+                            (u.is_active
+                              ? "um-badge--active"
+                              : "um-badge--inactive")
+                          }
+                        >
                           {u.is_active ? "Active" : "Inactive"}
                         </span>
 
@@ -374,7 +580,11 @@ export default function AdminUsers({ isAdmin, roleInit }) {
                           className="um-dangerBtn"
                           disabled={u.is_active}
                           onClick={() => openDelete(u)}
-                          title={u.is_active ? "Deactivate user first" : "Delete user permanently"}
+                          title={
+                            u.is_active
+                              ? "Deactivate user first"
+                              : "Delete user permanently"
+                          }
                         >
                           Delete
                         </button>
@@ -395,7 +605,12 @@ export default function AdminUsers({ isAdmin, roleInit }) {
                         <select
                           className="um-select"
                           value={selected}
-                          onChange={(e) => setPendingRole((p) => ({ ...p, [u.id]: e.target.value }))}
+                          onChange={(e) =>
+                            setPendingRole((p) => ({
+                              ...p,
+                              [u.id]: e.target.value,
+                            }))
+                          }
                           disabled={saving}
                         >
                           <option value="member">member</option>
@@ -428,7 +643,11 @@ export default function AdminUsers({ isAdmin, roleInit }) {
                           disabled={toggling}
                           onClick={() => toggleActive(u.id, !u.is_active)}
                         >
-                          {toggling ? "Updating…" : (u.is_active ? "Deactivate" : "Activate")}
+                          {toggling
+                            ? "Updating…"
+                            : u.is_active
+                            ? "Deactivate"
+                            : "Activate"}
                         </button>
                       </div>
                     </div>
@@ -439,82 +658,6 @@ export default function AdminUsers({ isAdmin, roleInit }) {
           </>
         )}
       </section>
-
-      {/* Create user modal */}
-      {open && (
-        <div className="um-modalBackdrop" role="dialog" aria-modal="true">
-          <div className="um-modal">
-            <div className="um-modalHead">
-              <h3>Create User</h3>
-              <button className="um-x" onClick={() => { setOpen(false); setCreateErr(""); }} aria-label="Close">
-                ✕
-              </button>
-            </div>
-
-            <div className="um-modalBody">
-              <label className="um-inputLabel">Email</label>
-              <input className="um-input" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="user@example.com" />
-
-              <label className="um-inputLabel">Password</label>
-              <input className="um-input" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 8 characters" />
-
-              <label className="um-inputLabel">Role</label>
-              <select className="um-select" value={newRole} onChange={(e) => setNewRole(e.target.value)}>
-                <option value="member">member</option>
-                <option value="admin">admin</option>
-              </select>
-
-              {createErr && <div className="um-error">{createErr}</div>}
-            </div>
-
-            <div className="um-modalActions">
-              <button className="um-secondaryBtn" onClick={() => setOpen(false)} disabled={creating}>
-                Cancel
-              </button>
-              <button className="um-createBtn" onClick={createUser} disabled={creating}>
-                {creating ? "Creating…" : "Create"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete confirm modal */}
-      {delOpen && (
-        <div className="um-modalBackdrop" role="dialog" aria-modal="true">
-          <div className="um-modal">
-            <div className="um-modalHead">
-              <h3>Delete user</h3>
-              <button className="um-x" onClick={() => { setDelOpen(false); setDelTarget(null); setDeleteErr(""); }} aria-label="Close">
-                ✕
-              </button>
-            </div>
-
-            <div className="um-modalBody">
-              <p style={{ margin: 0 }}>
-                This will permanently delete the user and all their data (workouts, sessions, sets, metrics, etc.).
-              </p>
-              <p style={{ margin: "10px 0 0", fontWeight: 800 }}>
-                {delTarget?.email}
-              </p>
-              <p style={{ margin: "10px 0 0", opacity: 0.8 }}>
-                Tip: Deactivate first, then Delete.
-              </p>
-
-              {deleteErr && <div className="um-error">{deleteErr}</div>}
-            </div>
-
-            <div className="um-modalActions">
-              <button className="um-secondaryBtn" onClick={() => setDelOpen(false)} disabled={deleting}>
-                Cancel
-              </button>
-              <button className="um-dangerBtn um-dangerBtn--solid" onClick={confirmDelete} disabled={deleting}>
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

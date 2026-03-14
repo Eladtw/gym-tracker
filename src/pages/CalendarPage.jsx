@@ -31,22 +31,27 @@ function normalizeTargets(t) {
 function summarizeTargets(setTargets) {
   const arr = normalizeTargets(setTargets);
   if (arr.length === 0) return "—";
+
   const repsArr = arr.map((s) => Number(s.reps) || 0);
   const wgtArr = arr.map((s) => Number(s.weight) || 0);
   const allRepsSame = repsArr.every((v) => v === repsArr[0]);
   const allWgtSame = wgtArr.every((v) => v === wgtArr[0]);
 
-  if (allRepsSame && allWgtSame)
+  if (allRepsSame && allWgtSame) {
     return `${arr.length}×(${repsArr[0]} @ ${wgtArr[0]} kg)`;
-  if (allRepsSame)
+  }
+  if (allRepsSame) {
     return `${arr.length} sets · ${repsArr[0]} reps (varying weight)`;
-  if (allWgtSame)
+  }
+  if (allWgtSame) {
     return `${arr.length} sets · ${wgtArr[0]} kg (varying reps)`;
+  }
   return `${arr.length} sets (varying reps & weight)`;
 }
 
 function SetDetails({ setTargets }) {
   const rows = normalizeTargets(setTargets);
+
   return (
     <div className="set-details-box">
       <div className="set-details-title">Set Details:</div>
@@ -113,7 +118,7 @@ function WorkoutSelect({ workouts, value, onChange }) {
   );
 }
 
-/* --------- Planned list UI (PROFESSIONAL + ICONS) --------- */
+/* --------- Planned list UI --------- */
 function PlannedList({
   mode,
   date,
@@ -162,7 +167,6 @@ function PlannedList({
             const w = workouts.find((x) => String(x.id) === String(ps.workout_id));
             const name = w?.name || "Workout";
             const isActive = String(selectedPlanId) === String(ps.id);
-
             const clickable = isToday || isFuture;
 
             return (
@@ -232,7 +236,7 @@ function PlannedList({
   );
 }
 
-/* --------- Modal של בחירת אימון (היום / עתיד) --------- */
+/* --------- Modal של בחירת אימון --------- */
 function WorkoutSelectorModal({
   mode, // "today" | "future"
   date,
@@ -240,12 +244,10 @@ function WorkoutSelectorModal({
   chosenWorkoutId,
   onChooseWorkout,
   chosenWorkoutItems,
-
   plannedSessions,
   selectedPlanSessionId,
   onSelectPlanSession,
   onDeletePlanSession,
-
   onPrimaryAction,
   msg,
   onClose,
@@ -285,7 +287,6 @@ function WorkoutSelectorModal({
   );
   const workoutName = selectedWorkout?.name || "Workout";
 
-  // ✅ Workout muscle groups = all unique PRIMARY groups in the workout
   const workoutMuscles = useMemo(() => {
     const unique = uniquePrimaryGroupsFromItems(chosenWorkoutItems);
     unique.sort((a, b) => a.localeCompare(b));
@@ -300,7 +301,12 @@ function WorkoutSelectorModal({
         <div className="calendar-modal-header">
           <div className="calendar-modal-toprow">
             <div className="calendar-modal-date">{dateTitle}</div>
-            <button className="calendar-modal-close" onClick={onClose}>
+            <button
+              type="button"
+              className="calendar-modal-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
               ✕
             </button>
           </div>
@@ -308,127 +314,160 @@ function WorkoutSelectorModal({
           <div className="calendar-modal-subtitle">{subtitle}</div>
         </div>
 
-        {(isToday || hasPlannedForFuture) && (
-          <PlannedList
-            mode={mode}
-            date={date}
-            plannedSessions={plannedSessions}
-            workouts={workouts}
-            selectedPlanId={selectedPlanSessionId}
-            onSelectPlan={(id) => onSelectPlanSession(id)}
-            onDeletePlan={(id) => onDeletePlanSession(id)}
-          />
-        )}
+        <div className="calendar-modal-body">
+          {(isToday || hasPlannedForFuture) && (
+            <PlannedList
+              mode={mode}
+              date={date}
+              plannedSessions={plannedSessions}
+              workouts={workouts}
+              selectedPlanId={selectedPlanSessionId}
+              onSelectPlan={(id) => onSelectPlanSession(id)}
+              onDeletePlan={(id) => onDeletePlanSession(id)}
+            />
+          )}
 
-        <div className="calendar-modal-section">
-          <div className="calendar-label">
-            {isFuture ? "Add another plan" : "Workout Plan"}
-          </div>
-          <WorkoutSelect
-            workouts={workouts}
-            value={chosenWorkoutId}
-            onChange={onChooseWorkout}
-          />
-          {isToday && hasPlanned && (
-            <div className="calendar-hint">
-              You can also start a non-planned workout by selecting a plan here.
+          <div className="calendar-modal-section">
+            <div className="calendar-label">
+              {isFuture ? "Add another plan" : "Workout Plan"}
             </div>
-          )}
-        </div>
 
-        <div className="calendar-exercises-container">
-          {!chosenWorkoutId && (
-            <p className="calendar-empty-hint">
-              Select a workout plan to view exercises
-            </p>
-          )}
+            <WorkoutSelect
+              workouts={workouts}
+              value={chosenWorkoutId}
+              onChange={onChooseWorkout}
+            />
 
-          {chosenWorkoutId && (
-            <>
-              {/* ✅ Workout header + muscle groups */}
-              <div className="calendar-workout-overview">
-                <div className="calendar-workout-name">{workoutName}</div>
-                <div className="calendar-workout-muscles">
-                  {workoutMuscles.length > 0 ? (
-                    workoutMuscles.map((m) => (
-                      <span key={m} className="muscle-chip">
-                        {m}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="calendar-workout-muscles-empty">
-                      No muscle groups found (check primary_subgroup_id in DB)
-                    </span>
-                  )}
+            {isToday && hasPlanned && (
+              <div className="calendar-hint">
+                You can also start a non-planned workout by selecting a plan here.
+              </div>
+            )}
+          </div>
+
+          <div className="calendar-exercises-container">
+            {!chosenWorkoutId && (
+              <>
+                <p className="calendar-empty-hint">
+                  Select a workout plan to view exercises
+                </p>
+
+                <div className="calendar-action-block">
+                  <button
+                    type="button"
+                    className={
+                      "calendar-start-btn" + (isDisabled ? " is-disabled" : "")
+                    }
+                    disabled={isDisabled}
+                    onClick={!isDisabled ? onPrimaryAction : undefined}
+                  >
+                    {buttonLabel}
+                  </button>
+
+                  {msg && <div className="calendar-error-msg">{msg}</div>}
                 </div>
-              </div>
+              </>
+            )}
 
-              <div className="calendar-exercises-count">
-                {chosenWorkoutItems.length}{" "}
-                {chosenWorkoutItems.length === 1 ? "exercise" : "exercises"}
-              </div>
-
-              {chosenWorkoutItems.map((it) => {
-                const summary = summarizeTargets(it.set_targets);
-                const isOpen = expandedId === it.id;
-
-                const groupLabel = it?.primary_group_label || "Unknown";
-                const primarySubLabel = it?.primary_subgroup_label || "Unknown";
-
-                return (
-                  <div key={it.id} className="exercise-card">
-                    <div
-                      className="exercise-header"
-                      onClick={() =>
-                        setExpandedId((prev) => (prev === it.id ? null : it.id))
-                      }
-                    >
-                      <div>
-                        <div className="exercise-title">{it.exercise_name}</div>
-                        <div className="exercise-summary">{summary}</div>
-                      </div>
-                      <div className="exercise-chevron">{isOpen ? "▴" : "▾"}</div>
-                    </div>
-
-                    <div className="exercise-tag-row">
-                      <span
-                        className={
-                          "exercise-tag" +
-                          (groupLabel === "Unknown" ? " is-unknown" : "")
-                        }
-                      >
-                        {groupLabel}
+            {chosenWorkoutId && (
+              <>
+                <div className="calendar-workout-overview">
+                  <div className="calendar-workout-name">{workoutName}</div>
+                  <div className="calendar-workout-muscles">
+                    {workoutMuscles.length > 0 ? (
+                      workoutMuscles.map((m) => (
+                        <span key={m} className="muscle-chip">
+                          {m}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="calendar-workout-muscles-empty">
+                        No muscle groups found (check primary_subgroup_id in DB)
                       </span>
-                      <span
-                        className={
-                          "exercise-tag" +
-                          (primarySubLabel === "Unknown" ? " is-unknown" : "")
-                        }
-                      >
-                        {primarySubLabel}
-                      </span>
-                    </div>
-
-                    {isOpen && <SetDetails setTargets={it.set_targets} />}
+                    )}
                   </div>
-                );
-              })}
-            </>
-          )}
-        </div>
+                </div>
 
-        {/* ✅ UPDATED: footer wrapper so we can pad above bottom tabs */}
-        <div className="calendar-modal-footer">
-          <div className="calendar-modal-footer-inner">
-            <button
-              className={"calendar-start-btn" + (isDisabled ? " is-disabled" : "")}
-              disabled={isDisabled}
-              onClick={!isDisabled ? onPrimaryAction : undefined}
-            >
-              {buttonLabel}
-            </button>
+                <div className="calendar-exercises-count">
+                  {chosenWorkoutItems.length}{" "}
+                  {chosenWorkoutItems.length === 1 ? "exercise" : "exercises"}
+                </div>
 
-            {msg && <div className="calendar-error-msg">{msg}</div>}
+                <div className="calendar-exercises-scroll-shell">
+                  <div className="calendar-exercises-scroll">
+                    {chosenWorkoutItems.map((it) => {
+                      const summary = summarizeTargets(it.set_targets);
+                      const isOpen = expandedId === it.id;
+
+                      const groupLabel = it?.primary_group_label || "Unknown";
+                      const primarySubLabel =
+                        it?.primary_subgroup_label || "Unknown";
+
+                      return (
+                        <div key={it.id} className="exercise-card">
+                          <div
+                            className="exercise-header"
+                            onClick={() =>
+                              setExpandedId((prev) =>
+                                prev === it.id ? null : it.id
+                              )
+                            }
+                          >
+                            <div>
+                              <div className="exercise-title">
+                                {it.exercise_name}
+                              </div>
+                              <div className="exercise-summary">{summary}</div>
+                            </div>
+                            <div className="exercise-chevron">
+                              {isOpen ? "▴" : "▾"}
+                            </div>
+                          </div>
+
+                          <div className="exercise-tag-row">
+                            <span
+                              className={
+                                "exercise-tag" +
+                                (groupLabel === "Unknown" ? " is-unknown" : "")
+                              }
+                            >
+                              {groupLabel}
+                            </span>
+                            <span
+                              className={
+                                "exercise-tag" +
+                                (primarySubLabel === "Unknown"
+                                  ? " is-unknown"
+                                  : "")
+                              }
+                            >
+                              {primarySubLabel}
+                            </span>
+                          </div>
+
+                          {isOpen && <SetDetails setTargets={it.set_targets} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="calendar-action-block">
+                  <button
+                    type="button"
+                    className={
+                      "calendar-start-btn" + (isDisabled ? " is-disabled" : "")
+                    }
+                    disabled={isDisabled}
+                    onClick={!isDisabled ? onPrimaryAction : undefined}
+                  >
+                    {buttonLabel}
+                  </button>
+
+                  {msg && <div className="calendar-error-msg">{msg}</div>}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -447,7 +486,12 @@ function DaySessionsModal({ date, sessions, workouts, loading, onClose }) {
         <div className="calendar-modal-header">
           <div className="calendar-modal-toprow">
             <div className="calendar-modal-date">{dateTitle}</div>
-            <button className="calendar-modal-close" onClick={onClose}>
+            <button
+              type="button"
+              className="calendar-modal-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
               ✕
             </button>
           </div>
@@ -459,32 +503,34 @@ function DaySessionsModal({ date, sessions, workouts, loading, onClose }) {
           </div>
         </div>
 
-        <div className="calendar-exercises-container">
-          {loading && <p className="calendar-empty-hint">Loading workouts…</p>}
+        <div className="calendar-modal-body">
+          <div className="calendar-exercises-container">
+            {loading && <p className="calendar-empty-hint">Loading workouts…</p>}
 
-          {!loading && !hasSessions && (
-            <p className="calendar-empty-hint">
-              Nothing here yet. You didn&apos;t log a workout on this date.
-            </p>
-          )}
+            {!loading && !hasSessions && (
+              <p className="calendar-empty-hint">
+                Nothing here yet. You didn&apos;t log a workout on this date.
+              </p>
+            )}
 
-          {!loading && hasSessions && (
-            <ul className="calendar-session-list">
-              {sessions.map((s) => {
-                const w = workouts.find((w) => w.id === s.workout_id);
-                return (
-                  <li key={s.id} className="calendar-session-item">
-                    <div className="calendar-session-name">
-                      {w?.name || "Workout"}
-                    </div>
-                    <div className="calendar-session-meta">
-                      {s.ended_at ? "Completed" : "Logged"}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+            {!loading && hasSessions && (
+              <ul className="calendar-session-list">
+                {sessions.map((s) => {
+                  const w = workouts.find((w) => w.id === s.workout_id);
+                  return (
+                    <li key={s.id} className="calendar-session-item">
+                      <div className="calendar-session-name">
+                        {w?.name || "Workout"}
+                      </div>
+                      <div className="calendar-session-meta">
+                        {s.ended_at ? "Completed" : "Logged"}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -497,18 +543,15 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(() => todayIL.startOf("month"));
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // activeModal: null | "today" | "future" | "past"
   const [activeModal, setActiveModal] = useState(null);
 
   const [workouts, setWorkouts] = useState([]);
   const [chosenWorkoutId, setChosenWorkoutId] = useState("");
   const [chosenWorkoutItems, setChosenWorkoutItems] = useState([]);
 
-  // plannedByDate: dateStr -> array of planned sessions
   const [plannedByDate, setPlannedByDate] = useState(new Map());
   const [completedCountByDate, setCompletedCountByDate] = useState(new Map());
 
-  // state for selected day's plans
   const [plannedForSelectedDate, setPlannedForSelectedDate] = useState([]);
   const [selectedPlanSessionId, setSelectedPlanSessionId] = useState(null);
 
@@ -519,7 +562,6 @@ export default function CalendarPage() {
 
   const navigate = useNavigate();
 
-  // ✅ Lock body scroll when modal is open (fix mobile scroll + overscroll)
   useEffect(() => {
     const isOpen = !!activeModal;
     const body = document.body;
@@ -535,7 +577,6 @@ export default function CalendarPage() {
     };
   }, [activeModal]);
 
-  // טען אימונים
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase
@@ -548,9 +589,6 @@ export default function CalendarPage() {
     })();
   }, []);
 
-  // טען sessions לחודש:
-  // Planned = started_at is null
-  // Completed = ended_at not null
   const loadMonthSessions = useCallback(async () => {
     const { data: s } = await supabase.auth.getSession();
     const uid = s?.session?.user?.id;
@@ -628,7 +666,6 @@ export default function CalendarPage() {
     loadMonthSessions();
   }
 
-  // בניית גריד תאריכים
   const days = useMemo(() => {
     const start = month.startOf("month");
     const end = month.endOf("month");
@@ -636,14 +673,15 @@ export default function CalendarPage() {
     const endGrid = end.endOf("week");
     const arr = [];
     let cur = startGrid;
+
     while (cur.isBefore(endGrid) || cur.isSame(endGrid, "day")) {
       arr.push(cur);
       cur = cur.add(1, "day");
     }
+
     return arr;
   }, [month]);
 
-  // ✅ Load exercises + show: Primary Group + Primary Subgroup
   useEffect(() => {
     if (!chosenWorkoutId) {
       setChosenWorkoutItems([]);
@@ -751,7 +789,6 @@ export default function CalendarPage() {
     })();
   }, [chosenWorkoutId]);
 
-  // טעינת Sessions ליום עבר
   async function loadDaySessions(date) {
     setDaySessionsLoading(true);
     setDaySessions([]);
@@ -779,7 +816,6 @@ export default function CalendarPage() {
     setDaySessionsLoading(false);
   }
 
-  // ---------- Start for TODAY ----------
   async function startSessionForDate() {
     if (!selectedDate) return setMsg("Pick a date");
 
@@ -868,7 +904,6 @@ export default function CalendarPage() {
     navigate(`/session/${data.id}`);
   }
 
-  // ---------- Plan for FUTURE ----------
   async function planSessionForDate() {
     if (!selectedDate) return setMsg("Pick a date");
     if (!chosenWorkoutId) return setMsg("Pick a workout");
@@ -919,7 +954,6 @@ export default function CalendarPage() {
     setMsg("✅ Workout planned for this day");
   }
 
-  // ---------- Delete a specific planned session ----------
   async function deletePlanById(planId) {
     if (!planId) return;
 
@@ -953,7 +987,6 @@ export default function CalendarPage() {
     setMsg("✅ Plan deleted");
   }
 
-  // ---------- Day click ----------
   async function handleDayClick(d) {
     setSelectedDate(d);
     setMsg("");
@@ -967,8 +1000,8 @@ export default function CalendarPage() {
     setActiveModal(mode);
 
     const dateKey = d.format("YYYY-MM-DD");
-
     const plannedArr = plannedByDate.get(dateKey) || [];
+
     setPlannedForSelectedDate(plannedArr);
 
     if (plannedArr.length === 1) {
@@ -1155,9 +1188,11 @@ export default function CalendarPage() {
           onSelectPlanSession={(planId) => {
             setSelectedPlanSessionId(planId);
             setMsg("");
+
             const plan = (plannedForSelectedDate || []).find(
               (p) => String(p.id) === String(planId)
             );
+
             if (plan?.workout_id) setChosenWorkoutId(plan.workout_id);
           }}
           onDeletePlanSession={deletePlanById}

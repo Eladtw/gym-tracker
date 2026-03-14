@@ -3,6 +3,7 @@ import "../css/workouts-page.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import { useModal } from "../components/ModalProvider";
 
 // עוזר: נרמול set_targets
 function normalizeTargets(t) {
@@ -28,18 +29,14 @@ function summarizeExerciseTargets(setTargets) {
   const allWgtSame = wgtArr.every((v) => v === wgtArr[0]);
 
   if (allRepsSame && allWgtSame) {
-    // 3 × 10
     return `${arr.length} × ${repsArr[0]}`;
   }
   if (allRepsSame && !allWgtSame) {
-    // 3 sets · 10 reps (varying weight)
     return `${arr.length} sets · ${repsArr[0]} reps (varying weight)`;
   }
   if (!allRepsSame && allWgtSame) {
-    // 3 sets · 80 kg (varying reps)
     return `${arr.length} sets · ${wgtArr[0]} kg (varying reps)`;
   }
-  // 3 sets (varying reps & weight)
   return `${arr.length} sets (varying reps & weight)`;
 }
 
@@ -52,11 +49,9 @@ function getWorkoutStats(workout) {
   const muscleGroupsSet = new Set();
 
   exercises.forEach((ex) => {
-    // סופרים סטים לפי set_targets
     const normalized = normalizeTargets(ex.set_targets);
     totalSets += normalized.length;
 
-    // הוצאת קבוצת השריר ברמת group (Chest / Back / Legs וכו')
     const groupLabel =
       ex.exercises_catalog?.primary_subgroup?.group?.label ||
       ex.exercises_catalog?.primary_subgroup?.label ||
@@ -74,27 +69,156 @@ function getWorkoutStats(workout) {
   };
 }
 
+function CreateWorkoutModal({ onClose, onCreated, setGlobalMsg }) {
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [localMsg, setLocalMsg] = useState("");
+
+  async function handleCreateConfirm() {
+    const { data: s } = await supabase.auth.getSession();
+    const uid = s?.session?.user?.id;
+
+    if (!uid) {
+      setLocalMsg("❌ Not logged in");
+      return;
+    }
+
+    if (!name.trim()) {
+      setLocalMsg("❌ Enter workout name");
+      return;
+    }
+
+    setSubmitting(true);
+    setLocalMsg("");
+
+    const { error } = await supabase
+      .from("workouts")
+      .insert({ user_id: uid, name: name.trim(), notes: null });
+
+    setSubmitting(false);
+
+    if (error) {
+      setLocalMsg("❌ " + error.message);
+      return;
+    }
+
+    setGlobalMsg("✅ Workout created");
+    await onCreated();
+    onClose();
+  }
+
+  return (
+    <div
+      className="workouts-modal-overlay"
+      onMouseDown={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="workouts-modal"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <h3 className="workouts-modal-title">Create New Workout</h3>
+        <p className="workouts-modal-subtitle">
+          Give your workout a name. You’ll add exercises next.
+        </p>
+
+        <label className="workouts-label" htmlFor="modal-workout-name">
+          Workout Name
+        </label>
+        <input
+          id="modal-workout-name"
+          className="workouts-input"
+          placeholder="e.g. Upper Body Strength"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={submitting}
+          autoFocus
+        />
+
+        {localMsg && <p className="workouts-message">{localMsg}</p>}
+
+        <div className="workouts-modal-actions">
+          <button
+            className="workouts-modal-confirm"
+            onClick={handleCreateConfirm}
+            disabled={submitting}
+          >
+            {submitting ? "Creating…" : "Continue"}
+          </button>
+          <button
+            className="workouts-modal-cancel"
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteWorkoutModal({
+  workout,
+  deleting,
+  onClose,
+  onConfirm,
+}) {
+  return (
+    <div
+      className="workouts-modal-overlay"
+      onMouseDown={deleting ? undefined : onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="workouts-modal workouts-modal-danger"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <h3 className="workouts-modal-title workouts-modal-delete-title">
+          Delete workout?
+        </h3>
+        <p className="workouts-modal-subtitle">
+          You are about to delete <strong>{workout.name}</strong>. This action
+          cannot be undone.
+        </p>
+
+        <div className="workouts-modal-actions">
+          <button
+            className="workouts-modal-delete-confirm"
+            onClick={onConfirm}
+            disabled={deleting}
+          >
+            {deleting ? "Deleting…" : "Delete"}
+          </button>
+          <button
+            className="workouts-modal-cancel"
+            onClick={onClose}
+            disabled={deleting}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Workouts() {
   const [workouts, setWorkouts] = useState([]);
-  const [name, setName] = useState("");
   const [msg, setMsg] = useState("");
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // למחיקה
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null); // { id, name }
   const [deleting, setDeleting] = useState(false);
 
-  // dropdown פתוח
   const [expandedId, setExpandedId] = useState(null);
 
   const navigate = useNavigate();
+  const { openModal, closeModal } = useModal();
 
   async function load() {
     setMsg("");
 
-    // מוצא את המשתמש המחובר
     const { data: s } = await supabase.auth.getSession();
     const uid = s?.session?.user?.id;
     if (!uid) {
@@ -103,7 +227,6 @@ export default function Workouts() {
       return;
     }
 
-    // טוען אימונים של המשתמש + התרגילים והקבוצות שריר לכל אימון
     const [
       { data: workoutsData, error: wError },
       { data: exData, error: exError },
@@ -135,27 +258,25 @@ export default function Workouts() {
               )
             )
           )
-        `,
+        `
         ),
     ]);
 
     if (wError || exError) {
       setMsg(
         "❌ " +
-          (wError?.message || exError?.message || "Failed to load workouts"),
+          (wError?.message || exError?.message || "Failed to load workouts")
       );
       setWorkouts([]);
       return;
     }
 
-    // קיבוץ תרגילים לפי workout_id
     const byWorkout = new Map();
     (exData || []).forEach((ex) => {
       if (!byWorkout.has(ex.workout_id)) byWorkout.set(ex.workout_id, []);
       byWorkout.get(ex.workout_id).push(ex);
     });
 
-    // חיבור התרגילים לכל אימון
     const merged = (workoutsData || []).map((w) => ({
       ...w,
       exercises: byWorkout.get(w.id) || [],
@@ -168,76 +289,59 @@ export default function Workouts() {
     load();
   }, []);
 
-  async function createWorkout() {
-    const { data: s } = await supabase.auth.getSession();
-    const uid = s?.session?.user?.id;
-    if (!uid) {
-      setMsg("❌ Not logged in");
-      return false;
-    }
-    if (!name.trim()) {
-      setMsg("❌ Enter workout name");
-      return false;
-    }
+  function openCreateWorkoutModal() {
+    let modalId = null;
 
-    const { error } = await supabase
-      .from("workouts")
-      .insert({ user_id: uid, name: name.trim(), notes: null });
-
-    if (error) {
-      setMsg("❌ " + error.message);
-      return false;
-    }
-
-    setName("");
-    setMsg("✅ Workout created");
-    await load();
-    return true;
+    modalId = openModal(
+      <CreateWorkoutModal
+        onClose={() => closeModal(modalId)}
+        onCreated={load}
+        setGlobalMsg={setMsg}
+      />,
+      {
+        closeOnBackdrop: true,
+        closeOnEsc: true,
+      }
+    );
   }
 
-  async function handleCreateConfirm() {
-    const ok = await createWorkout();
-    if (ok) {
-      setShowCreateModal(false);
-    }
-  }
-
-  function handleCreateCancel() {
-    setShowCreateModal(false);
-  }
-
-  // פתיחת מודל מחיקה
   function openDeleteModal(workout) {
-    setDeleteTarget(workout);
-    setShowDeleteModal(true);
-  }
+    let modalId = null;
 
-  function closeDeleteModal() {
-    setShowDeleteModal(false);
-    setDeleteTarget(null);
-  }
+    async function confirmDelete() {
+      if (!workout?.id) return;
+      setMsg("");
+      setDeleting(true);
 
-  // מחיקה אמיתית
-  async function confirmDelete() {
-    if (!deleteTarget?.id) return;
-    setMsg("");
-    setDeleting(true);
+      const { error } = await supabase
+        .from("workouts")
+        .delete()
+        .eq("id", workout.id);
 
-    const { error } = await supabase
-      .from("workouts")
-      .delete()
-      .eq("id", deleteTarget.id);
+      setDeleting(false);
 
-    setDeleting(false);
+      if (error) {
+        setMsg("❌ " + error.message);
+        return;
+      }
 
-    if (error) {
-      setMsg("❌ " + error.message);
-      return;
+      setMsg("✅ Workout deleted");
+      closeModal(modalId);
+      load();
     }
 
-    setMsg("✅ Workout deleted");
-    closeDeleteModal();
-    load();
+    modalId = openModal(
+      <DeleteWorkoutModal
+        workout={workout}
+        deleting={deleting}
+        onClose={() => closeModal(modalId)}
+        onConfirm={confirmDelete}
+      />,
+      {
+        closeOnBackdrop: !deleting,
+        closeOnEsc: !deleting,
+      }
+    );
   }
 
   return (
@@ -249,18 +353,16 @@ export default function Workouts() {
         </p>
       </header>
 
-      {/* כפתור יצירת אימון חדש */}
       <section className="workouts-top-actions">
         <button
           className="workouts-primary-btn"
-          onClick={() => setShowCreateModal(true)}
+          onClick={openCreateWorkoutModal}
         >
           + Create New Workout
         </button>
         {msg && <p className="workouts-message">{msg}</p>}
       </section>
 
-      {/* רשימת האימונים */}
       <section className="workouts-list-section">
         <ul className="workouts-list">
           {workouts.map((w) => {
@@ -271,7 +373,6 @@ export default function Workouts() {
 
             return (
               <li key={w.id} className="workouts-item">
-                {/* header של הכרטיס – לוחצים עליו כדי לפתוח/לסגור */}
                 <div
                   className="workouts-item-header"
                   onClick={() =>
@@ -283,12 +384,10 @@ export default function Workouts() {
                       <span className="workouts-item-name">{w.name}</span>
                     </div>
 
-                    {/* תאריך יצירה */}
                     <span className="workouts-item-meta">
                       Created on {createdDate}
                     </span>
 
-                    {/* קבוצות שריר שעובד האימון */}
                     {muscleGroups.length > 0 && (
                       <div className="workouts-item-muscles">
                         {muscleGroups.map((mg) => (
@@ -303,7 +402,6 @@ export default function Workouts() {
                       </div>
                     )}
 
-                    {/* שורה מתחת – כמות תרגילים וסטים */}
                     <div className="workouts-item-stats">
                       {exercisesCount === 0 ? (
                         <span className="workouts-item-stats-pill">
@@ -323,7 +421,6 @@ export default function Workouts() {
                     </div>
                   </div>
 
-                  {/* חץ לפתיחה/סגירה – רק ויזואלי, כל ה-header לחיץ */}
                   <div className="workouts-item-actions">
                     <button
                       type="button"
@@ -339,7 +436,6 @@ export default function Workouts() {
                   </div>
                 </div>
 
-                {/* רשימת תרגילים – רק כשהכרטיס פתוח */}
                 {expandedId === w.id && (
                   <div className="workouts-exercises">
                     {w.exercises.length === 0 ? (
@@ -361,7 +457,6 @@ export default function Workouts() {
                   </div>
                 )}
 
-                {/* שורת אקשנים בתחתית הכרטיס */}
                 <div className="workouts-item-footer">
                   <button
                     type="button"
@@ -389,79 +484,6 @@ export default function Workouts() {
           <p className="workouts-empty">No workouts yet.</p>
         )}
       </section>
-
-      {/* Pop-up יצירת אימון חדש */}
-      {showCreateModal && (
-        <div className="workouts-modal-overlay">
-          <div className="workouts-modal">
-            <h3 className="workouts-modal-title">Create New Workout</h3>
-            <p className="workouts-modal-subtitle">
-              Give your workout a name. You’ll add exercises next.
-            </p>
-
-            <label className="workouts-label" htmlFor="modal-workout-name">
-              Workout Name
-            </label>
-            <input
-              id="modal-workout-name"
-              className="workouts-input"
-              placeholder="e.g. Upper Body Strength"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-            {msg && <p className="workouts-message">{msg}</p>}
-
-            <div className="workouts-modal-actions">
-              <button
-                className="workouts-modal-confirm"
-                onClick={handleCreateConfirm}
-              >
-                Continue
-              </button>
-              <button
-                className="workouts-modal-cancel"
-                onClick={handleCreateCancel}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pop-up מחיקת אימון */}
-      {showDeleteModal && deleteTarget && (
-        <div className="workouts-modal-overlay">
-          <div className="workouts-modal workouts-modal-danger">
-            <h3 className="workouts-modal-title workouts-modal-delete-title">
-              Delete workout?
-            </h3>
-            <p className="workouts-modal-subtitle">
-              You are about to delete{" "}
-              <strong>{deleteTarget.name}</strong>. This action cannot be
-              undone.
-            </p>
-
-            <div className="workouts-modal-actions">
-              <button
-                className="workouts-modal-delete-confirm"
-                onClick={confirmDelete}
-                disabled={deleting}
-              >
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
-              <button
-                className="workouts-modal-cancel"
-                onClick={closeDeleteModal}
-                disabled={deleting}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

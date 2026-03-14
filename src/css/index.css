@@ -106,3 +106,29 @@
   from { transform: translateY(-6px); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
 }
+
+
+
+/* Root container for all app modals */
+.app-modal-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* overlay יקבל pointer */
+  z-index: 2147483000;  /* גבוה אבל לא MAX, כדי להשאיר מקום אם צריך */
+}
+
+/* Each overlay */
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  pointer-events: auto;
+}
+
+/* Optional: top modal slightly stronger */
+.app-modal-overlay.is-top {
+  background: rgba(0, 0, 0, 0.82);
+}
