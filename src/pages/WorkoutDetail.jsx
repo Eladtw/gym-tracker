@@ -2,8 +2,8 @@
 import "../css/workout-detail.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import dayjs from "dayjs";
 import { supabase } from "../lib/supabaseClient";
+import { startOrResumeWorkoutSession } from "../lib/sessionFlow";
 import { useModal } from "../components/ModalProvider";
 
 /* =======================
@@ -1391,25 +1391,12 @@ export default function WorkoutDetail() {
 
   async function startSession() {
     setMsg("");
-    const { data: s } = await supabase.auth.getSession();
-    const uid = s?.session?.user?.id;
-    if (!uid) {
-      pushToast("Not logged in");
+    const result = await startOrResumeWorkoutSession(id);
+    if (result.error || !result.sessionId) {
+      pushToast(result.error || "Failed to start session");
       return;
     }
-    const today = dayjs().format("YYYY-MM-DD");
-
-    const { data, error } = await supabase
-      .from("sessions")
-      .insert({ user_id: uid, workout_id: id, session_date: today })
-      .select("id")
-      .single();
-
-    if (error) {
-      pushToast(error.message);
-      return;
-    }
-    navigate(`/session/${data.id}`);
+    navigate(`/session/${result.sessionId}?date=${result.dateISO}`);
   }
 
   function renderSetsDetailed(st) {

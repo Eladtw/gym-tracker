@@ -1,0 +1,101 @@
+.workout-start-page {
+  padding: 14px 12px 20px;
+}
+
+.workout-start-header {
+  margin-bottom: 12px;
+}
+
+.workout-start-date {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 2px;
+}
+
+.workout-start-title {
+  margin: 0;
+  font-size: 1.45rem;
+}
+
+.workout-start-subtitle {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.workout-start-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workout-start-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #dbe1ea;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.workout-start-card-name {
+  font-size: 1rem;
+  font-weight: 650;
+  margin-bottom: 4px;
+}
+
+.workout-start-card-meta {
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.workout-start-card-count {
+  margin-top: 7px;
+  font-size: 0.78rem;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.workout-start-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: none;
+  display: grid;
+  place-items: center;
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.workout-start-play-btn:disabled {
+  opacity: 0.65;
+}
+
+.workout-start-empty {
+  background: #fff;
+  border: 1px dashed #cbd5e1;
+  color: #475569;
+  padding: 16px;
+  text-align: center;
+  border-radius: 12px;
+}
+
+.workout-start-message {
+  color: #b91c1c;
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+}
+
+.workout-start-create-btn {
+  margin-top: 8px;
+  border: none;
+  background: #0f172a;
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 12px;
+}

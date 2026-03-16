@@ -152,16 +152,22 @@
   flex-wrap: wrap;
 }
 
+.session-ex-meta {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.25;
+}
+
+.session-ex-meta.is-unknown {
+  color: #b45309;
+}
+
 .session-ex-chip {
   padding: 2px 8px;
   border-radius: 999px;
   background: #e5e7eb;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: #111827;
-}
-
-.session-ex-chip.is-unknown {
-  background: #fef3c7;
 }
 
 .session-ex-sets-label {
@@ -197,17 +203,6 @@
 .session-icon-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.session-mark-btn {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  cursor: pointer;
-  font-size: 0.8rem;
-  color: #6b7280;
-  font-weight: 600;
 }
 
 .session-ex-progress {
@@ -246,28 +241,64 @@
   color: #6b7280;
 }
 
-.session-log-grid {
+.session-current-set-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
-.session-log-field .session-label {
-  font-size: 0.8rem;
-  color: #4b5563;
+.session-current-set-block {
+  border: 1px solid #dbe1ea;
+  border-radius: 12px;
+  padding: 8px;
+  background: #f8fafc;
 }
 
-.session-input {
+.session-current-set-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.session-current-set-controls {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.session-step-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 1.1rem;
+}
+
+.session-current-input {
   width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  font-size: 0.85rem;
+  text-align: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 3px 4px;
 }
 
-.session-input:disabled {
-  background: #f3f4f6;
+.session-current-input:disabled,
+.session-step-btn:disabled {
+  opacity: 0.6;
+}
+
+.session-current-set-meta {
+  font-size: 0.7rem;
+  color: #64748b;
 }
 
 .session-log-btn {
@@ -454,7 +485,7 @@
 }
 
 @media (max-width: 420px) {
-  .session-log-grid {
+  .session-current-set-grid {
     grid-template-columns: 1fr;
   }
 

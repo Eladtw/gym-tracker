@@ -2,6 +2,7 @@ import "../css/home-page.css";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import { startOrResumeWorkoutSession } from "../lib/sessionFlow";
 import { Play, ChevronRight, Calendar, Flame, Clock, TrendingUp } from "lucide-react";
 
 // Helper: get muscle group labels from workout exercises
@@ -320,43 +321,13 @@ export default function HomePage() {
   }, [allSessions]);
 
   async function handleStartWorkout(workoutId) {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const uid = sessionData?.session?.user?.id;
-    if (!uid) return;
-
-    const todayISO = new Date().toISOString().split("T")[0];
-
-    const { data: existing } = await supabase
-      .from("sessions")
-      .select("id")
-      .eq("user_id", uid)
-      .eq("workout_id", workoutId)
-      .eq("session_date", todayISO)
-      .is("ended_at", null)
-      .limit(1);
-
-    if (existing && existing.length > 0) {
-      navigate(`/session/${existing[0].id}?date=${todayISO}`);
+    const result = await startOrResumeWorkoutSession(workoutId);
+    if (result.error || !result.sessionId) {
+      console.error("Failed to start session:", result.error);
       return;
     }
 
-    const { data, error } = await supabase
-      .from("sessions")
-      .insert({
-        user_id: uid,
-        workout_id: workoutId,
-        session_date: todayISO,
-        started_at: new Date().toISOString(),
-      })
-      .select("id")
-      .single();
-
-    if (error) {
-      console.error("Failed to start session:", error);
-      return;
-    }
-
-    navigate(`/session/${data.id}?date=${todayISO}`);
+    navigate(`/session/${result.sessionId}?date=${result.dateISO}`);
   }
 
   if (loading) {

@@ -237,6 +237,7 @@ function ExerciseCard({
   isEnded,
   isSaving,
   onOpenImage,
+  previousBest,
 }) {
   const [open, setOpen] = useState(false);
   const [weight, setWeight] = useState("");
@@ -255,7 +256,6 @@ function ExerciseCard({
   const targetForNext =
     planned.find((r) => Number(r.set_index) === nextIndex) || null;
 
-  // אם אין סטים מתוכננים – לא מגבילים
   const canLogMore = plannedCount === 0 ? true : nextIndex <= plannedCount;
 
   const progressPct =
@@ -263,7 +263,6 @@ function ExerciseCard({
       ? Math.min(100, Math.round((doneCount / plannedCount) * 100))
       : 0;
 
-  // אוטופיל לסט הבא – קודם לפי target, אחרת לפי הסט האחרון שבוצע
   useEffect(() => {
     if (!canLogMore) return;
 
@@ -298,23 +297,25 @@ function ExerciseCard({
     setLocalSaving(false);
   }
 
-  const groupLabel = meta?.group_label || null;
-  const primaryLabel = meta?.primary_subgroup_label || null;
-  const chipText =
-    groupLabel && primaryLabel
-      ? `${groupLabel} · ${primaryLabel}`
-      : groupLabel
-      ? groupLabel
-      : primaryLabel
-      ? primaryLabel
-      : "Unknown";
+  function adjustNumericValue(value, delta, { min = 0, step = 1 }) {
+    const current = Number(value);
+    const safeCurrent = Number.isFinite(current) ? current : 0;
+    const next = Math.max(min, safeCurrent + delta * step);
+    return Number.isInteger(step) ? String(Math.round(next)) : String(Number(next.toFixed(2)));
+  }
+
+  const metaParts = [meta?.group_label, meta?.primary_subgroup_label, meta?.equipment_label].filter(Boolean);
 
   const plannedDisplay = plannedCount ? plannedCount : "?";
 
-  const title =
-    exercise.variation_label
-      ? `${exercise.exercise_name} — ${exercise.variation_label}`
-      : exercise.exercise_name;
+  const title = exercise.exercise_name;
+
+  const plannedReps = targetForNext?.reps ?? "—";
+  const plannedWeight = targetForNext?.weight;
+  const lastReps = previousBest?.reps ?? "—";
+  const lastWeight = previousBest?.weight;
+  const plannedWeightText = plannedWeight == null ? "—" : `${plannedWeight} kg`;
+  const lastWeightText = lastWeight == null ? "—" : `${lastWeight} kg`;
 
   return (
     <div className="session-ex-card">
@@ -328,21 +329,10 @@ function ExerciseCard({
           <div className="session-ex-header-main">
             <div className="session-ex-name">{title}</div>
             <div className="session-ex-sub">
-              <span
-                className={
-                  "session-ex-chip" +
-                  (chipText === "Unknown" ? " is-unknown" : "")
-                }
-              >
-                {chipText}
+              <span className={"session-ex-meta" + (metaParts.length ? "" : " is-unknown")}>
+                {metaParts.length ? metaParts.join(" • ") : "Unknown exercise metadata"}
               </span>
-
-              {exercise.variation_label && (
-                <span className="session-ex-chip" style={{ marginLeft: 6 }}>
-                  {exercise.variation_label}
-                </span>
-              )}
-
+              {exercise.variation_label && <span className="session-ex-chip">{exercise.variation_label}</span>}
               <span className="session-ex-sets-label">
                 {doneSets.length} / {plannedDisplay} sets
               </span>
@@ -368,16 +358,6 @@ function ExerciseCard({
           >
             🖼
           </button>
-
-          <button
-            type="button"
-            className="session-mark-btn"
-            onClick={(e) => e.stopPropagation()}
-            title="Mark (coming soon)"
-            aria-label="Mark"
-          >
-            ○ Mark
-          </button>
         </div>
       </div>
 
@@ -391,60 +371,47 @@ function ExerciseCard({
       {open && (
         <div className="session-ex-body">
           <div className="session-box">
-            <div className="session-box-title">Planned Sets</div>
-            {planned.length === 0 ? (
-              <p className="session-muted">No planned sets.</p>
-            ) : (
-              planned.map((r) => (
-                <div key={r.set_index} className="session-row">
-                  <span className="session-row-label">
-                    Set {r.set_index || "?"}
-                  </span>
-                  <span className="session-row-value">
-                    : {r.reps ?? 0} reps × {r.weight ?? 0} kg
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="session-box">
             <div className="session-log-header">
               <div className="session-box-title">
-                Log Set {canLogMore ? doneSets.length + 1 : doneSets.length}
+                Set {canLogMore ? doneSets.length + 1 : doneSets.length}
               </div>
-              {targetForNext && (
-                <div className="session-log-target">
-                  Target:&nbsp;
-                  <strong>
-                    {targetForNext.reps ?? 0} × {targetForNext.weight ?? 0} kg
-                  </strong>
-                </div>
-              )}
             </div>
 
-            <div className="session-log-grid">
-              <div className="session-log-field">
-                <label className="session-label">Reps</label>
-                <input
-                  className="session-input"
-                  type="number"
-                  inputMode="numeric"
-                  value={reps}
-                  onChange={(e) => setReps(e.target.value)}
-                  disabled={isEnded || !canLogMore}
-                />
+            <div className="session-current-set-grid">
+              <div className="session-current-set-block">
+                <div className="session-current-set-label">Reps</div>
+                <div className="session-current-set-controls">
+                  <button type="button" className="session-step-btn" onClick={() => setReps((v) => adjustNumericValue(v, -1, { min: 0, step: 1 }))} disabled={isEnded || !canLogMore}>−</button>
+                  <input
+                    className="session-current-input"
+                    type="number"
+                    inputMode="numeric"
+                    value={reps}
+                    onChange={(e) => setReps(e.target.value)}
+                    disabled={isEnded || !canLogMore}
+                  />
+                  <button type="button" className="session-step-btn" onClick={() => setReps((v) => adjustNumericValue(v, 1, { min: 0, step: 1 }))} disabled={isEnded || !canLogMore}>+</button>
+                </div>
+                <div className="session-current-set-meta">Planned: {plannedReps}</div>
+                <div className="session-current-set-meta">Last workout: {lastReps}</div>
               </div>
-              <div className="session-log-field">
-                <label className="session-label">Weight (kg)</label>
-                <input
-                  className="session-input"
-                  type="number"
-                  inputMode="numeric"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  disabled={isEnded || !canLogMore}
-                />
+
+              <div className="session-current-set-block">
+                <div className="session-current-set-label">Weight (kg)</div>
+                <div className="session-current-set-controls">
+                  <button type="button" className="session-step-btn" onClick={() => setWeight((v) => adjustNumericValue(v, -1, { min: 0, step: 2.5 }))} disabled={isEnded || !canLogMore}>−</button>
+                  <input
+                    className="session-current-input"
+                    type="number"
+                    inputMode="decimal"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    disabled={isEnded || !canLogMore}
+                  />
+                  <button type="button" className="session-step-btn" onClick={() => setWeight((v) => adjustNumericValue(v, 1, { min: 0, step: 2.5 }))} disabled={isEnded || !canLogMore}>+</button>
+                </div>
+                <div className="session-current-set-meta">Planned: {plannedWeightText}</div>
+                <div className="session-current-set-meta">Last workout: {lastWeightText}</div>
               </div>
             </div>
 
@@ -466,7 +433,7 @@ function ExerciseCard({
                 ? "All sets logged"
                 : localSaving || isSaving
                 ? "Saving…"
-                : `+ Log Set ${doneSets.length + 1}`}
+                : `Log Set`}
             </button>
           </div>
 
@@ -515,6 +482,7 @@ export default function SessionPage() {
   const [ending, setEnding] = useState(false);
 
   const [metaByExerciseId, setMetaByExerciseId] = useState(new Map());
+  const [previousByExerciseKey, setPreviousByExerciseKey] = useState(new Map());
 
   const [imgOpen, setImgOpen] = useState(false);
   const [imgTitle, setImgTitle] = useState("");
@@ -611,7 +579,7 @@ export default function SessionPage() {
 
     const { data: exRows, error: exErr } = await supabase
       .from("exercises_catalog")
-      .select("id, image_path, primary_subgroup_id")
+      .select("id, image_path, primary_subgroup_id, equipment_id")
       .in("id", ids);
 
     if (exErr) {
@@ -634,6 +602,22 @@ export default function SessionPage() {
       else subgroups = sg || [];
     }
 
+
+    const equipmentIds = Array.from(
+      new Set((exRows || []).map((r) => r.equipment_id).filter(Boolean))
+    );
+
+    let equipments = [];
+    if (equipmentIds.length) {
+      const { data: eq, error: eqErr } = await supabase
+        .from("equipment")
+        .select("id, label")
+        .in("id", equipmentIds);
+
+      if (eqErr) console.error("equipment meta error:", eqErr);
+      else equipments = eq || [];
+    }
+
     const groupIds = Array.from(
       new Set((subgroups || []).map((s) => s.group_id).filter(Boolean))
     );
@@ -651,6 +635,7 @@ export default function SessionPage() {
 
     const subgroupById = new Map((subgroups || []).map((s) => [s.id, s]));
     const groupLabelById = new Map((groups || []).map((g) => [g.id, g.label]));
+    const equipmentLabelById = new Map((equipments || []).map((e) => [e.id, e.label]));
 
     const map = new Map();
     (exRows || []).forEach((r) => {
@@ -663,6 +648,7 @@ export default function SessionPage() {
         image_path: r.image_path || null,
         primary_subgroup_label: sg?.label || null,
         group_label: groupLabel || null,
+        equipment_label: r.equipment_id ? equipmentLabelById.get(r.equipment_id) || null : null,
       });
     });
 
@@ -697,6 +683,52 @@ export default function SessionPage() {
         : null,
     }));
   }, []);
+
+  async function loadPreviousPerformance(sessionRow) {
+    if (!sessionRow?.user_id || !sessionRow?.workout_id) {
+      setPreviousByExerciseKey(new Map());
+      return;
+    }
+
+    const { data: previousSessions, error: prevErr } = await supabase
+      .from("sessions")
+      .select("id")
+      .eq("user_id", sessionRow.user_id)
+      .eq("workout_id", sessionRow.workout_id)
+      .neq("id", sessionRow.id)
+      .not("ended_at", "is", null)
+      .order("session_date", { ascending: false })
+      .order("ended_at", { ascending: false })
+      .limit(10);
+
+    if (prevErr || !previousSessions?.length) {
+      setPreviousByExerciseKey(new Map());
+      return;
+    }
+
+    const prevIds = previousSessions.map((r) => r.id);
+
+    const { data: prevSets, error: setErr } = await supabase
+      .from("sets")
+      .select("exercise_id, variation_id, reps, weight, created_at")
+      .in("session_id", prevIds)
+      .order("created_at", { ascending: false });
+
+    if (setErr) {
+      setPreviousByExerciseKey(new Map());
+      return;
+    }
+
+    const nextMap = new Map();
+    for (const row of prevSets || []) {
+      const key = makeKey(row.exercise_id, row.variation_id);
+      if (!nextMap.has(key)) {
+        nextMap.set(key, { reps: row.reps, weight: row.weight });
+      }
+    }
+
+    setPreviousByExerciseKey(nextMap);
+  }
 
   async function loadInitial() {
     setLoading(true);
@@ -738,9 +770,11 @@ export default function SessionPage() {
       const withVarLabels = await attachVariationLabels(cleaned);
       setWorkoutItems(withVarLabels);
       await loadExerciseMeta(withVarLabels);
+      await loadPreviousPerformance(s);
     } else {
       setWorkoutItems([]);
       setMetaByExerciseId(new Map());
+      setPreviousByExerciseKey(new Map());
     }
 
     const { data: performed, error: eP } = await supabase
@@ -1168,6 +1202,7 @@ export default function SessionPage() {
                 isEnded={isEnded}
                 isSaving={saving}
                 onOpenImage={openExerciseImage}
+                previousBest={previousByExerciseKey.get(key) || null}
               />
             );
           })}
