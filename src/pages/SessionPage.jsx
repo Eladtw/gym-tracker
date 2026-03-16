@@ -1,7 +1,7 @@
 // src/pages/SessionPage.jsx
 import "../css/session-page.css";
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 const BUCKET = "exercise-images";
@@ -232,6 +232,7 @@ function ConfirmPlanUpdateModal({
 function ExerciseCard({
   exercise,
   meta,
+  previousSetByIndex,
   doneSets,
   onLogSet,
   isEnded,
@@ -300,14 +301,8 @@ function ExerciseCard({
 
   const groupLabel = meta?.group_label || null;
   const primaryLabel = meta?.primary_subgroup_label || null;
-  const chipText =
-    groupLabel && primaryLabel
-      ? `${groupLabel} · ${primaryLabel}`
-      : groupLabel
-      ? groupLabel
-      : primaryLabel
-      ? primaryLabel
-      : "Unknown";
+  const equipmentLabel = meta?.equipment_label || null;
+  const detailsLine = [groupLabel, primaryLabel, equipmentLabel].filter(Boolean).join(" • ") || "Unknown";
 
   const plannedDisplay = plannedCount ? plannedCount : "?";
 
@@ -328,14 +323,7 @@ function ExerciseCard({
           <div className="session-ex-header-main">
             <div className="session-ex-name">{title}</div>
             <div className="session-ex-sub">
-              <span
-                className={
-                  "session-ex-chip" +
-                  (chipText === "Unknown" ? " is-unknown" : "")
-                }
-              >
-                {chipText}
-              </span>
+              <span className={"session-ex-meta-line" + (detailsLine === "Unknown" ? " is-unknown" : "")}>{detailsLine}</span>
 
               {exercise.variation_label && (
                 <span className="session-ex-chip" style={{ marginLeft: 6 }}>
@@ -423,28 +411,40 @@ function ExerciseCard({
               )}
             </div>
 
-            <div className="session-log-grid">
-              <div className="session-log-field">
+            <div className="session-log-grid session-log-grid--compact">
+              <div className="session-log-field session-current-field">
                 <label className="session-label">Reps</label>
-                <input
-                  className="session-input"
-                  type="number"
-                  inputMode="numeric"
-                  value={reps}
-                  onChange={(e) => setReps(e.target.value)}
-                  disabled={isEnded || !canLogMore}
-                />
+                <div className="session-current-row">
+                  <button type="button" className="session-step-btn" onClick={() => setReps(String(Math.max(0, Number(reps || 0) - 1)))} disabled={isEnded || !canLogMore}>−</button>
+                  <input
+                    className="session-input session-input-current"
+                    type="number"
+                    inputMode="numeric"
+                    value={reps}
+                    onChange={(e) => setReps(e.target.value)}
+                    disabled={isEnded || !canLogMore}
+                  />
+                  <button type="button" className="session-step-btn" onClick={() => setReps(String(Number(reps || 0) + 1))} disabled={isEnded || !canLogMore}>+</button>
+                </div>
+                <div className="session-field-sub">Planned: {targetForNext?.reps ?? "—"}</div>
+                <div className="session-field-sub">Last workout: {previousSetByIndex?.get(nextIndex)?.reps ?? "—"}</div>
               </div>
-              <div className="session-log-field">
+              <div className="session-log-field session-current-field">
                 <label className="session-label">Weight (kg)</label>
-                <input
-                  className="session-input"
-                  type="number"
-                  inputMode="numeric"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  disabled={isEnded || !canLogMore}
-                />
+                <div className="session-current-row">
+                  <button type="button" className="session-step-btn" onClick={() => setWeight(String(Math.max(0, Number(weight || 0) - 2.5)))} disabled={isEnded || !canLogMore}>−</button>
+                  <input
+                    className="session-input session-input-current"
+                    type="number"
+                    inputMode="numeric"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    disabled={isEnded || !canLogMore}
+                  />
+                  <button type="button" className="session-step-btn" onClick={() => setWeight(String(Number(weight || 0) + 2.5))} disabled={isEnded || !canLogMore}>+</button>
+                </div>
+                <div className="session-field-sub">Planned: {targetForNext?.weight ?? "—"} kg</div>
+                <div className="session-field-sub">Last workout: {previousSetByIndex?.get(nextIndex)?.weight ?? "—"} kg</div>
               </div>
             </div>
 
@@ -510,11 +510,13 @@ export default function SessionPage() {
   const [workoutItems, setWorkoutItems] = useState([]);
   const [sets, setSets] = useState([]);
   const [msg, setMsg] = useState("");
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [ending, setEnding] = useState(false);
 
   const [metaByExerciseId, setMetaByExerciseId] = useState(new Map());
+  const [previousSetsByKey, setPreviousSetsByKey] = useState(new Map());
 
   const [imgOpen, setImgOpen] = useState(false);
   const [imgTitle, setImgTitle] = useState("");
@@ -611,7 +613,7 @@ export default function SessionPage() {
 
     const { data: exRows, error: exErr } = await supabase
       .from("exercises_catalog")
-      .select("id, image_path, primary_subgroup_id")
+      .select("id, image_path, primary_subgroup_id, equipment:equipment_id (label)")
       .in("id", ids);
 
     if (exErr) {
@@ -663,6 +665,7 @@ export default function SessionPage() {
         image_path: r.image_path || null,
         primary_subgroup_label: sg?.label || null,
         group_label: groupLabel || null,
+        equipment_label: r?.equipment?.label || null,
       });
     });
 
@@ -741,6 +744,39 @@ export default function SessionPage() {
     } else {
       setWorkoutItems([]);
       setMetaByExerciseId(new Map());
+      setPreviousSetsByKey(new Map());
+    }
+
+    if (s?.workout_id && s?.user_id) {
+      const { data: prevSessions } = await supabase
+        .from("sessions")
+        .select("id")
+        .eq("user_id", s.user_id)
+        .eq("workout_id", s.workout_id)
+        .not("id", "eq", sessionId)
+        .not("ended_at", "is", null)
+        .order("ended_at", { ascending: false })
+        .limit(1);
+
+      const prevSessionId = prevSessions?.[0]?.id;
+
+      if (prevSessionId) {
+        const { data: prevSets } = await supabase
+          .from("sets")
+          .select("exercise_id, variation_id, set_index, reps, weight")
+          .eq("session_id", prevSessionId);
+
+        const prevMap = new Map();
+        (prevSets || []).forEach((row) => {
+          const key = makeKey(row.exercise_id, row.variation_id);
+          if (!prevMap.has(key)) prevMap.set(key, new Map());
+          prevMap.get(key).set(Number(row.set_index) || 0, row);
+        });
+
+        setPreviousSetsByKey(prevMap);
+      } else {
+        setPreviousSetsByKey(new Map());
+      }
     }
 
     const { data: performed, error: eP } = await supabase
@@ -1114,7 +1150,7 @@ export default function SessionPage() {
           <button
             type="button"
             className="session-header-exit"
-            onClick={() => window.history.back()}
+            onClick={() => navigate("/workout")}
           >
             ← Exit
           </button>
@@ -1163,6 +1199,7 @@ export default function SessionPage() {
                 key={it.id}
                 exercise={it}
                 meta={meta}
+                previousSetByIndex={previousSetsByKey.get(key) || null}
                 doneSets={done}
                 onLogSet={logSetForExercise}
                 isEnded={isEnded}
