@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: "/home", label: "Home", icon: Home },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/workouts", label: "Workouts", icon: Dumbbell },
+  { to: "/workout", label: "Workout", icon: Dumbbell },
   { to: "/progress", label: "Progress", icon: TrendingUp },
   { to: "/exercises", label: "Exercises", icon: BookOpen },
 ];

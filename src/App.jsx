@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { supabase } from "./lib/supabaseClient";
-import { Menu, Dumbbell } from "lucide-react";
+import { Menu, Dumbbell, House, ClipboardList, TrendingUp, BookOpen } from "lucide-react";
 import { useAppDataCache } from "./context/AppDataCacheContext";
 
 // Pages
@@ -13,6 +13,7 @@ import HomePage from "./pages/HomePage";
 import Workouts from "./pages/Workouts";
 import WorkoutDetail from "./pages/WorkoutDetail";
 import SessionPage from "./pages/SessionPage";
+import WorkoutStartPage from "./pages/WorkoutStartPage";
 import CalendarPage from "./pages/CalendarPage";
 import ProgressPage from "./pages/ProgressPage";
 import ExerciseLibrary from "./pages/ExerciseLibrary";
@@ -23,11 +24,11 @@ import "./css/sidebar.css";
 
 // Bottom tab bar items
 const TABS = [
-  { to: "/home", label: "Home", icon: "🏠" },
-  { to: "/calendar", label: "Calendar", icon: "📅" },
-  { to: "/workouts", label: "Workouts", icon: "🏋️" },
-  { to: "/progress", label: "Progress", icon: "📈" },
-  { to: "/exercises", label: "Exercises", icon: "📚" },
+  { to: "/home", label: "Home", icon: House },
+  { to: "/workouts", label: "Workouts", icon: ClipboardList },
+  { to: "/workout", label: "Workout", icon: Dumbbell, isCenter: true },
+  { to: "/progress", label: "Progress", icon: TrendingUp },
+  { to: "/exercises", label: "Exercises", icon: BookOpen },
 ];
 
 function PageTransition({ children, pathname }) {
@@ -143,7 +144,6 @@ export default function App() {
 
   const isTabActive = (to) => {
     if (to === "/home") return pathname === "/home" || pathname === "/";
-    if (to === "/calendar") return pathname.startsWith("/calendar");
     return pathname.startsWith(to);
   };
 
@@ -181,6 +181,7 @@ export default function App() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/workouts/:id" element={<WorkoutDetail />} />
+            <Route path="/workout" element={<WorkoutStartPage />} />
             <Route path="/session/:sessionId" element={<SessionPage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/progress/id/:exerciseId" element={<ProgressPage />} />
@@ -196,13 +197,18 @@ export default function App() {
       <nav className="app-bottom-nav" aria-label="Bottom navigation">
         {TABS.map((tab) => {
           const active = isTabActive(tab.to);
+          const Icon = tab.icon;
           return (
             <Link
               key={tab.to}
               to={tab.to}
-              className={"app-nav-item" + (active ? " app-nav-item--active" : "")}
+              className={
+                "app-nav-item" +
+                (tab.isCenter ? " app-nav-item--center" : "") +
+                (active ? " app-nav-item--active" : "")
+              }
             >
-              <span className="app-nav-icon">{tab.icon}</span>
+              <span className="app-nav-icon"><Icon size={18} /></span>
               <span className="app-nav-label">{tab.label}</span>
             </Link>
           );
