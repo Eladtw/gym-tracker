@@ -1,49 +1,89 @@
-// src/pages/SessionPage.jsx
 import "../css/session-page.css";
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import { useModal } from "../components/ModalProvider";
 
 const BUCKET = "exercise-images";
+const REST_TIMER_DEFAULT = 90;
+const REST_TIMER_STEP = 15;
+const FINISH_REDIRECT_DELAY = 2400;
 
-// reps חייב להיות >0 אם הוזן, weight יכול להיות >=0 אם הוזן
 const isPosNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) > 0;
 const isNonNegNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) >= 0;
 
-// סידור סטים של תרגיל לפי set_index
 function sortTargets(st) {
   if (!Array.isArray(st)) return [];
   return [...st].sort(
-    (a, b) => (Number(a.set_index) || 0) - (Number(b.set_index) || 0)
+    (a, b) => (Number(a?.set_index) || 0) - (Number(b?.set_index) || 0)
   );
 }
 
-// helper: build unique key per exercise+variation
 function makeKey(exerciseId, variationId) {
   const ex = String(exerciseId ?? "");
   const v = variationId ? String(variationId) : "null";
   return `${ex}:${v}`;
 }
 
-/* ===== Session skeleton ===== */
+function makeSetKey(exerciseId, variationId, setIndex) {
+  return `${makeKey(exerciseId, variationId)}:${Number(setIndex) || 0}`;
+}
+
+function fmtTimer(totalSeconds) {
+  const sec = Math.max(0, Number(totalSeconds) || 0);
+  const mm = String(Math.floor(sec / 60)).padStart(2, "0");
+  const ss = String(sec % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
+function formatWeight(weight) {
+  return weight == null ? "—" : `${weight} lbs`;
+}
+
+function getPublicImageUrl(path) {
+  if (!path) return null;
+  if (typeof path === "string" && /^https?:\/\//i.test(path)) return path;
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return data?.publicUrl || null;
+}
+
+function formatElapsed(startedAt, endedAt) {
+  if (!startedAt) return "00:00";
+  const startMs = new Date(startedAt).getTime();
+  const endMs = endedAt ? new Date(endedAt).getTime() : Date.now();
+
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return "00:00";
+
+  const totalSec = Math.max(0, Math.floor((endMs - startMs) / 1000));
+  const hh = Math.floor(totalSec / 3600);
+  const mm = Math.floor((totalSec % 3600) / 60);
+  const ss = totalSec % 60;
+
+  if (hh > 0) {
+    return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:${String(
+      ss
+    ).padStart(2, "0")}`;
+  }
+  return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`;
+}
+
 function SessionPageSkeleton() {
   return (
     <div className="session-page-root">
       <div className="session-page-shell session-content-ready">
-        <header className="session-header session-skeleton-fade">
-          <div className="session-skeleton session-skeleton-exit" />
-          <div className="session-skeleton session-skeleton-date" />
-          <div className="session-skeleton session-skeleton-title" />
-          <div className="session-skeleton session-skeleton-sub" />
-          <div className="session-progress">
-            <div className="session-skeleton session-skeleton-progress-fill" />
+        <header className="session-header-sticky-wrap session-skeleton-fade">
+          <div className="session-header-card">
+            <div className="session-skeleton session-skeleton-date" />
+            <div className="session-skeleton session-skeleton-title" />
+            <div className="session-skeleton session-skeleton-sub" />
+            <div className="session-progress">
+              <div className="session-skeleton session-skeleton-progress-fill" />
+            </div>
+            <div className="session-skeleton session-skeleton-chip" />
           </div>
-          <div className="session-skeleton session-skeleton-chip" />
         </header>
 
-        <section className="session-card session-skeleton-fade">
-          <div className="session-skeleton session-skeleton-card-title" />
-
+        <section className="session-exercises-wrap session-skeleton-fade">
           {[1, 2, 3].map((n) => (
             <div key={n} className="session-ex-card">
               <div className="session-ex-header">
@@ -60,7 +100,6 @@ function SessionPageSkeleton() {
 
                 <div className="session-ex-actions">
                   <div className="session-skeleton session-skeleton-icon-btn" />
-                  <div className="session-skeleton session-skeleton-mark-btn" />
                 </div>
               </div>
 
@@ -69,171 +108,231 @@ function SessionPageSkeleton() {
               </div>
             </div>
           ))}
-        </section>
 
-        <section className="session-card session-summary-card session-skeleton-fade">
-          <div className="session-skeleton session-skeleton-card-title" />
-          <div className="session-summary-grid">
-            <div className="session-summary-item">
-              <div className="session-skeleton session-skeleton-summary-label" />
-              <div className="session-skeleton session-skeleton-summary-value" />
-            </div>
-            <div className="session-summary-item">
-              <div className="session-skeleton session-skeleton-summary-label" />
-              <div className="session-skeleton session-skeleton-summary-value" />
-            </div>
-            <div className="session-summary-item">
-              <div className="session-skeleton session-skeleton-summary-label" />
-              <div className="session-skeleton session-skeleton-summary-value" />
-            </div>
+          <div className="session-finish-inline-wrap session-skeleton-fade">
+            <div className="session-skeleton session-skeleton-finish-btn" />
           </div>
         </section>
-
-        <div className="session-finish-wrap session-skeleton-fade">
-          <div className="session-skeleton session-skeleton-finish-btn" />
-        </div>
       </div>
     </div>
   );
 }
 
-/* ===== Modal תמונה ===== */
-function ImageModal({ open, title, imageUrl, loading, onClose }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+function ImageViewerModal({ title, imageUrl, onClose }) {
+  return (
+    <div
+      className="el-image-viewer-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <button
+        type="button"
+        className="el-image-viewer-close"
+        aria-label="Close image viewer"
+        onClick={onClose}
+      >
+        ✕
+      </button>
 
+      <div
+        className="el-image-viewer-content"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={title || ""}
+            className="el-image-viewer-img"
+          />
+        ) : (
+          <div className="el-image-viewer-fallback">No image</div>
+        )}
+        <div className="el-image-viewer-caption">{title || "Exercise"}</div>
+      </div>
+    </div>
+  );
+}
+
+function UpdatePlanModalContent({
+  exerciseTitle,
+  diffs,
+  saving,
+  onConfirm,
+  onCancel,
+}) {
+  return (
+    <div className="planupd-shell">
+      <div className="planupd-head">
+        <div className="planupd-title">Update plan for next time?</div>
+        <button
+          className="planupd-x"
+          type="button"
+          onClick={onCancel}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="planupd-body">
+        <div className="planupd-sub">
+          We found differences between the planned sets and what you actually
+          logged for <strong>{exerciseTitle}</strong>.
+        </div>
+
+        <div className="planupd-compare">
+          <div className="planupd-col">
+            <div className="planupd-coltitle">Logged</div>
+            {diffs.map((d) => (
+              <div key={`logged-${d.set_index}`} className="planupd-rowcard">
+                <div className="planupd-rowset">Set #{d.set_index}</div>
+                <div className="planupd-pill">
+                  Reps: <strong>{d.loggedReps ?? "—"}</strong>
+                </div>
+                <div className="planupd-pill">
+                  Weight: <strong>{d.loggedWeight ?? "—"}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="planupd-col">
+            <div className="planupd-coltitle">Planned</div>
+            {diffs.map((d) => (
+              <div key={`planned-${d.set_index}`} className="planupd-rowcard">
+                <div className="planupd-rowset">Set #{d.set_index}</div>
+                <div className="planupd-pill">
+                  Reps: <strong>{d.plannedReps ?? "—"}</strong>
+                </div>
+                <div className="planupd-pill">
+                  Weight: <strong>{d.plannedWeight ?? "—"}</strong>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="planupd-note">
+          Only the sets shown here will be updated in the workout plan.
+        </div>
+      </div>
+
+      <div className="planupd-foot">
+        <button
+          className="planupd-btnGhost"
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          Keep as is
+        </button>
+        <button
+          className="planupd-btnPrimary"
+          type="button"
+          onClick={onConfirm}
+          disabled={saving}
+        >
+          {saving ? "Updating…" : "Update"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RestTimer({
+  open,
+  seconds,
+  onClose,
+  onIncrease,
+  onDecrease,
+  isReady,
+  baseSeconds,
+}) {
   if (!open) return null;
 
+  const pct =
+    baseSeconds > 0
+      ? Math.max(0, Math.min(100, (seconds / baseSeconds) * 100))
+      : 0;
+
   return (
-    <div className="img-modal-overlay" role="dialog" aria-modal="true">
-      <div className="img-modal-panel">
-        <div className="img-modal-header">
-          <div className="img-modal-title" title={title}>
-            {title || "Exercise image"}
+    <div className="rest-timer-viewport">
+      <div className="rest-timer-panel" aria-live="polite">
+        <div className="rest-timer-head">
+          <div className="rest-timer-title">
+            ⏱ {isReady ? "You’re ready" : "Rest Timer"}
           </div>
           <button
             type="button"
-            className="img-modal-close"
+            className="rest-timer-close"
             onClick={onClose}
-            aria-label="Close"
+            aria-label="Close timer"
           >
             ✕
           </button>
         </div>
 
-        <div className="img-modal-body">
-          {loading && <div className="img-modal-loading">Loading image…</div>}
+        <div className="rest-timer-main">
+          <button
+            type="button"
+            className="rest-timer-step"
+            onClick={onDecrease}
+            aria-label="Decrease timer"
+          >
+            −
+          </button>
 
-          {!loading && !imageUrl && (
-            <div className="img-modal-empty">
-              No image found for this exercise.
-            </div>
-          )}
+          <div className="rest-timer-value">
+            {isReady ? "READY" : fmtTimer(seconds)}
+          </div>
 
-          {!loading && imageUrl && (
-            <img className="img-modal-img" src={imageUrl} alt={title || ""} />
-          )}
+          <button
+            type="button"
+            className="rest-timer-step"
+            onClick={onIncrease}
+            aria-label="Increase timer"
+          >
+            +
+          </button>
         </div>
 
-        <div className="img-modal-footer">
-          <button type="button" className="img-modal-btn" onClick={onClose}>
-            Close
-          </button>
+        <div className="rest-timer-sub">
+          {isReady ? "You can start your next set." : "Take a short break and reset."}
+        </div>
+
+        <div className="rest-timer-bar">
+          <div className="rest-timer-bar-fill" style={{ width: `${pct}%` }} />
         </div>
       </div>
     </div>
   );
 }
 
-/* ===== Confirm Update Modal ===== */
-function ConfirmPlanUpdateModal({
-  open,
-  title,
-  setIndex,
-  oldReps,
-  oldWeight,
-  newReps,
-  newWeight,
-  onConfirm,
-  onCancel,
-  saving,
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => e.key === "Escape" && onCancel();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onCancel]);
-
+function FinishSuccessOverlay({ open }) {
   if (!open) return null;
 
   return (
-    <div className="planupd-overlay" role="dialog" aria-modal="true" onClick={onCancel}>
-      <div className="planupd-card" onClick={(e) => e.stopPropagation()}>
-        <div className="planupd-head">
-          <div className="planupd-title">Update planned set?</div>
-          <button className="planupd-x" type="button" onClick={onCancel} aria-label="Close">
-            ✕
-          </button>
-        </div>
-
-        <div className="planupd-body">
-          <div className="planupd-sub">
-            You logged different values for <strong>{title}</strong> — Set{" "}
-            <strong>{setIndex}</strong>. Save this change to the workout plan?
-          </div>
-
-          <div className="planupd-compare">
-            <div className="planupd-col">
-              <div className="planupd-coltitle">Planned</div>
-              <div className="planupd-pill">
-                Reps: <strong>{oldReps ?? "—"}</strong>
-              </div>
-              <div className="planupd-pill">
-                Weight: <strong>{oldWeight ?? "—"}</strong>
-              </div>
-            </div>
-
-            <div className="planupd-col">
-              <div className="planupd-coltitle">Logged</div>
-              <div className="planupd-pill">
-                Reps: <strong>{newReps ?? "—"}</strong>
-              </div>
-              <div className="planupd-pill">
-                Weight: <strong>{newWeight ?? "—"}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="planupd-note">
-            If you choose <strong>Update</strong>, the workout’s planned set_targets
-            will be updated for this set.
-          </div>
-        </div>
-
-        <div className="planupd-foot">
-          <button className="planupd-btnGhost" type="button" onClick={onCancel} disabled={saving}>
-            Keep plan
-          </button>
-          <button className="planupd-btnPrimary" type="button" onClick={onConfirm} disabled={saving}>
-            {saving ? "Updating…" : "Update plan"}
-          </button>
+    <div className="session-finish-overlay" role="status" aria-live="polite">
+      <div className="session-finish-overlay-card">
+        <div className="session-finish-overlay-icon">✓</div>
+        <div className="session-finish-overlay-title">Workout Completed</div>
+        <div className="session-finish-overlay-text">
+          Great job. Your session was saved successfully.
         </div>
       </div>
     </div>
   );
 }
 
-/* ===== כרטיס תרגיל – אקורדיון + כפתור תמונה ===== */
 function ExerciseCard({
   exercise,
   meta,
   doneSets,
+  lastSetMap,
   onLogSet,
+  onLogRemainingAsPlanned,
+  onOpenPlanUpdate,
   isEnded,
   isSaving,
   onOpenImage,
@@ -243,19 +342,19 @@ function ExerciseCard({
   const [reps, setReps] = useState("");
   const [localSaving, setLocalSaving] = useState(false);
 
-  const planned = useMemo(
-    () => sortTargets(exercise.set_targets),
-    [exercise.set_targets]
-  );
+  const planned = useMemo(() => sortTargets(exercise.set_targets), [exercise.set_targets]);
 
   const doneCount = doneSets.length;
   const plannedCount = planned.length;
   const nextIndex = doneCount + 1;
 
   const targetForNext =
-    planned.find((r) => Number(r.set_index) === nextIndex) || null;
+    planned.find((r) => Number(r?.set_index) === Number(nextIndex)) || null;
 
-  // אם אין סטים מתוכננים – לא מגבילים
+  const lastForNext =
+    lastSetMap.get(makeSetKey(exercise.exercise_id, exercise.variation_id, nextIndex)) ||
+    null;
+
   const canLogMore = plannedCount === 0 ? true : nextIndex <= plannedCount;
 
   const progressPct =
@@ -263,24 +362,73 @@ function ExerciseCard({
       ? Math.min(100, Math.round((doneCount / plannedCount) * 100))
       : 0;
 
-  // אוטופיל לסט הבא – קודם לפי target, אחרת לפי הסט האחרון שבוצע
   useEffect(() => {
     if (!canLogMore) return;
 
     if (targetForNext) {
-      setWeight(
-        targetForNext.weight != null ? String(targetForNext.weight) : ""
-      );
+      setWeight(targetForNext.weight != null ? String(targetForNext.weight) : "");
       setReps(targetForNext.reps != null ? String(targetForNext.reps) : "");
     } else if (doneSets.length) {
       const last = doneSets[doneSets.length - 1];
-      setWeight(last.weight != null ? String(last.weight) : "");
-      setReps(last.reps != null ? String(last.reps) : "");
+      setWeight(last?.weight != null ? String(last.weight) : "");
+      setReps(last?.reps != null ? String(last.reps) : "");
     } else {
       setWeight("");
       setReps("");
     }
   }, [exercise.id, doneSets, targetForNext, canLogMore]);
+
+  const title = exercise.exercise_name || "Exercise";
+
+  const detailsText = [meta?.group_label, meta?.primary_subgroup_label]
+    .filter(Boolean)
+    .join(" • ");
+
+  const canOpenImage = !!meta?.image_path;
+
+  const diffs = useMemo(() => {
+    if (!planned.length || !doneSets.length) return [];
+
+    return planned
+      .map((target) => {
+        const setIndex = Number(target?.set_index) || 0;
+        const logged = doneSets.find((s) => Number(s?.set_index) === setIndex);
+        if (!logged) return null;
+
+        const plannedReps = target?.reps ?? null;
+        const plannedWeight = target?.weight ?? null;
+        const loggedReps = logged?.reps ?? null;
+        const loggedWeight = logged?.weight ?? null;
+
+        const repsChanged =
+          plannedReps != null &&
+          loggedReps != null &&
+          Number(plannedReps) !== Number(loggedReps);
+
+        const weightChanged =
+          plannedWeight != null &&
+          loggedWeight != null &&
+          Number(plannedWeight) !== Number(loggedWeight);
+
+        if (!repsChanged && !weightChanged) return null;
+
+        return {
+          set_index: setIndex,
+          plannedReps,
+          plannedWeight,
+          loggedReps,
+          loggedWeight,
+        };
+      })
+      .filter(Boolean);
+  }, [planned, doneSets]);
+
+  const showPerformanceChanged =
+    doneCount >= plannedCount && plannedCount > 0 && diffs.length > 0;
+
+  const futureSets = useMemo(() => {
+    return planned.filter((p) => Number(p?.set_index) > Number(nextIndex));
+  }, [planned, nextIndex]);
 
   async function handleLog() {
     if (!canLogMore || isEnded) return;
@@ -289,32 +437,9 @@ function ExerciseCard({
     if (!hasAny) return;
 
     setLocalSaving(true);
-    await onLogSet(
-      exercise.exercise_id,
-      exercise.variation_id ?? null,
-      weight,
-      reps
-    );
+    await onLogSet(exercise.exercise_id, exercise.variation_id ?? null, weight, reps);
     setLocalSaving(false);
   }
-
-  const groupLabel = meta?.group_label || null;
-  const primaryLabel = meta?.primary_subgroup_label || null;
-  const chipText =
-    groupLabel && primaryLabel
-      ? `${groupLabel} · ${primaryLabel}`
-      : groupLabel
-      ? groupLabel
-      : primaryLabel
-      ? primaryLabel
-      : "Unknown";
-
-  const plannedDisplay = plannedCount ? plannedCount : "?";
-
-  const title =
-    exercise.variation_label
-      ? `${exercise.exercise_name} — ${exercise.variation_label}`
-      : exercise.exercise_name;
 
   return (
     <div className="session-ex-card">
@@ -327,25 +452,25 @@ function ExerciseCard({
         >
           <div className="session-ex-header-main">
             <div className="session-ex-name">{title}</div>
-            <div className="session-ex-sub">
-              <span
-                className={
-                  "session-ex-chip" +
-                  (chipText === "Unknown" ? " is-unknown" : "")
-                }
-              >
-                {chipText}
-              </span>
 
-              {exercise.variation_label && (
-                <span className="session-ex-chip" style={{ marginLeft: 6 }}>
-                  {exercise.variation_label}
-                </span>
+            <div className="session-ex-meta-row">
+              {detailsText ? (
+                <span className="session-ex-meta-text">{detailsText}</span>
+              ) : (
+                <span className="session-ex-meta-text is-muted">Unknown details</span>
               )}
 
-              <span className="session-ex-sets-label">
-                {doneSets.length} / {plannedDisplay} sets
-              </span>
+              {meta?.equipment_label && (
+                <span className="session-ex-equipment-chip">{meta.equipment_label}</span>
+              )}
+
+              {exercise?.variation_label && (
+                <span className="session-ex-variation-chip">{exercise.variation_label}</span>
+              )}
+            </div>
+
+            <div className="session-ex-sets-line">
+              {doneCount}/{plannedCount || 0} sets
             </div>
           </div>
 
@@ -358,25 +483,17 @@ function ExerciseCard({
           <button
             type="button"
             className="session-icon-btn"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
-              onOpenImage(exercise.exercise_id, title, meta?.image_path);
+              if (!canOpenImage) return;
+              onOpenImage(title, meta?.image_path);
             }}
-            disabled={!meta?.image_path}
-            title={meta?.image_path ? "View exercise image" : "No image"}
+            disabled={!canOpenImage}
+            title={canOpenImage ? "View exercise image" : "No image"}
             aria-label="View image"
           >
             🖼
-          </button>
-
-          <button
-            type="button"
-            className="session-mark-btn"
-            onClick={(e) => e.stopPropagation()}
-            title="Mark (coming soon)"
-            aria-label="Mark"
-          >
-            ○ Mark
           </button>
         </div>
       </div>
@@ -390,120 +507,250 @@ function ExerciseCard({
 
       {open && (
         <div className="session-ex-body">
-          <div className="session-box">
-            <div className="session-box-title">Planned Sets</div>
-            {planned.length === 0 ? (
-              <p className="session-muted">No planned sets.</p>
-            ) : (
-              planned.map((r) => (
-                <div key={r.set_index} className="session-row">
-                  <span className="session-row-label">
-                    Set {r.set_index || "?"}
-                  </span>
-                  <span className="session-row-value">
-                    : {r.reps ?? 0} reps × {r.weight ?? 0} kg
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="session-box">
-            <div className="session-log-header">
-              <div className="session-box-title">
-                Log Set {canLogMore ? doneSets.length + 1 : doneSets.length}
+          {planned.length > 0 && (
+            <div className="session-target-compare">
+              <div className="session-target-box">
+                <div className="session-target-box-title">TARGET</div>
+                {planned.map((r) => (
+                  <div key={`target-${r.set_index}`} className="session-target-row">
+                    <span className="session-target-index">#{r.set_index}</span>
+                    <span className="session-target-value">
+                      {r.reps ?? "—"}r × {formatWeight(r.weight)}
+                    </span>
+                  </div>
+                ))}
               </div>
-              {targetForNext && (
-                <div className="session-log-target">
-                  Target:&nbsp;
-                  <strong>
-                    {targetForNext.reps ?? 0} × {targetForNext.weight ?? 0} kg
-                  </strong>
-                </div>
-              )}
-            </div>
 
-            <div className="session-log-grid">
-              <div className="session-log-field">
-                <label className="session-label">Reps</label>
-                <input
-                  className="session-input"
-                  type="number"
-                  inputMode="numeric"
-                  value={reps}
-                  onChange={(e) => setReps(e.target.value)}
-                  disabled={isEnded || !canLogMore}
-                />
-              </div>
-              <div className="session-log-field">
-                <label className="session-label">Weight (kg)</label>
-                <input
-                  className="session-input"
-                  type="number"
-                  inputMode="numeric"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  disabled={isEnded || !canLogMore}
-                />
+              <div className="session-target-box">
+                <div className="session-target-box-title">LAST TIME</div>
+                {planned.map((r) => {
+                  const last =
+                    lastSetMap.get(
+                      makeSetKey(exercise.exercise_id, exercise.variation_id, r.set_index)
+                    ) || null;
+
+                  return (
+                    <div key={`last-${r.set_index}`} className="session-target-row">
+                      <span className="session-target-index">#{r.set_index}</span>
+                      <span className="session-target-value session-target-value--accent">
+                        {last?.reps ?? "—"}r × {formatWeight(last?.weight)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
+          )}
 
+          {plannedCount > 0 && doneCount < plannedCount && (
             <button
               type="button"
-              className="session-log-btn"
-              onClick={handleLog}
-              disabled={
-                isEnded ||
-                !canLogMore ||
-                isSaving ||
-                localSaving ||
-                !(isPosNum(reps) || isNonNegNum(weight))
-              }
+              className="session-log-remaining-btn"
+              onClick={() => onLogRemainingAsPlanned(exercise)}
+              disabled={isSaving || localSaving || isEnded}
             >
-              {isEnded
-                ? "Session completed"
-                : !canLogMore
-                ? "All sets logged"
-                : localSaving || isSaving
-                ? "Saving…"
-                : `+ Log Set ${doneSets.length + 1}`}
+              Log Remaining as Planned
             </button>
+          )}
+
+          <div className="session-set-flow">
+            {doneSets.map((s) => {
+              const last =
+                lastSetMap.get(
+                  makeSetKey(exercise.exercise_id, exercise.variation_id, s.set_index)
+                ) || null;
+
+              return (
+                <div key={s.id} className="session-done-card">
+                  <div className="session-done-check">✓</div>
+
+                  <div className="session-done-main">
+                    <div className="session-done-set-label">Set {s.set_index}</div>
+                    <div className="session-done-value">
+                      {s.reps ?? "—"} × {s.weight ?? "—"} lbs
+                    </div>
+                    <div className="session-done-last">
+                      Last: {last?.reps ?? "—"} × {last?.weight ?? "—"} lbs
+                    </div>
+                  </div>
+
+                  <div className="session-done-status">✓ Done</div>
+                </div>
+              );
+            })}
+
+            {canLogMore && !isEnded && (
+              <div className="session-active-set-card">
+                <div className="session-active-top">
+                  <div className="session-active-badge">#{nextIndex}</div>
+
+                  <div className="session-active-top-main">
+                    <div className="session-active-kicker">NEXT SET</div>
+                    <div className="session-active-lastline">
+                      Last workout: {lastForNext?.reps ?? "—"}r × {lastForNext?.weight ?? "—"}lbs
+                    </div>
+                  </div>
+                </div>
+
+                <div className="session-active-controls">
+                  <div className="session-value-box">
+                    <div className="session-value-label">REPS</div>
+
+                    <div className="session-stepper">
+                      <button
+                        type="button"
+                        className="session-step-btn"
+                        onClick={() =>
+                          setReps((prev) => {
+                            const n = Number(prev || 0);
+                            return String(Math.max(0, n - 1));
+                          })
+                        }
+                      >
+                        −
+                      </button>
+
+                      <div className="session-value-main">{reps || "0"}</div>
+
+                      <button
+                        type="button"
+                        className="session-step-btn"
+                        onClick={() =>
+                          setReps((prev) => {
+                            const n = Number(prev || 0);
+                            return String(n + 1);
+                          })
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <div className="session-value-meta">
+                      Planned: {targetForNext?.reps ?? "—"}
+                    </div>
+                    <div className="session-value-meta">
+                      Last workout: {lastForNext?.reps ?? "—"}
+                    </div>
+                  </div>
+
+                  <div className="session-value-box">
+                    <div className="session-value-label">WEIGHT</div>
+
+                    <div className="session-stepper">
+                      <button
+                        type="button"
+                        className="session-step-btn"
+                        onClick={() =>
+                          setWeight((prev) => {
+                            const n = Number(prev || 0);
+                            return String(Math.max(0, n - 1));
+                          })
+                        }
+                      >
+                        −
+                      </button>
+
+                      <div className="session-value-main">{weight || "0"}</div>
+
+                      <button
+                        type="button"
+                        className="session-step-btn"
+                        onClick={() =>
+                          setWeight((prev) => {
+                            const n = Number(prev || 0);
+                            return String(n + 1);
+                          })
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <div className="session-value-meta">
+                      Planned: {targetForNext?.weight ?? "—"} lbs
+                    </div>
+                    <div className="session-value-meta">
+                      Last workout: {lastForNext?.weight ?? "—"} lbs
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="session-log-btn session-log-btn--primary"
+                  onClick={handleLog}
+                  disabled={
+                    isEnded ||
+                    !canLogMore ||
+                    isSaving ||
+                    localSaving ||
+                    !(isPosNum(reps) || isNonNegNum(weight))
+                  }
+                >
+                  {localSaving || isSaving ? "Saving…" : "Log Set"}
+                </button>
+              </div>
+            )}
+
+            {futureSets.map((future) => {
+              const last =
+                lastSetMap.get(
+                  makeSetKey(exercise.exercise_id, exercise.variation_id, future.set_index)
+                ) || null;
+
+              return (
+                <div key={`future-${future.set_index}`} className="session-upcoming-row">
+                  <div className="session-upcoming-left">#{future.set_index}</div>
+
+                  <div className="session-upcoming-main">
+                    <div className="session-upcoming-values">
+                      <span>{future.reps ?? "—"} reps</span>
+                      <span>{future.weight ?? "—"} lbs</span>
+                    </div>
+                    <div className="session-upcoming-last">
+                      ({last?.reps ?? "—"}) &nbsp;&nbsp; ({last?.weight ?? "—"})
+                    </div>
+                  </div>
+
+                  <div className="session-upcoming-status">Upcoming</div>
+                </div>
+              );
+            })}
           </div>
 
-          <div className="session-box">
-            <div className="session-box-title">Completed Sets</div>
-            {doneSets.length === 0 ? (
-              <p className="session-muted">No sets yet.</p>
-            ) : (
-              <ul className="session-exercise-list">
-                {doneSets.map((s) => (
-                  <li key={s.id} className="session-completed-row">
-                    <span>
-                      Set {s.set_index}: {s.reps ?? "—"} reps × {s.weight ?? "—"} kg
-                    </span>
-                    <span className="session-timestamp">
-                      {new Date(s.created_at).toLocaleTimeString(undefined, {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: false,
-                      })}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {showPerformanceChanged && (
+            <div className="session-plan-alert">
+              <div className="session-plan-alert-icon">i</div>
+
+              <div className="session-plan-alert-main">
+                <div className="session-plan-alert-title">Performance Changed</div>
+                <div className="session-plan-alert-text">
+                  Update your plan to match today’s performance?
+                </div>
+
+                <button
+                  type="button"
+                  className="session-plan-alert-btn"
+                  onClick={() => onOpenPlanUpdate(exercise, diffs)}
+                >
+                  Update Plan for Next Time
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-/* ===== עמוד סשן ===== */
 export default function SessionPage() {
   const qs = new URLSearchParams(window.location.search);
   const dateISO = qs.get("date");
   const { sessionId } = useParams();
+  const navigate = useNavigate();
+  const { openModal, closeModal } = useModal();
 
   const [session, setSession] = useState(null);
   const [workoutName, setWorkoutName] = useState("");
@@ -515,16 +762,18 @@ export default function SessionPage() {
   const [ending, setEnding] = useState(false);
 
   const [metaByExerciseId, setMetaByExerciseId] = useState(new Map());
+  const [lastWorkoutSetMap, setLastWorkoutSetMap] = useState(new Map());
 
-  const [imgOpen, setImgOpen] = useState(false);
-  const [imgTitle, setImgTitle] = useState("");
-  const [imgUrl, setImgUrl] = useState("");
-  const [imgLoading, setImgLoading] = useState(false);
+  const [restOpen, setRestOpen] = useState(false);
+  const [restSeconds, setRestSeconds] = useState(REST_TIMER_DEFAULT);
+  const [restBaseSeconds, setRestBaseSeconds] = useState(REST_TIMER_DEFAULT);
 
-  // ✅ confirm modal state
-  const [planUpdOpen, setPlanUpdOpen] = useState(false);
-  const [planUpdSaving, setPlanUpdSaving] = useState(false);
-  const [planUpdPayload, setPlanUpdPayload] = useState(null);
+  const [planModalSaving, setPlanModalSaving] = useState(false);
+  const [showFinishOverlay, setShowFinishOverlay] = useState(false);
+
+  const finishRedirectRef = useRef(null);
+  const tickRef = useRef(null);
+  const [nowTick, setNowTick] = useState(Date.now());
 
   const fmtLocal = (iso) => {
     try {
@@ -537,6 +786,28 @@ export default function SessionPage() {
       return iso ?? "";
     }
   };
+
+  useEffect(() => {
+    if (!restOpen) return;
+    if (restSeconds <= 0) return;
+
+    const id = window.setInterval(() => {
+      setRestSeconds((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => window.clearInterval(id);
+  }, [restOpen, restSeconds]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNowTick(Date.now());
+    }, 1000);
+
+    tickRef.current = interval;
+    return () => {
+      if (tickRef.current) window.clearInterval(tickRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -554,9 +825,7 @@ export default function SessionPage() {
         },
         (payload) => {
           const row = payload.new;
-          setSets((prev) =>
-            prev.some((s) => s.id === row.id) ? prev : [...prev, row]
-          );
+          setSets((prev) => (prev.some((s) => s.id === row.id) ? prev : [...prev, row]));
         }
       )
       .on(
@@ -596,73 +865,63 @@ export default function SessionPage() {
 
     return () => {
       supabase.removeChannel(channel);
+      if (finishRedirectRef.current) {
+        window.clearTimeout(finishRedirectRef.current);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
+
+  const startRestTimer = useCallback((seconds = REST_TIMER_DEFAULT) => {
+    setRestBaseSeconds(seconds);
+    setRestSeconds(seconds);
+    setRestOpen(true);
+  }, []);
+
+  const closeRestTimer = useCallback(() => {
+    setRestOpen(false);
+  }, []);
 
   const loadExerciseMeta = useCallback(async (items) => {
     const ids = Array.from(
       new Set((items || []).map((x) => x.exercise_id).filter(Boolean).map(String))
     );
+
     if (!ids.length) {
       setMetaByExerciseId(new Map());
       return;
     }
 
-    const { data: exRows, error: exErr } = await supabase
+    const { data: exRows, error } = await supabase
       .from("exercises_catalog")
-      .select("id, image_path, primary_subgroup_id")
+      .select(`
+        id,
+        image_path,
+        primary_subgroup:muscle_subgroups!exercises_catalog_primary_subgroup_id_fkey (
+          id,
+          label,
+          muscle_groups ( id, label )
+        ),
+        equipment:equipment (
+          id,
+          label
+        )
+      `)
       .in("id", ids);
 
-    if (exErr) {
-      console.error("exercises_catalog meta error:", exErr);
+    if (error) {
+      console.error("exercises_catalog meta error:", error);
       return;
     }
 
-    const primarySubgroupIds = Array.from(
-      new Set((exRows || []).map((r) => r.primary_subgroup_id).filter(Boolean))
-    );
-
-    let subgroups = [];
-    if (primarySubgroupIds.length) {
-      const { data: sg, error: sgErr } = await supabase
-        .from("muscle_subgroups")
-        .select("id, label, group_id")
-        .in("id", primarySubgroupIds);
-
-      if (sgErr) console.error("muscle_subgroups meta error:", sgErr);
-      else subgroups = sg || [];
-    }
-
-    const groupIds = Array.from(
-      new Set((subgroups || []).map((s) => s.group_id).filter(Boolean))
-    );
-
-    let groups = [];
-    if (groupIds.length) {
-      const { data: g, error: gErr } = await supabase
-        .from("muscle_groups")
-        .select("id, label")
-        .in("id", groupIds);
-
-      if (gErr) console.error("muscle_groups meta error:", gErr);
-      else groups = g || [];
-    }
-
-    const subgroupById = new Map((subgroups || []).map((s) => [s.id, s]));
-    const groupLabelById = new Map((groups || []).map((g) => [g.id, g.label]));
-
     const map = new Map();
-    (exRows || []).forEach((r) => {
-      const sg = r.primary_subgroup_id
-        ? subgroupById.get(r.primary_subgroup_id)
-        : null;
-      const groupLabel = sg?.group_id ? groupLabelById.get(sg.group_id) : null;
 
+    (exRows || []).forEach((r) => {
       map.set(String(r.id), {
         image_path: r.image_path || null,
-        primary_subgroup_label: sg?.label || null,
-        group_label: groupLabel || null,
+        primary_subgroup_label: r?.primary_subgroup?.label || null,
+        group_label: r?.primary_subgroup?.muscle_groups?.label || null,
+        equipment_label: r?.equipment?.label || null,
       });
     });
 
@@ -698,6 +957,57 @@ export default function SessionPage() {
     }));
   }, []);
 
+  const loadPreviousWorkoutSets = useCallback(async (sessionRow) => {
+    if (!sessionRow?.workout_id || !sessionRow?.user_id) {
+      setLastWorkoutSetMap(new Map());
+      return;
+    }
+
+    const { data: prevSessions, error: prevSessionsErr } = await supabase
+      .from("sessions")
+      .select("id, ended_at")
+      .eq("user_id", sessionRow.user_id)
+      .eq("workout_id", sessionRow.workout_id)
+      .not("ended_at", "is", null)
+      .neq("id", sessionRow.id)
+      .order("ended_at", { ascending: false })
+      .limit(10);
+
+    if (prevSessionsErr) {
+      console.error("previous sessions load error:", prevSessionsErr);
+      setLastWorkoutSetMap(new Map());
+      return;
+    }
+
+    const prevSessionIds = (prevSessions || []).map((x) => x.id).filter(Boolean);
+    if (!prevSessionIds.length) {
+      setLastWorkoutSetMap(new Map());
+      return;
+    }
+
+    const { data: prevSets, error: prevSetsErr } = await supabase
+      .from("sets")
+      .select(
+        "id, session_id, exercise_id, variation_id, set_index, weight, reps, created_at"
+      )
+      .in("session_id", prevSessionIds)
+      .order("created_at", { ascending: false });
+
+    if (prevSetsErr) {
+      console.error("previous sets load error:", prevSetsErr);
+      setLastWorkoutSetMap(new Map());
+      return;
+    }
+
+    const map = new Map();
+    for (const row of prevSets || []) {
+      const key = makeSetKey(row.exercise_id, row.variation_id, row.set_index);
+      if (!map.has(key)) map.set(key, row);
+    }
+
+    setLastWorkoutSetMap(map);
+  }, []);
+
   async function loadInitial() {
     setLoading(true);
     setMsg("");
@@ -721,13 +1031,16 @@ export default function SessionPage() {
         .select("id, name")
         .eq("id", s.workout_id)
         .single();
+
       if (w?.name) setWorkoutName(w.name);
     }
 
     if (s?.workout_id) {
       const { data: items, error: eI } = await supabase
         .from("workout_exercises")
-        .select("id, exercise_id, exercise_name, variation_id, set_targets, order_index")
+        .select(
+          "id, exercise_id, exercise_name, variation_id, set_targets, order_index"
+        )
         .eq("workout_id", s.workout_id)
         .order("order_index");
 
@@ -738,14 +1051,18 @@ export default function SessionPage() {
       const withVarLabels = await attachVariationLabels(cleaned);
       setWorkoutItems(withVarLabels);
       await loadExerciseMeta(withVarLabels);
+      await loadPreviousWorkoutSets(s);
     } else {
       setWorkoutItems([]);
       setMetaByExerciseId(new Map());
+      setLastWorkoutSetMap(new Map());
     }
 
     const { data: performed, error: eP } = await supabase
       .from("sets")
-      .select("id, exercise_id, exercise_name, variation_id, set_index, weight, reps, created_at")
+      .select(
+        "id, exercise_id, exercise_name, variation_id, set_index, weight, reps, created_at"
+      )
       .eq("session_id", sessionId)
       .order("created_at", { ascending: true });
 
@@ -772,13 +1089,26 @@ export default function SessionPage() {
     return sum;
   }, [workoutItems]);
 
-  const totalLoggedSets = sets.length;
+  const completedExercisesCount = useMemo(() => {
+    return workoutItems.reduce((acc, it) => {
+      const key = makeKey(it.exercise_id, it.variation_id);
+      const done = grouped.get(key) || [];
+      const plannedCount = Array.isArray(it.set_targets) ? it.set_targets.length : 0;
+
+      if (plannedCount > 0 && done.length >= plannedCount) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+  }, [workoutItems, grouped]);
+
   const progressPct =
     totalPlannedSets > 0
-      ? Math.round((totalLoggedSets / totalPlannedSets) * 100)
+      ? Math.min(100, Math.round((sets.length / totalPlannedSets) * 100))
       : 0;
 
   const isEnded = !!session?.ended_at;
+  const elapsedLabel = formatElapsed(session?.started_at, session?.ended_at || nowTick);
 
   async function ensureStartedIfNeeded() {
     if (!session?.id) return;
@@ -800,12 +1130,13 @@ export default function SessionPage() {
   function buildUpdatedTargets(existingTargets, setIndex, patch) {
     const base = Array.isArray(existingTargets) ? sortTargets(existingTargets) : [];
     const idx = base.findIndex((x) => Number(x?.set_index) === Number(setIndex));
-    const current = idx >= 0 ? base[idx] : { set_index: setIndex, reps: null, weight: null };
+    const current =
+      idx >= 0 ? base[idx] : { set_index: setIndex, reps: null, weight: null };
 
     const next = {
       set_index: Number(setIndex),
-      reps: patch.reps !== undefined ? patch.reps : (current.reps ?? null),
-      weight: patch.weight !== undefined ? patch.weight : (current.weight ?? null),
+      reps: patch.reps !== undefined ? patch.reps : current.reps ?? null,
+      weight: patch.weight !== undefined ? patch.weight : current.weight ?? null,
     };
 
     const out = [...base];
@@ -857,52 +1188,20 @@ export default function SessionPage() {
     return { ok: false };
   }
 
-  function shouldPromptUpdateDifferent(plannedTarget, logged) {
-    if (!plannedTarget) return { ok: false };
-
-    const plannedReps = plannedTarget.reps;
-    const plannedWeight = plannedTarget.weight;
-    const plannedHasBoth = plannedReps != null && plannedWeight != null;
-
-    const loggedReps = logged.reps;
-    const loggedWeight = logged.weight;
-
-    const hasLoggedAny = loggedReps != null || loggedWeight != null;
-    if (!hasLoggedAny) return { ok: false };
-
-    if (!plannedHasBoth) return { ok: false };
-
-    const repsChanged = loggedReps != null && Number(loggedReps) !== Number(plannedReps);
-    const weightChanged = loggedWeight != null && Number(loggedWeight) !== Number(plannedWeight);
-
-    if (!repsChanged && !weightChanged) return { ok: false };
-
-    return {
-      ok: true,
-      oldReps: plannedReps,
-      oldWeight: plannedWeight,
-      newReps: loggedReps,
-      newWeight: loggedWeight,
-      patch: {
-        reps: loggedReps != null ? Number(loggedReps) : undefined,
-        weight: loggedWeight != null ? Number(loggedWeight) : undefined,
-      },
-    };
-  }
-
-  async function logSetForExercise(exerciseId, variationId, weight, reps) {
+  async function logSetForExercise(exerciseId, variationId, weight, reps, options = {}) {
+    const { startTimer = true } = options;
     setMsg("");
 
     if (isEnded) {
       setMsg("❌ Session already completed");
-      return;
+      return { ok: false };
     }
 
     const repsOk = isPosNum(reps);
     const weightOk = isNonNegNum(weight);
     if (!repsOk && !weightOk) {
       setMsg("❌ Enter reps and/or weight");
-      return;
+      return { ok: false };
     }
 
     const repsVal = repsOk ? Number(reps) : null;
@@ -919,7 +1218,7 @@ export default function SessionPage() {
 
     if (!plan) {
       setMsg("❌ Exercise not found (variation mismatch)");
-      return;
+      return { ok: false };
     }
 
     const key = makeKey(plan.exercise_id, plan.variation_id);
@@ -930,7 +1229,7 @@ export default function SessionPage() {
 
     if (plannedCount && nextIndex > plannedCount) {
       setMsg("❌ All planned sets for this exercise are already logged");
-      return;
+      return { ok: false };
     }
 
     setSaving(true);
@@ -947,52 +1246,111 @@ export default function SessionPage() {
         weight: weightVal,
         reps: repsVal,
       })
-      .select("id, exercise_id, exercise_name, variation_id, set_index, weight, reps, created_at")
+      .select(
+        "id, exercise_id, exercise_name, variation_id, set_index, weight, reps, created_at"
+      )
       .single();
 
     setSaving(false);
 
     if (error) {
       setMsg("❌ " + error.message);
-      return;
+      return { ok: false };
     }
 
     setSets((prev) => [...prev, data]);
     setMsg("✅ Set logged");
 
+    if (startTimer) {
+      startRestTimer(REST_TIMER_DEFAULT);
+    }
+
     const plannedArr = sortTargets(plan.set_targets);
-    const plannedTarget = plannedArr.find((t) => Number(t?.set_index) === Number(nextIndex)) || null;
+    const plannedTarget =
+      plannedArr.find((t) => Number(t?.set_index) === Number(nextIndex)) || null;
 
     const logged = { reps: repsVal, weight: weightVal };
-
     const auto = shouldAutoUpdateMissingTarget(plannedTarget, logged);
+
     if (auto.ok) {
       const res = await updatePlanSetTargets(plan.id, nextIndex, auto.patch);
       if (!res.ok) console.warn("Auto update plan failed:", res.error);
-      return;
     }
 
-    const diff = shouldPromptUpdateDifferent(plannedTarget, logged);
-    if (diff.ok) {
-      const title =
-        plan.variation_label
-          ? `${plan.exercise_name} — ${plan.variation_label}`
-          : plan.exercise_name;
+    return { ok: true };
+  }
 
-      setPlanUpdPayload({
-        planId: plan.id,
-        title,
-        setIndex: nextIndex,
-        oldReps: diff.oldReps,
-        oldWeight: diff.oldWeight,
-        newReps: diff.newReps,
-        newWeight: diff.newWeight,
-        patchReps: diff.patch.reps,
-        patchWeight: diff.patch.weight,
-      });
-      setPlanUpdOpen(true);
+  async function logRemainingAsPlanned(exercise) {
+    if (!exercise || isEnded) return;
+
+    const currentDone = grouped.get(makeKey(exercise.exercise_id, exercise.variation_id)) || [];
+    const planned = sortTargets(exercise.set_targets);
+    const nextIndex = currentDone.length + 1;
+    const remaining = planned.filter((p) => Number(p?.set_index) >= nextIndex);
+
+    if (!remaining.length) return;
+
+    for (let i = 0; i < remaining.length; i += 1) {
+      const row = remaining[i];
+      const isLast = i === remaining.length - 1;
+
+      const result = await logSetForExercise(
+        exercise.exercise_id,
+        exercise.variation_id ?? null,
+        row.weight != null ? String(row.weight) : "",
+        row.reps != null ? String(row.reps) : "",
+        { startTimer: isLast }
+      );
+
+      if (!result?.ok) break;
     }
   }
+
+  const openPlanUpdateModal = useCallback(
+    (exercise, diffs) => {
+      const title = exercise?.variation_label
+        ? `${exercise.exercise_name} — ${exercise.variation_label}`
+        : exercise.exercise_name || "Exercise";
+
+      let modalId = null;
+
+      modalId = openModal(
+        <UpdatePlanModalContent
+          exerciseTitle={title}
+          diffs={diffs}
+          saving={planModalSaving}
+          onConfirm={async () => {
+            setPlanModalSaving(true);
+
+            for (const diff of diffs) {
+              const res = await updatePlanSetTargets(exercise.id, diff.set_index, {
+                reps: diff.loggedReps != null ? Number(diff.loggedReps) : undefined,
+                weight: diff.loggedWeight != null ? Number(diff.loggedWeight) : undefined,
+              });
+
+              if (!res.ok) {
+                setMsg("❌ Failed to update plan: " + res.error);
+                setPlanModalSaving(false);
+                return;
+              }
+            }
+
+            setPlanModalSaving(false);
+            closeModal(modalId);
+            setMsg("✅ Plan updated for next time");
+          }}
+          onCancel={() => {
+            closeModal(modalId);
+          }}
+        />,
+        {
+          closeOnBackdrop: true,
+          closeOnEsc: true,
+        }
+      );
+    },
+    [openModal, closeModal, planModalSaving]
+  );
 
   async function finishSession() {
     setMsg("");
@@ -1032,125 +1390,99 @@ export default function SessionPage() {
     );
 
     setMsg("✅ Session completed");
+    setRestOpen(false);
+    setShowFinishOverlay(true);
+
+    if (finishRedirectRef.current) window.clearTimeout(finishRedirectRef.current);
+    finishRedirectRef.current = window.setTimeout(() => {
+      navigate("/home");
+    }, FINISH_REDIRECT_DELAY);
   }
 
-  const openExerciseImage = useCallback(async (exerciseId, exerciseName, imagePath) => {
-    const path = imagePath || null;
-    setImgTitle(exerciseName || "Exercise image");
-    setImgUrl("");
-    setImgOpen(true);
+  const openExerciseImage = useCallback(
+    (title, imagePath) => {
+      const imageUrl = getPublicImageUrl(imagePath) || "";
+      let modalId = null;
 
-    if (!path) return;
-
-    setImgLoading(true);
-
-    try {
-      const { data, error } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrl(path, 60 * 60);
-
-      if (!error && data?.signedUrl) {
-        setImgUrl(data.signedUrl);
-        setImgLoading(false);
-        return;
-      }
-
-      const pub = supabase.storage.from(BUCKET).getPublicUrl(path);
-      setImgUrl(pub?.data?.publicUrl || "");
-    } catch (e) {
-      console.error("openExerciseImage error:", e);
-      const pub = supabase.storage.from(BUCKET).getPublicUrl(path);
-      setImgUrl(pub?.data?.publicUrl || "");
-    } finally {
-      setImgLoading(false);
-    }
-  }, []);
-
-  async function confirmPlanUpdate() {
-    if (!planUpdPayload) return;
-    setPlanUpdSaving(true);
-
-    const patch = {
-      reps: planUpdPayload.patchReps,
-      weight: planUpdPayload.patchWeight,
-    };
-
-    const res = await updatePlanSetTargets(planUpdPayload.planId, planUpdPayload.setIndex, patch);
-    setPlanUpdSaving(false);
-
-    if (!res.ok) {
-      setMsg("❌ Failed to update plan: " + res.error);
-    } else {
-      setMsg("✅ Plan updated");
-    }
-
-    setPlanUpdOpen(false);
-    setPlanUpdPayload(null);
-  }
-
-  function cancelPlanUpdate() {
-    setPlanUpdOpen(false);
-    setPlanUpdPayload(null);
-  }
+      modalId = openModal(
+        <ImageViewerModal
+          title={title || "Exercise"}
+          imageUrl={imageUrl}
+          onClose={() => closeModal(modalId)}
+        />,
+        {
+          closeOnBackdrop: false,
+          closeOnEsc: true,
+        }
+      );
+    },
+    [openModal, closeModal]
+  );
 
   if (loading) return <SessionPageSkeleton />;
 
   const dateLabel =
     session?.session_date || dateISO
       ? new Date(session?.session_date || dateISO).toLocaleDateString(undefined, {
-          weekday: "short",
-          month: "short",
+          weekday: "long",
+          month: "long",
           day: "numeric",
           year: "numeric",
         })
       : "N/A";
 
   const startedLabel = session?.started_at ? fmtLocal(session.started_at) : null;
+  const headerChipText = isEnded
+    ? `Completed ${fmtLocal(session.ended_at)}`
+    : "Workout in Progress";
 
   return (
     <div className="session-page-root">
       <div className="session-page-shell session-content-ready">
-        <header className="session-header">
-          <button
-            type="button"
-            className="session-header-exit"
-            onClick={() => window.history.back()}
-          >
-            ← Exit
-          </button>
+        <header className="session-header-sticky-wrap">
+          <div className="session-header-card">
+            <div className="session-header-date">{dateLabel}</div>
 
-          <div className="session-header-date">{dateLabel}</div>
+            <h2 className="session-header-title">{workoutName || "Workout Session"}</h2>
 
-          <h2 className="session-header-title">
-            {workoutName || "Workout Session"}
-          </h2>
-
-          <div className="session-header-sub">
-            <span>{workoutItems.length} exercises</span>
-            <span>• {sets.length} / {totalPlannedSets || 0} sets logged</span>
-            <span>• {progressPct}%</span>
-          </div>
-
-          <div className="session-progress">
-            <div className="session-progress-fill" style={{ width: `${progressPct}%` }} />
-          </div>
-
-          {!isEnded && startedLabel && (
-            <div className="session-header-chip">In progress {startedLabel}</div>
-          )}
-
-          {isEnded && (
-            <div className="session-header-chip">
-              Completed {fmtLocal(session.ended_at)}
+            <div className="session-header-sub">
+              <span>{elapsedLabel}</span>
+              <span>•</span>
+              <span>{workoutItems.length} exercises</span>
+              <span>•</span>
+              <span>
+                {completedExercisesCount}/{workoutItems.length || 0} completed
+              </span>
+              <span>•</span>
+              <span>
+                {sets.length}/{totalPlannedSets || 0} sets
+              </span>
+              <span>•</span>
+              <span>{progressPct}%</span>
             </div>
-          )}
+
+            <div className="session-progress">
+              <div className="session-progress-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+
+            <div className={`session-header-chip ${isEnded ? "is-completed" : ""}`}>
+              ● {headerChipText}
+            </div>
+
+            {msg && <div className="session-inline-message">{msg}</div>}
+            {!isEnded && !startedLabel && (
+              <div className="session-inline-hint">
+                The timer starts on your first logged set.
+              </div>
+            )}
+          </div>
         </header>
 
-        <section className="session-card">
-          <h3 className="session-card-title">Exercises</h3>
-
+        <section className="session-exercises-wrap">
           {workoutItems.length === 0 && (
-            <p className="session-muted">No exercises in this workout.</p>
+            <div className="session-card">
+              <p className="session-muted">No exercises in this workout.</p>
+            </div>
           )}
 
           {workoutItems.map((it) => {
@@ -1164,77 +1496,46 @@ export default function SessionPage() {
                 exercise={it}
                 meta={meta}
                 doneSets={done}
+                lastSetMap={lastWorkoutSetMap}
                 onLogSet={logSetForExercise}
+                onLogRemainingAsPlanned={logRemainingAsPlanned}
+                onOpenPlanUpdate={openPlanUpdateModal}
                 isEnded={isEnded}
                 isSaving={saving}
                 onOpenImage={openExerciseImage}
               />
             );
           })}
-        </section>
 
-        <section className="session-card session-summary-card">
-          <h3 className="session-card-title">Session summary</h3>
-          <div className="session-summary-grid">
-            <div className="session-summary-item">
-              <div className="session-summary-label">Total sets</div>
-              <div className="session-summary-value">{sets.length}</div>
-            </div>
-            <div className="session-summary-item">
-              <div className="session-summary-label">Planned sets</div>
-              <div className="session-summary-value">{totalPlannedSets || 0}</div>
-            </div>
-            <div className="session-summary-item">
-              <div className="session-summary-label">Progress</div>
-              <div className="session-summary-value">
-                {progressPct}
-                <span className="session-summary-suffix">%</span>
-              </div>
-            </div>
+          <div className="session-finish-inline-wrap">
+            <button
+              className="session-finish-btn"
+              onClick={finishSession}
+              disabled={ending || isEnded}
+            >
+              {isEnded ? "Session completed" : ending ? "Finishing…" : "Finish Session"}
+            </button>
           </div>
 
-          {msg && (
-            <p className="session-message" style={{ marginTop: 8 }}>
-              {msg}
-            </p>
-          )}
+          <div className="session-scroll-bottom-space" />
         </section>
-
-        <div className="session-finish-wrap">
-          <button
-            className="session-finish-btn"
-            onClick={finishSession}
-            disabled={ending || isEnded}
-          >
-            {isEnded ? "Session completed" : ending ? "Finishing…" : "Finish Session"}
-          </button>
-        </div>
       </div>
 
-      <ImageModal
-        open={imgOpen}
-        title={imgTitle}
-        imageUrl={imgUrl}
-        loading={imgLoading}
-        onClose={() => {
-          setImgOpen(false);
-          setImgUrl("");
-          setImgTitle("");
+      <RestTimer
+        open={restOpen}
+        seconds={restSeconds}
+        baseSeconds={restBaseSeconds}
+        isReady={restSeconds <= 0}
+        onClose={closeRestTimer}
+        onIncrease={() => {
+          const next = restSeconds + REST_TIMER_STEP;
+          setRestSeconds(next);
+          setRestBaseSeconds(Math.max(restBaseSeconds, next));
         }}
+        onDecrease={() => setRestSeconds((prev) => Math.max(0, prev - REST_TIMER_STEP))}
       />
 
-      <ConfirmPlanUpdateModal
-        open={planUpdOpen}
-        title={planUpdPayload?.title || ""}
-        setIndex={planUpdPayload?.setIndex || 1}
-        oldReps={planUpdPayload?.oldReps ?? null}
-        oldWeight={planUpdPayload?.oldWeight ?? null}
-        newReps={planUpdPayload?.newReps ?? null}
-        newWeight={planUpdPayload?.newWeight ?? null}
-        onConfirm={confirmPlanUpdate}
-        onCancel={cancelPlanUpdate}
-        saving={planUpdSaving}
-      />
+      <FinishSuccessOverlay open={showFinishOverlay} />
     </div>
   );
 }
