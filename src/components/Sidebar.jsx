@@ -1,12 +1,13 @@
 // src/components/Sidebar.jsx
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, CalendarDays, Dumbbell, TrendingUp, BookOpen, Users, LogOut, X } from "lucide-react";
+import { Home, CalendarDays, Dumbbell, ClipboardList, TrendingUp, BookOpen, Users, LogOut, X } from "lucide-react";
 
 const NAV_ITEMS = [
   { to: "/home", label: "Home", icon: Home },
+  { to: "/workout", label: "Workout", icon: Dumbbell },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/workouts", label: "Workouts", icon: Dumbbell },
+  { to: "/workouts", label: "Workouts", icon: ClipboardList },
   { to: "/progress", label: "Progress", icon: TrendingUp },
   { to: "/exercises", label: "Exercises", icon: BookOpen },
 ];

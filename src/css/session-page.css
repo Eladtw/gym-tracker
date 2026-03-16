@@ -287,6 +287,58 @@
   cursor: not-allowed;
 }
 
+
+.session-ex-meta-line {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.session-ex-meta-line.is-unknown {
+  color: #92400e;
+}
+
+.session-log-grid--compact {
+  gap: 10px;
+}
+
+.session-current-field {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 8px;
+  background: #f8fafc;
+}
+
+.session-current-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  gap: 6px;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.session-step-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.session-input-current {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  padding: 6px 8px;
+}
+
+.session-field-sub {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.25;
+}
+
 /* Completed list */
 .session-exercise-list {
   margin-top: 2px;

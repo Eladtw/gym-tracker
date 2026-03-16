@@ -1,0 +1,128 @@
+.workout-start-page {
+  padding: 8px 4px 16px;
+}
+
+.workout-start-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
+.workout-start-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.workout-start-active {
+  margin-top: 14px;
+  background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.workout-start-active-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #0f172a;
+}
+
+.workout-start-active-label {
+  font-size: 0.75rem;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.workout-start-continue-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 600;
+}
+
+.workout-start-msg {
+  margin: 10px 0 0;
+  font-size: 0.85rem;
+}
+
+.workout-start-list-wrap {
+  margin-top: 12px;
+}
+
+.workout-start-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.workout-start-item {
+  border: 1px solid #dbe1ea;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.workout-start-item-main {
+  min-width: 0;
+}
+
+.workout-start-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workout-start-item-title-row h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.workout-start-item-muscles {
+  margin: 6px 0 2px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.workout-start-item-meta {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.workout-start-play-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.workout-start-play-btn:disabled {
+  opacity: 0.6;
+}
+
+.workout-start-empty {
+  margin: 10px 2px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
