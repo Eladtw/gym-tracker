@@ -804,7 +804,7 @@ export default function SessionPage() {
   const [restSeconds, setRestSeconds] = useState(REST_TIMER_DEFAULT);
   const [restBaseSeconds, setRestBaseSeconds] = useState(REST_TIMER_DEFAULT);
 
-  const [openExerciseId, setOpenExerciseId] = useState(null);
+  const [openExerciseIds, setOpenExerciseIds] = useState(() => new Set());
   const exercisesWrapRef = useRef(null);
   const exerciseCardRefs = useRef(new Map());
 
@@ -939,7 +939,7 @@ export default function SessionPage() {
     const containerRect = container.getBoundingClientRect();
     const cardRect = card.getBoundingClientRect();
     const targetTop =
-      container.scrollTop + (cardRect.top - containerRect.top) - 8;
+      container.scrollTop + (cardRect.top - containerRect.top) - 26;
 
     container.scrollTo({
       top: Math.max(0, targetTop),
@@ -952,12 +952,15 @@ export default function SessionPage() {
     if (idx < 0) return;
 
     const next = workoutItems[idx + 1] || null;
-    if (!next) {
-      setOpenExerciseId(null);
-      return;
-    }
 
-    setOpenExerciseId(next.id);
+    setOpenExerciseIds((prev) => {
+      const nextSet = new Set(prev);
+      nextSet.delete(exerciseId);
+      if (next?.id) nextSet.add(next.id);
+      return nextSet;
+    });
+
+    if (!next) return;
 
     window.requestAnimationFrame(() => {
       window.setTimeout(() => {
@@ -1195,19 +1198,16 @@ export default function SessionPage() {
   const elapsedLabel = formatElapsed(session?.started_at, session?.ended_at || nowTick);
 
   useEffect(() => {
-    if (!workoutItems.length) {
-      setOpenExerciseId(null);
-      return;
-    }
+    const validIds = new Set(workoutItems.map((it) => it.id));
 
-    if (openExerciseId == null) {
-      setOpenExerciseId(workoutItems[0].id);
-      return;
-    }
-
-    const stillExists = workoutItems.some((it) => it.id === openExerciseId);
-    if (!stillExists) setOpenExerciseId(workoutItems[0].id);
-  }, [workoutItems, openExerciseId]);
+    setOpenExerciseIds((prev) => {
+      const next = new Set();
+      for (const id of prev) {
+        if (validIds.has(id)) next.add(id);
+      }
+      return next;
+    });
+  }, [workoutItems]);
 
   async function ensureStartedIfNeeded() {
     if (!session?.id) return;
@@ -1322,7 +1322,13 @@ export default function SessionPage() {
 
     const key = makeKey(plan.exercise_id, plan.variation_id);
     const already = grouped.get(key) || [];
-    const nextIndex = Number.isFinite(Number(setIndexOverride))
+    const hasSetIndexOverride =
+      setIndexOverride !== null &&
+      setIndexOverride !== undefined &&
+      Number.isFinite(Number(setIndexOverride)) &&
+      Number(setIndexOverride) > 0;
+
+    const nextIndex = hasSetIndexOverride
       ? Number(setIndexOverride)
       : already.length + 1;
 
@@ -1619,8 +1625,15 @@ export default function SessionPage() {
                 isEnded={isEnded}
                 isSaving={saving}
                 onOpenImage={openExerciseImage}
-                isOpen={openExerciseId === it.id}
-                onToggle={() => setOpenExerciseId((prev) => (prev === it.id ? null : it.id))}
+                isOpen={openExerciseIds.has(it.id)}
+                onToggle={() =>
+                  setOpenExerciseIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(it.id)) next.delete(it.id);
+                    else next.add(it.id);
+                    return next;
+                  })
+                }
                 registerCardRef={registerExerciseCardRef}
               />
             );
