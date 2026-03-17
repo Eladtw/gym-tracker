@@ -132,3 +132,17 @@
 .app-modal-overlay.is-top {
   background: rgba(0, 0, 0, 0.82);
 }
+
+
+.app-modal-overlay--clear,
+.app-modal-overlay--clear.is-top {
+  background: transparent !important;
+}
+
+
+.app-modal-overlay--focus,
+.app-modal-overlay--focus.is-top {
+  background: rgba(15, 23, 42, 0.14) !important;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}

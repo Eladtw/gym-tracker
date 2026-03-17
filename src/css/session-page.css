@@ -45,7 +45,7 @@
   border: 1px solid #d9dde5;
   background: rgba(255, 255, 255, 0.96);
   border-radius: 22px;
-  padding: 12px 12px 11px;
+  padding: 14px 14px 12px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(8px);
 }
@@ -66,26 +66,18 @@
 }
 
 .session-header-date {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #64748b;
-  margin-bottom: 0;
+  margin-bottom: 8px;
 }
 
 .session-header-title {
-  font-size: 1.36rem;
-  line-height: 1.1;
+  font-size: 2rem;
+  line-height: 1.02;
   font-weight: 800;
   color: #0f172a;
   margin: 0;
-  letter-spacing: -0.01em;
-}
-
-.session-header-inline-meta {
-  flex: none;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #475569;
-  padding-bottom: 2px;
+  letter-spacing: -0.02em;
 }
 
 .session-header-sub {
@@ -93,17 +85,13 @@
   align-items: center;
   gap: 7px;
   flex-wrap: wrap;
-  margin-top: 6px;
-  font-size: 0.77rem;
+  margin-top: 10px;
+  font-size: 0.84rem;
   color: #64748b;
 }
 
-.session-header-sub-secondary {
-  margin-top: 7px;
-}
-
 .session-progress {
-  margin-top: 9px;
+  margin-top: 12px;
   height: 6px;
   border-radius: 999px;
   background: #e5e7eb;
@@ -114,11 +102,10 @@
   height: 100%;
   border-radius: inherit;
   background: #2563eb;
-  transition: width 340ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .session-header-chip {
-  margin-top: 0;
+  margin-top: 12px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -126,7 +113,7 @@
   border-radius: 999px;
   background: #dbeafe;
   color: #1d4ed8;
-  font-size: 0.73rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
@@ -191,6 +178,13 @@
   background: #ffffff;
   padding: 12px;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+  transition: border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+}
+
+.session-ex-card.is-completed {
+  border-color: #a7f3d0;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 70%);
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.12);
 }
 
 .session-ex-header {
@@ -273,6 +267,23 @@
 .session-ex-sets-line {
   font-size: 0.8rem;
   color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-ex-completed-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .session-ex-chevron {
@@ -526,7 +537,7 @@
 }
 
 .session-active-lastline {
-  margin-top: 2px;
+  margin-top: 0;
   font-size: 0.76rem;
   color: #64748b;
 }
@@ -840,12 +851,16 @@
 }
 
 .planupd-shell {
-  width: min(680px, calc(100vw - 20px));
+  width: min(680px, calc(100vw - 40px));
+  max-height: min(86dvh, 760px);
+  margin: 0 auto;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 18px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .planupd-head {
@@ -875,6 +890,7 @@
 
 .planupd-body {
   padding: 14px;
+  overflow: auto;
 }
 
 .planupd-sub {
@@ -896,6 +912,12 @@
   border-radius: 14px;
   padding: 10px;
   background: #fff;
+}
+
+.planupd-rows-scroll {
+  max-height: 330px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .planupd-coltitle {
@@ -1248,11 +1270,7 @@
   }
 
   .session-header-title {
-    font-size: 1.16rem;
-  }
-
-  .session-header-inline-meta {
-    font-size: 0.74rem;
+    font-size: 1.8rem;
   }
 
   .session-target-compare {
@@ -1292,7 +1310,11 @@
   }
 
   .planupd-shell {
-    width: calc(100vw - 16px);
+    width: calc(100vw - 32px);
+  }
+
+  .planupd-rows-scroll {
+    max-height: 286px;
   }
 
   .planupd-compare {

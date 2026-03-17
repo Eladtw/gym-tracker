@@ -183,6 +183,14 @@ function UpdatePlanModalContent({
   onConfirm,
   onCancel,
 }) {
+  const sortedDiffs = useMemo(
+    () =>
+      [...(diffs || [])].sort(
+        (a, b) => (Number(a?.set_index) || 0) - (Number(b?.set_index) || 0)
+      ),
+    [diffs]
+  );
+
   return (
     <div className="planupd-shell">
       <div className="planupd-head">
@@ -206,7 +214,8 @@ function UpdatePlanModalContent({
         <div className="planupd-compare">
           <div className="planupd-col">
             <div className="planupd-coltitle">Logged</div>
-            {diffs.map((d) => (
+            <div className="planupd-rows-scroll">
+              {sortedDiffs.map((d) => (
               <div key={`logged-${d.set_index}`} className="planupd-rowcard">
                 <div className="planupd-rowset">Set #{d.set_index}</div>
                 <div className="planupd-pill">
@@ -216,12 +225,14 @@ function UpdatePlanModalContent({
                   Weight: <strong>{d.loggedWeight ?? "—"}</strong>
                 </div>
               </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <div className="planupd-col">
             <div className="planupd-coltitle">Planned</div>
-            {diffs.map((d) => (
+            <div className="planupd-rows-scroll">
+              {sortedDiffs.map((d) => (
               <div key={`planned-${d.set_index}`} className="planupd-rowcard">
                 <div className="planupd-rowset">Set #{d.set_index}</div>
                 <div className="planupd-pill">
@@ -231,7 +242,8 @@ function UpdatePlanModalContent({
                   Weight: <strong>{d.plannedWeight ?? "—"}</strong>
                 </div>
               </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 
@@ -367,6 +379,7 @@ function ExerciseCard({
   const [reps, setReps] = useState("");
   const [localSaving, setLocalSaving] = useState(false);
   const [setAdvanceFx, setSetAdvanceFx] = useState(false);
+  const prefillKeyRef = useRef("");
 
   const planned = useMemo(() => sortTargets(exercise.set_targets), [exercise.set_targets]);
 
@@ -391,6 +404,10 @@ function ExerciseCard({
   useEffect(() => {
     if (!canLogMore) return;
 
+    const prefillKey = `${exercise.id || "ex"}:${nextIndex}`;
+    if (prefillKeyRef.current === prefillKey) return;
+    prefillKeyRef.current = prefillKey;
+
     if (targetForNext) {
       setWeight(targetForNext.weight != null ? String(targetForNext.weight) : "");
       setReps(targetForNext.reps != null ? String(targetForNext.reps) : "");
@@ -402,7 +419,7 @@ function ExerciseCard({
       setWeight("");
       setReps("");
     }
-  }, [exercise.id, doneSets, targetForNext, canLogMore]);
+  }, [exercise.id, doneSets, targetForNext, canLogMore, nextIndex]);
 
   const title = exercise.exercise_name || "Exercise";
 
@@ -449,6 +466,8 @@ function ExerciseCard({
       .filter(Boolean);
   }, [planned, doneSets]);
 
+  const isExerciseCompleted = plannedCount > 0 && doneCount >= plannedCount;
+
   const showPerformanceChanged =
     doneCount >= plannedCount && plannedCount > 0 && diffs.length > 0;
 
@@ -474,13 +493,16 @@ function ExerciseCard({
     setLocalSaving(false);
 
     const loggedFinalSet = plannedCount > 0 && nextIndex >= plannedCount;
-    if (result?.ok && loggedFinalSet) {
+    if (result?.ok && loggedFinalSet && !result?.hasPlanDiff) {
       onExerciseCompleted(exercise.id);
     }
   }
 
   return (
-    <div className="session-ex-card" ref={(node) => registerCardRef(exercise.id, node)}>
+    <div
+      className={`session-ex-card ${isExerciseCompleted ? "is-completed" : ""}`}
+      ref={(node) => registerCardRef(exercise.id, node)}
+    >
       <div className="session-ex-header">
         <button
           type="button"
@@ -509,6 +531,9 @@ function ExerciseCard({
 
             <div className="session-ex-sets-line">
               {doneCount}/{plannedCount || 0} sets
+              {isExerciseCompleted && (
+                <span className="session-ex-completed-pill">✓ Completed</span>
+              )}
             </div>
           </div>
 
@@ -1289,6 +1314,29 @@ export default function SessionPage() {
     return { ok: false };
   }
 
+  function hasLoggedDiffAgainstPlan(plannedTargets, loggedSets) {
+    const plannedArr = sortTargets(plannedTargets);
+    if (!plannedArr.length || !loggedSets.length) return false;
+
+    return plannedArr.some((target) => {
+      const setIndex = Number(target?.set_index) || 0;
+      const logged = loggedSets.find((s) => Number(s?.set_index) === setIndex);
+      if (!logged) return false;
+
+      const plannedReps = target?.reps;
+      const plannedWeight = target?.weight;
+      const loggedReps = logged?.reps;
+      const loggedWeight = logged?.weight;
+
+      const repsChanged =
+        plannedReps != null && loggedReps != null && Number(plannedReps) !== Number(loggedReps);
+      const weightChanged =
+        plannedWeight != null && loggedWeight != null && Number(plannedWeight) !== Number(loggedWeight);
+
+      return repsChanged || weightChanged;
+    });
+  }
+
   async function logSetForExercise(exerciseId, variationId, weight, reps, options = {}) {
     const { startTimer = true, setIndexOverride = null } = options;
     setMsg("");
@@ -1386,7 +1434,10 @@ export default function SessionPage() {
       if (!res.ok) console.warn("Auto update plan failed:", res.error);
     }
 
-    return { ok: true };
+    const mergedLoggedSets = [...already, data];
+    const hasPlanDiff = hasLoggedDiffAgainstPlan(plan.set_targets, mergedLoggedSets);
+
+    return { ok: true, hasPlanDiff };
   }
 
   async function logRemainingAsPlanned(exercise) {
@@ -1400,6 +1451,7 @@ export default function SessionPage() {
     if (!remaining.length) return;
 
     let allLogged = true;
+    let hasPlanDiff = hasLoggedDiffAgainstPlan(exercise.set_targets, currentDone);
 
     for (let i = 0; i < remaining.length; i += 1) {
       const row = remaining[i];
@@ -1420,9 +1472,11 @@ export default function SessionPage() {
         allLogged = false;
         break;
       }
+
+      if (result?.hasPlanDiff) hasPlanDiff = true;
     }
 
-    if (allLogged) {
+    if (allLogged && !hasPlanDiff) {
       advanceToNextExercise(exercise.id);
     }
   }
@@ -1467,6 +1521,7 @@ export default function SessionPage() {
         {
           closeOnBackdrop: true,
           closeOnEsc: true,
+          overlayClassName: "app-modal-overlay--focus",
         }
       );
     },
@@ -1542,48 +1597,21 @@ export default function SessionPage() {
 
   if (loading) return <SessionPageSkeleton />;
 
-  const dateLabel =
-    session?.session_date || dateISO
-      ? new Date(session?.session_date || dateISO).toLocaleDateString(undefined, {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })
-      : "N/A";
-
   const startedLabel = session?.started_at ? fmtLocal(session.started_at) : null;
-  const headerChipText = isEnded
-    ? `Completed ${fmtLocal(session.ended_at)}`
-    : "Workout in Progress";
-
   return (
     <div className="session-page-root">
       <div className="session-page-shell session-content-ready">
         <header className="session-header-sticky-wrap">
-          <div className="session-header-card">
-            <div className="session-header-top-row">
-              <div className="session-header-date">{dateLabel}</div>
-              <div className={`session-header-chip ${isEnded ? "is-completed" : ""}`}>
-                ● {headerChipText}
-              </div>
-            </div>
-
+          <div className="session-header-card session-header-card--compact">
             <div className="session-header-title-row">
               <h2 className="session-header-title">{workoutName || "Workout Session"}</h2>
               <div className="session-header-inline-meta">{elapsedLabel}</div>
             </div>
 
             <div className="session-header-sub session-header-sub-secondary">
-              <span>{workoutItems.length} exercises</span>
+              <span>Exercises {completedExercisesCount}/{workoutItems.length || 0}</span>
               <span>•</span>
-              <span>
-                {completedExercisesCount}/{workoutItems.length || 0} completed
-              </span>
-              <span>•</span>
-              <span>
-                {sets.length}/{totalPlannedSets || 0} sets
-              </span>
+              <span>Sets {sets.length}/{totalPlannedSets || 0}</span>
               <span>•</span>
               <span>{progressPct}% done</span>
             </div>

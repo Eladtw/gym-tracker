@@ -34,6 +34,7 @@ export function ModalProvider({ children }) {
       onClose: opts.onClose,
       closeOnBackdrop: opts.closeOnBackdrop ?? true,
       closeOnEsc: opts.closeOnEsc ?? true,
+      overlayClassName: opts.overlayClassName ?? "",
     };
 
     setStack((prev) => [...prev, modal]);
@@ -101,7 +102,7 @@ function ModalRoot({ stack, onBackdropClose }) {
         return (
           <div
             key={m.id}
-            className={`app-modal-overlay ${isTop ? "is-top" : ""}`}
+            className={`app-modal-overlay ${isTop ? "is-top" : ""} ${m.overlayClassName || ""}`.trim()}
             role="dialog"
             aria-modal="true"
             onMouseDown={(e) => {
