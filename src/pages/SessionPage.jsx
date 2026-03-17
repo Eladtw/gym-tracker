@@ -1513,7 +1513,7 @@ export default function SessionPage() {
         {
           closeOnBackdrop: true,
           closeOnEsc: true,
-          overlayClassName: "app-modal-overlay--clear",
+          overlayClassName: "app-modal-overlay--focus",
         }
       );
     },
