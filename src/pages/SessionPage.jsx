@@ -1589,50 +1589,23 @@ export default function SessionPage() {
 
   if (loading) return <SessionPageSkeleton />;
 
-  const dateLabel =
-    session?.session_date || dateISO
-      ? new Date(session?.session_date || dateISO).toLocaleDateString(undefined, {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })
-      : "N/A";
-
   const startedLabel = session?.started_at ? fmtLocal(session.started_at) : null;
-  const headerChipText = isEnded
-    ? `Completed ${fmtLocal(session.ended_at)}`
-    : "Workout in Progress";
-
   return (
     <div className="session-page-root">
       <div className="session-page-shell session-content-ready">
         <header className="session-header-sticky-wrap">
-          <div className="session-header-card">
-            <div className="session-header-top-row">
-              <div className="session-header-date">{dateLabel}</div>
-              <div className={`session-header-chip ${isEnded ? "is-completed" : ""}`}>
-                ● {headerChipText}
-              </div>
-            </div>
-
+          <div className="session-header-card session-header-card--compact">
             <div className="session-header-title-row">
               <h2 className="session-header-title">{workoutName || "Workout Session"}</h2>
               <div className="session-header-inline-meta">{elapsedLabel}</div>
             </div>
 
             <div className="session-header-sub session-header-sub-secondary">
-              <span>{workoutItems.length} exercises</span>
+              <span>Exercises {completedExercisesCount}/{workoutItems.length || 0}</span>
               <span>•</span>
-              <span>
-                {completedExercisesCount}/{workoutItems.length || 0} completed
-              </span>
+              <span>Sets {sets.length}/{totalPlannedSets || 0}</span>
               <span>•</span>
-              <span>
-                {sets.length}/{totalPlannedSets || 0} sets
-              </span>
-              <span>•</span>
-              <span>{progressPct}% done</span>
+              <span>{progressPct}%</span>
             </div>
 
             <div className="session-progress">
