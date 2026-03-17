@@ -6,7 +6,8 @@ import { useModal } from "../components/ModalProvider";
 
 const BUCKET = "exercise-images";
 const REST_TIMER_DEFAULT = 90;
-const REST_TIMER_STEP = 15;
+const REST_TIMER_STEP = 10;
+const WEIGHT_STEP = 2.5;
 const FINISH_REDIRECT_DELAY = 2400;
 
 const isPosNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) > 0;
@@ -38,6 +39,27 @@ function fmtTimer(totalSeconds) {
 
 function formatWeight(weight) {
   return weight == null ? "—" : `${weight} lbs`;
+}
+
+function formatStepValue(value) {
+  if (!Number.isFinite(value)) return "0";
+  const rounded = Math.round(value * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+}
+
+function adjustWeightString(prev, delta) {
+  const n = Number(prev || 0);
+  const next = Math.max(0, Math.round((n + delta) * 100) / 100);
+  return formatStepValue(next);
+}
+
+function ExerciseImageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="session-icon-svg" aria-hidden="true">
+      <path d="M4.5 6.75h3.36l1.2-1.8A1.5 1.5 0 0 1 10.31 4.2h3.39a1.5 1.5 0 0 1 1.25.75l1.19 1.8h3.36A2.25 2.25 0 0 1 21.75 9v9.75A2.25 2.25 0 0 1 19.5 21H4.5a2.25 2.25 0 0 1-2.25-2.25V9A2.25 2.25 0 0 1 4.5 6.75Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="13.25" r="3.25" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
 }
 
 function getPublicImageUrl(path) {
@@ -341,6 +363,7 @@ function ExerciseCard({
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
   const [localSaving, setLocalSaving] = useState(false);
+  const [setAdvanceFx, setSetAdvanceFx] = useState(false);
 
   const planned = useMemo(() => sortTargets(exercise.set_targets), [exercise.set_targets]);
 
@@ -430,6 +453,13 @@ function ExerciseCard({
     return planned.filter((p) => Number(p?.set_index) > Number(nextIndex));
   }, [planned, nextIndex]);
 
+  useEffect(() => {
+    if (doneCount <= 0) return;
+    setSetAdvanceFx(true);
+    const id = window.setTimeout(() => setSetAdvanceFx(false), 360);
+    return () => window.clearTimeout(id);
+  }, [nextIndex, doneCount]);
+
   async function handleLog() {
     if (!canLogMore || isEnded) return;
 
@@ -493,7 +523,7 @@ function ExerciseCard({
             title={canOpenImage ? "View exercise image" : "No image"}
             aria-label="View image"
           >
-            🖼
+            <ExerciseImageIcon />
           </button>
         </div>
       </div>
@@ -505,7 +535,7 @@ function ExerciseCard({
         />
       </div>
 
-      {open && (
+      <div className={`session-ex-body-wrap ${open ? "is-open" : ""}`}>
         <div className="session-ex-body">
           {planned.length > 0 && (
             <div className="session-target-compare">
@@ -580,7 +610,7 @@ function ExerciseCard({
             })}
 
             {canLogMore && !isEnded && (
-              <div className="session-active-set-card">
+              <div className={`session-active-set-card ${setAdvanceFx ? "is-advancing" : ""}`}>
                 <div className="session-active-top">
                   <div className="session-active-badge">#{nextIndex}</div>
 
@@ -643,8 +673,7 @@ function ExerciseCard({
                         className="session-step-btn"
                         onClick={() =>
                           setWeight((prev) => {
-                            const n = Number(prev || 0);
-                            return String(Math.max(0, n - 1));
+                            return adjustWeightString(prev, -WEIGHT_STEP);
                           })
                         }
                       >
@@ -658,8 +687,7 @@ function ExerciseCard({
                         className="session-step-btn"
                         onClick={() =>
                           setWeight((prev) => {
-                            const n = Number(prev || 0);
-                            return String(n + 1);
+                            return adjustWeightString(prev, WEIGHT_STEP);
                           })
                         }
                       >
@@ -740,7 +768,7 @@ function ExerciseCard({
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -1259,8 +1287,6 @@ export default function SessionPage() {
     }
 
     setSets((prev) => [...prev, data]);
-    setMsg("✅ Set logged");
-
     if (startTimer) {
       startRestTimer(REST_TIMER_DEFAULT);
     }
@@ -1441,13 +1467,19 @@ export default function SessionPage() {
       <div className="session-page-shell session-content-ready">
         <header className="session-header-sticky-wrap">
           <div className="session-header-card">
-            <div className="session-header-date">{dateLabel}</div>
+            <div className="session-header-top-row">
+              <div className="session-header-date">{dateLabel}</div>
+              <div className={`session-header-chip ${isEnded ? "is-completed" : ""}`}>
+                ● {headerChipText}
+              </div>
+            </div>
 
-            <h2 className="session-header-title">{workoutName || "Workout Session"}</h2>
+            <div className="session-header-title-row">
+              <h2 className="session-header-title">{workoutName || "Workout Session"}</h2>
+              <div className="session-header-inline-meta">{elapsedLabel}</div>
+            </div>
 
-            <div className="session-header-sub">
-              <span>{elapsedLabel}</span>
-              <span>•</span>
+            <div className="session-header-sub session-header-sub-secondary">
               <span>{workoutItems.length} exercises</span>
               <span>•</span>
               <span>
@@ -1458,15 +1490,11 @@ export default function SessionPage() {
                 {sets.length}/{totalPlannedSets || 0} sets
               </span>
               <span>•</span>
-              <span>{progressPct}%</span>
+              <span>{progressPct}% done</span>
             </div>
 
             <div className="session-progress">
               <div className="session-progress-fill" style={{ width: `${progressPct}%` }} />
-            </div>
-
-            <div className={`session-header-chip ${isEnded ? "is-completed" : ""}`}>
-              ● {headerChipText}
             </div>
 
             {msg && <div className="session-inline-message">{msg}</div>}
