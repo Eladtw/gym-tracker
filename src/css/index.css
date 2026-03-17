@@ -132,3 +132,9 @@
 .app-modal-overlay.is-top {
   background: rgba(0, 0, 0, 0.82);
 }
+
+
+.app-modal-overlay--clear,
+.app-modal-overlay--clear.is-top {
+  background: transparent !important;
+}

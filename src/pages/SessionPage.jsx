@@ -6,7 +6,8 @@ import { useModal } from "../components/ModalProvider";
 
 const BUCKET = "exercise-images";
 const REST_TIMER_DEFAULT = 90;
-const REST_TIMER_STEP = 15;
+const REST_TIMER_STEP = 10;
+const WEIGHT_STEP = 2.5;
 const FINISH_REDIRECT_DELAY = 2400;
 
 const isPosNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) > 0;
@@ -38,6 +39,27 @@ function fmtTimer(totalSeconds) {
 
 function formatWeight(weight) {
   return weight == null ? "—" : `${weight} lbs`;
+}
+
+function formatStepValue(value) {
+  if (!Number.isFinite(value)) return "0";
+  const rounded = Math.round(value * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+}
+
+function adjustWeightString(prev, delta) {
+  const n = Number(prev || 0);
+  const next = Math.max(0, Math.round((n + delta) * 100) / 100);
+  return formatStepValue(next);
+}
+
+function ExerciseImageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="session-icon-svg" aria-hidden="true">
+      <path d="M4.5 6.75h3.36l1.2-1.8A1.5 1.5 0 0 1 10.31 4.2h3.39a1.5 1.5 0 0 1 1.25.75l1.19 1.8h3.36A2.25 2.25 0 0 1 21.75 9v9.75A2.25 2.25 0 0 1 19.5 21H4.5a2.25 2.25 0 0 1-2.25-2.25V9A2.25 2.25 0 0 1 4.5 6.75Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="13.25" r="3.25" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
 }
 
 function getPublicImageUrl(path) {
@@ -333,14 +355,19 @@ function ExerciseCard({
   onLogSet,
   onLogRemainingAsPlanned,
   onOpenPlanUpdate,
+  onExerciseCompleted,
   isEnded,
   isSaving,
   onOpenImage,
+  isOpen,
+  onToggle,
+  registerCardRef,
 }) {
-  const [open, setOpen] = useState(false);
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState("");
   const [localSaving, setLocalSaving] = useState(false);
+  const [setAdvanceFx, setSetAdvanceFx] = useState(false);
+  const prefillKeyRef = useRef("");
 
   const planned = useMemo(() => sortTargets(exercise.set_targets), [exercise.set_targets]);
 
@@ -365,6 +392,10 @@ function ExerciseCard({
   useEffect(() => {
     if (!canLogMore) return;
 
+    const prefillKey = `${exercise.id || "ex"}:${nextIndex}`;
+    if (prefillKeyRef.current === prefillKey) return;
+    prefillKeyRef.current = prefillKey;
+
     if (targetForNext) {
       setWeight(targetForNext.weight != null ? String(targetForNext.weight) : "");
       setReps(targetForNext.reps != null ? String(targetForNext.reps) : "");
@@ -376,7 +407,7 @@ function ExerciseCard({
       setWeight("");
       setReps("");
     }
-  }, [exercise.id, doneSets, targetForNext, canLogMore]);
+  }, [exercise.id, doneSets, targetForNext, canLogMore, nextIndex]);
 
   const title = exercise.exercise_name || "Exercise";
 
@@ -430,6 +461,13 @@ function ExerciseCard({
     return planned.filter((p) => Number(p?.set_index) > Number(nextIndex));
   }, [planned, nextIndex]);
 
+  useEffect(() => {
+    if (doneCount <= 0) return;
+    setSetAdvanceFx(true);
+    const id = window.setTimeout(() => setSetAdvanceFx(false), 360);
+    return () => window.clearTimeout(id);
+  }, [nextIndex, doneCount]);
+
   async function handleLog() {
     if (!canLogMore || isEnded) return;
 
@@ -437,18 +475,23 @@ function ExerciseCard({
     if (!hasAny) return;
 
     setLocalSaving(true);
-    await onLogSet(exercise.exercise_id, exercise.variation_id ?? null, weight, reps);
+    const result = await onLogSet(exercise.exercise_id, exercise.variation_id ?? null, weight, reps);
     setLocalSaving(false);
+
+    const loggedFinalSet = plannedCount > 0 && nextIndex >= plannedCount;
+    if (result?.ok && loggedFinalSet && !result?.hasPlanDiff) {
+      onExerciseCompleted(exercise.id);
+    }
   }
 
   return (
-    <div className="session-ex-card">
+    <div className="session-ex-card" ref={(node) => registerCardRef(exercise.id, node)}>
       <div className="session-ex-header">
         <button
           type="button"
           className="session-ex-toggle"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
+          onClick={onToggle}
+          aria-expanded={isOpen}
         >
           <div className="session-ex-header-main">
             <div className="session-ex-name">{title}</div>
@@ -475,7 +518,7 @@ function ExerciseCard({
           </div>
 
           <div className="session-ex-chevron" aria-hidden="true">
-            {open ? "▴" : "▾"}
+            {isOpen ? "▴" : "▾"}
           </div>
         </button>
 
@@ -493,7 +536,7 @@ function ExerciseCard({
             title={canOpenImage ? "View exercise image" : "No image"}
             aria-label="View image"
           >
-            🖼
+            <ExerciseImageIcon />
           </button>
         </div>
       </div>
@@ -505,7 +548,7 @@ function ExerciseCard({
         />
       </div>
 
-      {open && (
+      <div className={`session-ex-body-wrap ${isOpen ? "is-open" : ""}`}>
         <div className="session-ex-body">
           {planned.length > 0 && (
             <div className="session-target-compare">
@@ -580,7 +623,7 @@ function ExerciseCard({
             })}
 
             {canLogMore && !isEnded && (
-              <div className="session-active-set-card">
+              <div className={`session-active-set-card ${setAdvanceFx ? "is-advancing" : ""}`}>
                 <div className="session-active-top">
                   <div className="session-active-badge">#{nextIndex}</div>
 
@@ -643,8 +686,7 @@ function ExerciseCard({
                         className="session-step-btn"
                         onClick={() =>
                           setWeight((prev) => {
-                            const n = Number(prev || 0);
-                            return String(Math.max(0, n - 1));
+                            return adjustWeightString(prev, -WEIGHT_STEP);
                           })
                         }
                       >
@@ -658,8 +700,7 @@ function ExerciseCard({
                         className="session-step-btn"
                         onClick={() =>
                           setWeight((prev) => {
-                            const n = Number(prev || 0);
-                            return String(n + 1);
+                            return adjustWeightString(prev, WEIGHT_STEP);
                           })
                         }
                       >
@@ -740,7 +781,7 @@ function ExerciseCard({
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -767,6 +808,11 @@ export default function SessionPage() {
   const [restOpen, setRestOpen] = useState(false);
   const [restSeconds, setRestSeconds] = useState(REST_TIMER_DEFAULT);
   const [restBaseSeconds, setRestBaseSeconds] = useState(REST_TIMER_DEFAULT);
+
+  const [openExerciseIds, setOpenExerciseIds] = useState(() => new Set());
+  const [pendingAutoScrollExerciseId, setPendingAutoScrollExerciseId] = useState(null);
+  const exercisesWrapRef = useRef(null);
+  const exerciseCardRefs = useRef(new Map());
 
   const [planModalSaving, setPlanModalSaving] = useState(false);
   const [showFinishOverlay, setShowFinishOverlay] = useState(false);
@@ -881,6 +927,54 @@ export default function SessionPage() {
   const closeRestTimer = useCallback(() => {
     setRestOpen(false);
   }, []);
+
+  const registerExerciseCardRef = useCallback((exerciseId, node) => {
+    if (!exerciseId) return;
+    if (!node) {
+      exerciseCardRefs.current.delete(exerciseId);
+      return;
+    }
+    exerciseCardRefs.current.set(exerciseId, node);
+  }, []);
+
+  const scrollExerciseCardIntoView = useCallback((exerciseId) => {
+    const card = exerciseCardRefs.current.get(exerciseId);
+    if (!card) return;
+
+    card.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+      inline: "nearest",
+    });
+  }, []);
+
+  const advanceToNextExercise = useCallback((exerciseId) => {
+    const idx = workoutItems.findIndex((it) => it.id === exerciseId);
+    if (idx < 0) return;
+
+    const next = workoutItems[idx + 1] || null;
+
+    setOpenExerciseIds((prev) => {
+      const nextSet = new Set(prev);
+      nextSet.delete(exerciseId);
+      if (next?.id) nextSet.add(next.id);
+      return nextSet;
+    });
+
+    setPendingAutoScrollExerciseId(next?.id ?? null);
+  }, [workoutItems]);
+
+  useEffect(() => {
+    if (!pendingAutoScrollExerciseId) return;
+    if (!openExerciseIds.has(pendingAutoScrollExerciseId)) return;
+
+    const timeoutId = window.setTimeout(() => {
+      scrollExerciseCardIntoView(pendingAutoScrollExerciseId);
+      setPendingAutoScrollExerciseId(null);
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingAutoScrollExerciseId, openExerciseIds, scrollExerciseCardIntoView]);
 
   const loadExerciseMeta = useCallback(async (items) => {
     const ids = Array.from(
@@ -1110,6 +1204,18 @@ export default function SessionPage() {
   const isEnded = !!session?.ended_at;
   const elapsedLabel = formatElapsed(session?.started_at, session?.ended_at || nowTick);
 
+  useEffect(() => {
+    const validIds = new Set(workoutItems.map((it) => it.id));
+
+    setOpenExerciseIds((prev) => {
+      const next = new Set();
+      for (const id of prev) {
+        if (validIds.has(id)) next.add(id);
+      }
+      return next;
+    });
+  }, [workoutItems]);
+
   async function ensureStartedIfNeeded() {
     if (!session?.id) return;
     if (session.started_at || session.ended_at) return;
@@ -1188,8 +1294,31 @@ export default function SessionPage() {
     return { ok: false };
   }
 
+  function hasLoggedDiffAgainstPlan(plannedTargets, loggedSets) {
+    const plannedArr = sortTargets(plannedTargets);
+    if (!plannedArr.length || !loggedSets.length) return false;
+
+    return plannedArr.some((target) => {
+      const setIndex = Number(target?.set_index) || 0;
+      const logged = loggedSets.find((s) => Number(s?.set_index) === setIndex);
+      if (!logged) return false;
+
+      const plannedReps = target?.reps;
+      const plannedWeight = target?.weight;
+      const loggedReps = logged?.reps;
+      const loggedWeight = logged?.weight;
+
+      const repsChanged =
+        plannedReps != null && loggedReps != null && Number(plannedReps) !== Number(loggedReps);
+      const weightChanged =
+        plannedWeight != null && loggedWeight != null && Number(plannedWeight) !== Number(loggedWeight);
+
+      return repsChanged || weightChanged;
+    });
+  }
+
   async function logSetForExercise(exerciseId, variationId, weight, reps, options = {}) {
-    const { startTimer = true } = options;
+    const { startTimer = true, setIndexOverride = null } = options;
     setMsg("");
 
     if (isEnded) {
@@ -1223,7 +1352,15 @@ export default function SessionPage() {
 
     const key = makeKey(plan.exercise_id, plan.variation_id);
     const already = grouped.get(key) || [];
-    const nextIndex = already.length + 1;
+    const hasSetIndexOverride =
+      setIndexOverride !== null &&
+      setIndexOverride !== undefined &&
+      Number.isFinite(Number(setIndexOverride)) &&
+      Number(setIndexOverride) > 0;
+
+    const nextIndex = hasSetIndexOverride
+      ? Number(setIndexOverride)
+      : already.length + 1;
 
     const plannedCount = Array.isArray(plan.set_targets) ? plan.set_targets.length : 0;
 
@@ -1259,9 +1396,9 @@ export default function SessionPage() {
     }
 
     setSets((prev) => [...prev, data]);
-    setMsg("✅ Set logged");
 
-    if (startTimer) {
+    const isFinalWorkoutSet = totalPlannedSets > 0 && sets.length + 1 >= totalPlannedSets;
+    if (startTimer && !isFinalWorkoutSet) {
       startRestTimer(REST_TIMER_DEFAULT);
     }
 
@@ -1277,7 +1414,10 @@ export default function SessionPage() {
       if (!res.ok) console.warn("Auto update plan failed:", res.error);
     }
 
-    return { ok: true };
+    const mergedLoggedSets = [...already, data];
+    const hasPlanDiff = hasLoggedDiffAgainstPlan(plan.set_targets, mergedLoggedSets);
+
+    return { ok: true, hasPlanDiff };
   }
 
   async function logRemainingAsPlanned(exercise) {
@@ -1290,6 +1430,9 @@ export default function SessionPage() {
 
     if (!remaining.length) return;
 
+    let allLogged = true;
+    let hasPlanDiff = hasLoggedDiffAgainstPlan(exercise.set_targets, currentDone);
+
     for (let i = 0; i < remaining.length; i += 1) {
       const row = remaining[i];
       const isLast = i === remaining.length - 1;
@@ -1299,10 +1442,22 @@ export default function SessionPage() {
         exercise.variation_id ?? null,
         row.weight != null ? String(row.weight) : "",
         row.reps != null ? String(row.reps) : "",
-        { startTimer: isLast }
+        {
+          startTimer: isLast,
+          setIndexOverride: Number(row.set_index),
+        }
       );
 
-      if (!result?.ok) break;
+      if (!result?.ok) {
+        allLogged = false;
+        break;
+      }
+
+      if (result?.hasPlanDiff) hasPlanDiff = true;
+    }
+
+    if (allLogged && !hasPlanDiff) {
+      advanceToNextExercise(exercise.id);
     }
   }
 
@@ -1346,6 +1501,7 @@ export default function SessionPage() {
         {
           closeOnBackdrop: true,
           closeOnEsc: true,
+          overlayClassName: "app-modal-overlay--clear",
         }
       );
     },
@@ -1441,13 +1597,19 @@ export default function SessionPage() {
       <div className="session-page-shell session-content-ready">
         <header className="session-header-sticky-wrap">
           <div className="session-header-card">
-            <div className="session-header-date">{dateLabel}</div>
+            <div className="session-header-top-row">
+              <div className="session-header-date">{dateLabel}</div>
+              <div className={`session-header-chip ${isEnded ? "is-completed" : ""}`}>
+                ● {headerChipText}
+              </div>
+            </div>
 
-            <h2 className="session-header-title">{workoutName || "Workout Session"}</h2>
+            <div className="session-header-title-row">
+              <h2 className="session-header-title">{workoutName || "Workout Session"}</h2>
+              <div className="session-header-inline-meta">{elapsedLabel}</div>
+            </div>
 
-            <div className="session-header-sub">
-              <span>{elapsedLabel}</span>
-              <span>•</span>
+            <div className="session-header-sub session-header-sub-secondary">
               <span>{workoutItems.length} exercises</span>
               <span>•</span>
               <span>
@@ -1458,15 +1620,11 @@ export default function SessionPage() {
                 {sets.length}/{totalPlannedSets || 0} sets
               </span>
               <span>•</span>
-              <span>{progressPct}%</span>
+              <span>{progressPct}% done</span>
             </div>
 
             <div className="session-progress">
               <div className="session-progress-fill" style={{ width: `${progressPct}%` }} />
-            </div>
-
-            <div className={`session-header-chip ${isEnded ? "is-completed" : ""}`}>
-              ● {headerChipText}
             </div>
 
             {msg && <div className="session-inline-message">{msg}</div>}
@@ -1478,7 +1636,7 @@ export default function SessionPage() {
           </div>
         </header>
 
-        <section className="session-exercises-wrap">
+        <section className="session-exercises-wrap" ref={exercisesWrapRef}>
           {workoutItems.length === 0 && (
             <div className="session-card">
               <p className="session-muted">No exercises in this workout.</p>
@@ -1500,9 +1658,20 @@ export default function SessionPage() {
                 onLogSet={logSetForExercise}
                 onLogRemainingAsPlanned={logRemainingAsPlanned}
                 onOpenPlanUpdate={openPlanUpdateModal}
+                onExerciseCompleted={advanceToNextExercise}
                 isEnded={isEnded}
                 isSaving={saving}
                 onOpenImage={openExerciseImage}
+                isOpen={openExerciseIds.has(it.id)}
+                onToggle={() =>
+                  setOpenExerciseIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(it.id)) next.delete(it.id);
+                    else next.add(it.id);
+                    return next;
+                  })
+                }
+                registerCardRef={registerExerciseCardRef}
               />
             );
           })}
