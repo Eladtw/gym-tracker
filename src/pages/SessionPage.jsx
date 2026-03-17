@@ -466,6 +466,8 @@ function ExerciseCard({
       .filter(Boolean);
   }, [planned, doneSets]);
 
+  const isExerciseCompleted = plannedCount > 0 && doneCount >= plannedCount;
+
   const showPerformanceChanged =
     doneCount >= plannedCount && plannedCount > 0 && diffs.length > 0;
 
@@ -497,7 +499,10 @@ function ExerciseCard({
   }
 
   return (
-    <div className="session-ex-card" ref={(node) => registerCardRef(exercise.id, node)}>
+    <div
+      className={`session-ex-card ${isExerciseCompleted ? "is-completed" : ""}`}
+      ref={(node) => registerCardRef(exercise.id, node)}
+    >
       <div className="session-ex-header">
         <button
           type="button"
@@ -526,6 +531,9 @@ function ExerciseCard({
 
             <div className="session-ex-sets-line">
               {doneCount}/{plannedCount || 0} sets
+              {isExerciseCompleted && (
+                <span className="session-ex-completed-pill">✓ Completed</span>
+              )}
             </div>
           </div>
 

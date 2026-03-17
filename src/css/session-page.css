@@ -165,6 +165,13 @@
   background: #ffffff;
   padding: 12px;
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+  transition: border-color 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+}
+
+.session-ex-card.is-completed {
+  border-color: #a7f3d0;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 70%);
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.12);
 }
 
 .session-ex-header {
@@ -247,6 +254,23 @@
 .session-ex-sets-line {
   font-size: 0.8rem;
   color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-ex-completed-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .session-ex-chevron {
