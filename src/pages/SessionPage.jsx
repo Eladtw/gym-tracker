@@ -805,6 +805,7 @@ export default function SessionPage() {
   const [restBaseSeconds, setRestBaseSeconds] = useState(REST_TIMER_DEFAULT);
 
   const [openExerciseIds, setOpenExerciseIds] = useState(() => new Set());
+  const [pendingAutoScrollExerciseId, setPendingAutoScrollExerciseId] = useState(null);
   const exercisesWrapRef = useRef(null);
   const exerciseCardRefs = useRef(new Map());
 
@@ -932,18 +933,13 @@ export default function SessionPage() {
   }, []);
 
   const scrollExerciseCardIntoView = useCallback((exerciseId) => {
-    const container = exercisesWrapRef.current;
     const card = exerciseCardRefs.current.get(exerciseId);
-    if (!container || !card) return;
+    if (!card) return;
 
-    const containerRect = container.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    const targetTop =
-      container.scrollTop + (cardRect.top - containerRect.top) - 26;
-
-    container.scrollTo({
-      top: Math.max(0, targetTop),
+    card.scrollIntoView({
       behavior: "smooth",
+      block: "start",
+      inline: "nearest",
     });
   }, []);
 
@@ -960,14 +956,20 @@ export default function SessionPage() {
       return nextSet;
     });
 
-    if (!next) return;
+    setPendingAutoScrollExerciseId(next?.id ?? null);
+  }, [workoutItems]);
 
-    window.requestAnimationFrame(() => {
-      window.setTimeout(() => {
-        scrollExerciseCardIntoView(next.id);
-      }, 120);
-    });
-  }, [scrollExerciseCardIntoView, workoutItems]);
+  useEffect(() => {
+    if (!pendingAutoScrollExerciseId) return;
+    if (!openExerciseIds.has(pendingAutoScrollExerciseId)) return;
+
+    const timeoutId = window.setTimeout(() => {
+      scrollExerciseCardIntoView(pendingAutoScrollExerciseId);
+      setPendingAutoScrollExerciseId(null);
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pendingAutoScrollExerciseId, openExerciseIds, scrollExerciseCardIntoView]);
 
   const loadExerciseMeta = useCallback(async (items) => {
     const ids = Array.from(
