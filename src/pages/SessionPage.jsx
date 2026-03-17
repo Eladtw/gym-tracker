@@ -183,6 +183,14 @@ function UpdatePlanModalContent({
   onConfirm,
   onCancel,
 }) {
+  const sortedDiffs = useMemo(
+    () =>
+      [...(diffs || [])].sort(
+        (a, b) => (Number(a?.set_index) || 0) - (Number(b?.set_index) || 0)
+      ),
+    [diffs]
+  );
+
   return (
     <div className="planupd-shell">
       <div className="planupd-head">
@@ -206,7 +214,8 @@ function UpdatePlanModalContent({
         <div className="planupd-compare">
           <div className="planupd-col">
             <div className="planupd-coltitle">Logged</div>
-            {diffs.map((d) => (
+            <div className="planupd-rows-scroll">
+              {sortedDiffs.map((d) => (
               <div key={`logged-${d.set_index}`} className="planupd-rowcard">
                 <div className="planupd-rowset">Set #{d.set_index}</div>
                 <div className="planupd-pill">
@@ -216,12 +225,14 @@ function UpdatePlanModalContent({
                   Weight: <strong>{d.loggedWeight ?? "—"}</strong>
                 </div>
               </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <div className="planupd-col">
             <div className="planupd-coltitle">Planned</div>
-            {diffs.map((d) => (
+            <div className="planupd-rows-scroll">
+              {sortedDiffs.map((d) => (
               <div key={`planned-${d.set_index}`} className="planupd-rowcard">
                 <div className="planupd-rowset">Set #{d.set_index}</div>
                 <div className="planupd-pill">
@@ -231,7 +242,8 @@ function UpdatePlanModalContent({
                   Weight: <strong>{d.plannedWeight ?? "—"}</strong>
                 </div>
               </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
 

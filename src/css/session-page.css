@@ -840,7 +840,7 @@
 }
 
 .planupd-shell {
-  width: min(680px, calc(100vw - 20px));
+  width: min(680px, calc(100vw - 40px));
   max-height: min(86dvh, 760px);
   margin: 0 auto;
   background: #fff;
@@ -901,6 +901,12 @@
   border-radius: 14px;
   padding: 10px;
   background: #fff;
+}
+
+.planupd-rows-scroll {
+  max-height: 330px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .planupd-coltitle {
@@ -1297,7 +1303,11 @@
   }
 
   .planupd-shell {
-    width: calc(100vw - 16px);
+    width: calc(100vw - 32px);
+  }
+
+  .planupd-rows-scroll {
+    max-height: 286px;
   }
 
   .planupd-compare {
