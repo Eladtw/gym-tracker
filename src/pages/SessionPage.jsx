@@ -578,6 +578,9 @@ function ExerciseCard({
               )}
             </div>
 
+            {isExerciseCompleted && (
+              <div className="session-ex-completed-pill">✓ Completed</div>
+            )}
           </div>
 
           <div className="session-ex-chevron" aria-hidden="true">

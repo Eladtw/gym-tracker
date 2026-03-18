@@ -54,7 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 3px;
 }
 
 .session-header-title-row {
@@ -199,7 +199,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 2px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -215,7 +215,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  margin-inline-end: 2px;
+  margin-inline-end: 0;
 }
 
 .session-ex-set-dots-row {
@@ -253,6 +253,22 @@
   font-weight: 800;
   color: #111827;
   line-height: 1.15;
+}
+
+
+.session-ex-completed-pill {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  width: fit-content;
 }
 
 .session-ex-meta-row {
