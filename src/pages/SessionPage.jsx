@@ -401,6 +401,8 @@ function ExerciseCard({
       ? Math.min(100, Math.round((doneCount / plannedCount) * 100))
       : 0;
 
+  const isExerciseCompleted = plannedCount > 0 && doneCount >= plannedCount;
+
   const setIndicators = useMemo(
     () =>
       planned.map((target) => {
@@ -485,8 +487,6 @@ function ExerciseCard({
       })
       .filter(Boolean);
   }, [planned, doneSets]);
-
-  const isExerciseCompleted = plannedCount > 0 && doneCount >= plannedCount;
 
   const showPerformanceChanged =
     doneCount >= plannedCount && plannedCount > 0 && diffs.length > 0;
