@@ -401,6 +401,28 @@ function ExerciseCard({
       ? Math.min(100, Math.round((doneCount / plannedCount) * 100))
       : 0;
 
+  const isExerciseCompleted = plannedCount > 0 && doneCount >= plannedCount;
+
+  const setIndicators = useMemo(
+    () =>
+      planned.map((target) => {
+        const setIndex = Number(target?.set_index) || 0;
+        let status = "upcoming";
+
+        if (setIndex <= doneCount) {
+          status = "done";
+        } else if (!isExerciseCompleted && setIndex === nextIndex) {
+          status = "current";
+        }
+
+        return {
+          setIndex,
+          status,
+        };
+      }),
+    [planned, doneCount, isExerciseCompleted, nextIndex]
+  );
+
   useEffect(() => {
     if (!canLogMore) return;
 
@@ -466,8 +488,6 @@ function ExerciseCard({
       .filter(Boolean);
   }, [planned, doneSets]);
 
-  const isExerciseCompleted = plannedCount > 0 && doneCount >= plannedCount;
-
   const showPerformanceChanged =
     doneCount >= plannedCount && plannedCount > 0 && diffs.length > 0;
 
@@ -529,11 +549,38 @@ function ExerciseCard({
               )}
             </div>
 
-            <div className="session-ex-sets-line">
-              {doneCount}/{plannedCount || 0} sets
-              {isExerciseCompleted && (
-                <span className="session-ex-completed-pill">✓ Completed</span>
-              )}
+            <div className="session-ex-sets-block">
+              <div className="session-ex-sets-header">
+                <span className="session-ex-sets-title">Sets</span>
+                <div className="session-ex-sets-header-right">
+                  <span className="session-ex-sets-count">
+                    {doneCount}/{plannedCount || 0}
+                  </span>
+                  {isExerciseCompleted && (
+                    <span className="session-ex-completed-pill">✓ Completed</span>
+                  )}
+                </div>
+              </div>
+
+              <div
+                className="session-ex-sets-dots"
+                role="list"
+                aria-label={`Sets progress: ${doneCount} of ${plannedCount || 0} completed`}
+              >
+                {setIndicators.length > 0 ? (
+                  setIndicators.map(({ setIndex, status }) => (
+                    <span
+                      key={`set-indicator-${exercise.id}-${setIndex}`}
+                      className={`session-ex-set-dot is-${status}`}
+                      role="listitem"
+                      aria-label={`Set ${setIndex}: ${status}`}
+                      title={`Set ${setIndex}: ${status}`}
+                    />
+                  ))
+                ) : (
+                  <span className="session-ex-sets-empty">No sets planned</span>
+                )}
+              </div>
             </div>
           </div>
 
