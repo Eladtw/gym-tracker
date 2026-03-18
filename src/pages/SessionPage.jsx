@@ -149,9 +149,6 @@ function SessionPageSkeleton() {
                 </div>
               </div>
 
-              <div className="session-ex-progress">
-                <div className="session-skeleton session-skeleton-ex-progress-fill" />
-              </div>
             </div>
           ))}
 
@@ -420,10 +417,6 @@ function ExerciseCard({
 
   const canLogMore = plannedCount === 0 ? true : nextIndex <= plannedCount;
 
-  const progressPct =
-    plannedCount > 0
-      ? Math.min(100, Math.round((doneCount / plannedCount) * 100))
-      : 0;
 
   useEffect(() => {
     if (!canLogMore) return;
@@ -585,12 +578,6 @@ function ExerciseCard({
               )}
             </div>
 
-            <div className="session-ex-sets-line">
-              {doneCount}/{plannedCount || 0} sets
-              {isExerciseCompleted && (
-                <span className="session-ex-completed-pill">✓ Completed</span>
-              )}
-            </div>
           </div>
 
           <div className="session-ex-chevron" aria-hidden="true">
@@ -617,12 +604,6 @@ function ExerciseCard({
         </div>
       </div>
 
-      <div className="session-ex-progress">
-        <div
-          className="session-ex-progress-fill"
-          style={{ width: `${progressPct}%` }}
-        />
-      </div>
 
       <div className={`session-ex-body-wrap ${isOpen ? "is-open" : ""}`}>
         <div className="session-ex-body">

@@ -54,7 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 6px;
 }
 
 .session-header-title-row {
@@ -199,7 +199,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 6px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -210,24 +210,24 @@
 
 .session-ex-set-dots {
   flex: none;
-  width: 30px;
-  min-height: 28px;
+  min-height: 30px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 4px;
+  margin-inline-end: 2px;
 }
 
 .session-ex-set-dots-row {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .session-ex-set-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 999px;
   background: #cbd5e1;
   border: 1px solid #94a3b8;
@@ -296,27 +296,6 @@
   border: 1px solid #c7d2fe;
 }
 
-.session-ex-sets-line {
-  font-size: 0.8rem;
-  color: #64748b;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.session-ex-completed-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #dcfce7;
-  color: #15803d;
-  border: 1px solid #86efac;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-}
 
 .session-ex-chevron {
   font-size: 0.95rem;
@@ -365,20 +344,6 @@
   cursor: not-allowed;
 }
 
-.session-ex-progress {
-  margin-top: 10px;
-  height: 5px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  overflow: hidden;
-}
-
-.session-ex-progress-fill {
-  height: 100%;
-  border-radius: inherit;
-  background: #2563eb;
-  transition: width 340ms cubic-bezier(0.22, 1, 0.36, 1);
-}
 
 .session-ex-body-wrap {
   display: grid;
