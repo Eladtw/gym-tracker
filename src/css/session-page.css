@@ -273,6 +273,62 @@
   flex-wrap: wrap;
 }
 
+.session-set-tracker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.session-set-tracker-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.session-set-tracker-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #475569;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.session-set-tracker-summary {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.session-set-dot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-set-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.session-set-dot--done {
+  background: #dcfce7;
+  box-shadow: inset 0 0 0 1px #86efac;
+}
+
+.session-set-dot--next {
+  background: #dbeafe;
+  box-shadow: inset 0 0 0 1px #93c5fd;
+}
+
+.session-set-dot--planned {
+  background: #cbd5e1;
+  box-shadow: inset 0 0 0 1px #94a3b8;
+}
+
 .session-ex-completed-pill {
   display: inline-flex;
   align-items: center;

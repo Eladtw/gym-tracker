@@ -53,6 +53,14 @@ function adjustWeightString(prev, delta) {
   return formatStepValue(next);
 }
 
+function getSetIndicatorStatus(setIndex, doneCount, plannedCount) {
+  const numericIndex = Number(setIndex) || 0;
+
+  if (numericIndex <= doneCount) return "done";
+  if (doneCount < plannedCount && numericIndex === doneCount + 1) return "next";
+  return "planned";
+}
+
 function ExerciseImageIcon() {
   return (
     <svg viewBox="0 0 24 24" className="session-icon-svg" aria-hidden="true">
@@ -535,6 +543,37 @@ function ExerciseCard({
                 <span className="session-ex-completed-pill">✓ Completed</span>
               )}
             </div>
+
+            {plannedCount > 0 && (
+              <div
+                className="session-set-tracker"
+                aria-label={`Sets: ${doneCount} of ${plannedCount} completed`}
+              >
+                <div className="session-set-tracker-header">
+                  <span className="session-set-tracker-title">Sets</span>
+                  <span className="session-set-tracker-summary">
+                    {doneCount}/{plannedCount}
+                  </span>
+                </div>
+
+                <div className="session-set-dot-row" aria-hidden="true">
+                  {planned.map((setTarget) => {
+                    const status = getSetIndicatorStatus(
+                      setTarget?.set_index,
+                      doneCount,
+                      plannedCount
+                    );
+
+                    return (
+                      <span
+                        key={`set-dot-${exercise.id}-${setTarget?.set_index}`}
+                        className={`session-set-dot session-set-dot--${status}`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="session-ex-chevron" aria-hidden="true">
