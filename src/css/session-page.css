@@ -273,6 +273,81 @@
   flex-wrap: wrap;
 }
 
+.session-set-tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.session-set-tracker-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-set-tracker-title {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.session-set-tracker-summary {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.session-set-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-set-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.session-set-chip-index {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.session-set-chip-state {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.session-set-chip--done {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #15803d;
+}
+
+.session-set-chip--next {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.session-set-chip--planned {
+  background: #f8fafc;
+  border-color: #dbe3ef;
+  color: #475569;
+}
+
 .session-ex-completed-pill {
   display: inline-flex;
   align-items: center;

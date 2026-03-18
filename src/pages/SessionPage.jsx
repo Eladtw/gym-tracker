@@ -53,6 +53,14 @@ function adjustWeightString(prev, delta) {
   return formatStepValue(next);
 }
 
+function getSetChipStatus(setIndex, doneCount, plannedCount) {
+  const numericIndex = Number(setIndex) || 0;
+
+  if (numericIndex <= doneCount) return "done";
+  if (doneCount < plannedCount && numericIndex === doneCount + 1) return "next";
+  return "planned";
+}
+
 function ExerciseImageIcon() {
   return (
     <svg viewBox="0 0 24 24" className="session-icon-svg" aria-hidden="true">
@@ -475,6 +483,12 @@ function ExerciseCard({
     return planned.filter((p) => Number(p?.set_index) > Number(nextIndex));
   }, [planned, nextIndex]);
 
+  const setProgressSummary = useMemo(() => {
+    if (!plannedCount) return "";
+    if (isExerciseCompleted) return `All ${plannedCount} sets completed`;
+    return `${doneCount} of ${plannedCount} sets completed`;
+  }, [doneCount, isExerciseCompleted, plannedCount]);
+
   useEffect(() => {
     if (doneCount <= 0) return;
     setSetAdvanceFx(true);
@@ -535,6 +549,46 @@ function ExerciseCard({
                 <span className="session-ex-completed-pill">✓ Completed</span>
               )}
             </div>
+
+            {plannedCount > 0 && (
+              <div
+                className="session-set-tracker"
+                aria-label={`Set progress: ${setProgressSummary}`}
+              >
+                <div className="session-set-tracker-header">
+                  <span className="session-set-tracker-title">Set progress</span>
+                  <span className="session-set-tracker-summary">{setProgressSummary}</span>
+                </div>
+
+                <div className="session-set-chip-row">
+                  {planned.map((setTarget) => {
+                    const status = getSetChipStatus(
+                      setTarget?.set_index,
+                      doneCount,
+                      plannedCount
+                    );
+
+                    return (
+                      <span
+                        key={`set-chip-${exercise.id}-${setTarget?.set_index}`}
+                        className={`session-set-chip session-set-chip--${status}`}
+                      >
+                        <span className="session-set-chip-index">
+                          Set {setTarget?.set_index}
+                        </span>
+                        <span className="session-set-chip-state">
+                          {status === "done"
+                            ? "Done"
+                            : status === "next"
+                              ? "Next"
+                              : "Planned"}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="session-ex-chevron" aria-hidden="true">
