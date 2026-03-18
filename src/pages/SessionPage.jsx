@@ -53,7 +53,7 @@ function adjustWeightString(prev, delta) {
   return formatStepValue(next);
 }
 
-function getSetChipStatus(setIndex, doneCount, plannedCount) {
+function getSetIndicatorStatus(setIndex, doneCount, plannedCount) {
   const numericIndex = Number(setIndex) || 0;
 
   if (numericIndex <= doneCount) return "done";
@@ -483,12 +483,6 @@ function ExerciseCard({
     return planned.filter((p) => Number(p?.set_index) > Number(nextIndex));
   }, [planned, nextIndex]);
 
-  const setProgressSummary = useMemo(() => {
-    if (!plannedCount) return "";
-    if (isExerciseCompleted) return `All ${plannedCount} sets completed`;
-    return `${doneCount} of ${plannedCount} sets completed`;
-  }, [doneCount, isExerciseCompleted, plannedCount]);
-
   useEffect(() => {
     if (doneCount <= 0) return;
     setSetAdvanceFx(true);
@@ -553,16 +547,18 @@ function ExerciseCard({
             {plannedCount > 0 && (
               <div
                 className="session-set-tracker"
-                aria-label={`Set progress: ${setProgressSummary}`}
+                aria-label={`Sets: ${doneCount} of ${plannedCount} completed`}
               >
                 <div className="session-set-tracker-header">
-                  <span className="session-set-tracker-title">Set progress</span>
-                  <span className="session-set-tracker-summary">{setProgressSummary}</span>
+                  <span className="session-set-tracker-title">Sets</span>
+                  <span className="session-set-tracker-summary">
+                    {doneCount}/{plannedCount}
+                  </span>
                 </div>
 
-                <div className="session-set-chip-row">
+                <div className="session-set-dot-row" aria-hidden="true">
                   {planned.map((setTarget) => {
-                    const status = getSetChipStatus(
+                    const status = getSetIndicatorStatus(
                       setTarget?.set_index,
                       doneCount,
                       plannedCount
@@ -570,20 +566,9 @@ function ExerciseCard({
 
                     return (
                       <span
-                        key={`set-chip-${exercise.id}-${setTarget?.set_index}`}
-                        className={`session-set-chip session-set-chip--${status}`}
-                      >
-                        <span className="session-set-chip-index">
-                          Set {setTarget?.set_index}
-                        </span>
-                        <span className="session-set-chip-state">
-                          {status === "done"
-                            ? "Done"
-                            : status === "next"
-                              ? "Next"
-                              : "Planned"}
-                        </span>
-                      </span>
+                        key={`set-dot-${exercise.id}-${setTarget?.set_index}`}
+                        className={`session-set-dot session-set-dot--${status}`}
+                      />
                     );
                   })}
                 </div>
