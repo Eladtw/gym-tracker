@@ -7,7 +7,8 @@ import { useModal } from "../components/ModalProvider";
 const BUCKET = "exercise-images";
 const REST_TIMER_DEFAULT = 90;
 const REST_TIMER_STEP = 10;
-const WEIGHT_STEP = 2.5;
+const WEIGHT_STEP_DEFAULT = 2.5;
+const WEIGHT_STEP_DUMBBELL = 1;
 const FINISH_REDIRECT_DELAY = 2400;
 
 const isPosNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) > 0;
@@ -51,6 +52,29 @@ function adjustWeightString(prev, delta) {
   const n = Number(prev || 0);
   const next = Math.max(0, Math.round((n + delta) * 100) / 100);
   return formatStepValue(next);
+}
+
+function buildSetStatusRows(totalSets) {
+  const total = Math.max(0, Number(totalSets) || 0);
+  if (!total) return [];
+
+  if (total <= 3) return [total];
+  if (total === 4) return [2, 2];
+  if (total === 5) return [3, 2];
+
+  const rows = [];
+  let remaining = total;
+  while (remaining > 0) {
+    rows.push(Math.min(3, remaining));
+    remaining -= 3;
+  }
+  return rows;
+}
+
+function isDumbbellEquipment(meta) {
+  const key = String(meta?.equipment_key || "").trim().toLowerCase();
+  const label = String(meta?.equipment_label || "").trim().toLowerCase();
+  return key === "dumbbell" || label.includes("dumbbell");
 }
 
 function ExerciseImageIcon() {
@@ -125,9 +149,6 @@ function SessionPageSkeleton() {
                 </div>
               </div>
 
-              <div className="session-ex-progress">
-                <div className="session-skeleton session-skeleton-ex-progress-fill" />
-              </div>
             </div>
           ))}
 
@@ -396,10 +417,6 @@ function ExerciseCard({
 
   const canLogMore = plannedCount === 0 ? true : nextIndex <= plannedCount;
 
-  const progressPct =
-    plannedCount > 0
-      ? Math.min(100, Math.round((doneCount / plannedCount) * 100))
-      : 0;
 
   useEffect(() => {
     if (!canLogMore) return;
@@ -428,6 +445,23 @@ function ExerciseCard({
     .join(" • ");
 
   const canOpenImage = !!meta?.image_path;
+  const weightStep = isDumbbellEquipment(meta)
+    ? WEIGHT_STEP_DUMBBELL
+    : WEIGHT_STEP_DEFAULT;
+
+  const setStatusRows = useMemo(() => {
+    const rows = buildSetStatusRows(plannedCount);
+    let doneLeft = Math.min(doneCount, plannedCount);
+
+    return rows.map((dotsInRow) => {
+      const dots = Array.from({ length: dotsInRow }, (_, idx) => {
+        const isDone = doneLeft > idx;
+        return { isDone };
+      });
+      doneLeft = Math.max(0, doneLeft - dotsInRow);
+      return dots;
+    });
+  }, [doneCount, plannedCount]);
 
   const diffs = useMemo(() => {
     if (!planned.length || !doneSets.length) return [];
@@ -510,6 +544,21 @@ function ExerciseCard({
           onClick={onToggle}
           aria-expanded={isOpen}
         >
+          {setStatusRows.length > 0 && (
+            <div className="session-ex-set-dots" aria-hidden="true">
+              {setStatusRows.map((row, rowIdx) => (
+                <div key={`set-row-${rowIdx}`} className="session-ex-set-dots-row">
+                  {row.map((dot, dotIdx) => (
+                    <span
+                      key={`set-dot-${rowIdx}-${dotIdx}`}
+                      className={`session-ex-set-dot ${dot.isDone ? "is-done" : ""}`}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="session-ex-header-main">
             <div className="session-ex-name">{title}</div>
 
@@ -529,12 +578,9 @@ function ExerciseCard({
               )}
             </div>
 
-            <div className="session-ex-sets-line">
-              {doneCount}/{plannedCount || 0} sets
-              {isExerciseCompleted && (
-                <span className="session-ex-completed-pill">✓ Completed</span>
-              )}
-            </div>
+            {isExerciseCompleted && (
+              <div className="session-ex-completed-pill">✓ Completed</div>
+            )}
           </div>
 
           <div className="session-ex-chevron" aria-hidden="true">
@@ -561,12 +607,6 @@ function ExerciseCard({
         </div>
       </div>
 
-      <div className="session-ex-progress">
-        <div
-          className="session-ex-progress-fill"
-          style={{ width: `${progressPct}%` }}
-        />
-      </div>
 
       <div className={`session-ex-body-wrap ${isOpen ? "is-open" : ""}`}>
         <div className="session-ex-body">
@@ -706,7 +746,7 @@ function ExerciseCard({
                         className="session-step-btn"
                         onClick={() =>
                           setWeight((prev) => {
-                            return adjustWeightString(prev, -WEIGHT_STEP);
+                            return adjustWeightString(prev, -weightStep);
                           })
                         }
                       >
@@ -720,7 +760,7 @@ function ExerciseCard({
                         className="session-step-btn"
                         onClick={() =>
                           setWeight((prev) => {
-                            return adjustWeightString(prev, WEIGHT_STEP);
+                            return adjustWeightString(prev, weightStep);
                           })
                         }
                       >
@@ -1018,6 +1058,7 @@ export default function SessionPage() {
         ),
         equipment:equipment (
           id,
+          key,
           label
         )
       `)
@@ -1036,6 +1077,7 @@ export default function SessionPage() {
         primary_subgroup_label: r?.primary_subgroup?.label || null,
         group_label: r?.primary_subgroup?.muscle_groups?.label || null,
         equipment_label: r?.equipment?.label || null,
+        equipment_key: r?.equipment?.key || null,
       });
     });
 
