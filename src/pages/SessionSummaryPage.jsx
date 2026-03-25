@@ -58,6 +58,7 @@ export default function SessionSummaryPage() {
   const [historyRows, setHistoryRows] = useState([]);
   const [workoutName, setWorkoutName] = useState("Workout");
   const [historicalSetsBeforeCurrent, setHistoricalSetsBeforeCurrent] = useState([]);
+  const [resolvedSessionId, setResolvedSessionId] = useState(sessionId || null);
 
   useEffect(() => {
     let active = true;
@@ -65,14 +66,49 @@ export default function SessionSummaryPage() {
     async function load() {
       setLoading(true);
       setError("");
+      setResolvedSessionId(sessionId || null);
 
       const { data: authData } = await supabase.auth.getSession();
       const authedUserId = authData?.session?.user?.id || null;
+      if (!authedUserId) {
+        setError("Please log in to view your session summary.");
+        setLoading(false);
+        return;
+      }
+
+      let targetSessionId = sessionId || null;
+      if (!targetSessionId) {
+        const { data: latestCompleted, error: latestErr } = await supabase
+          .from("sessions")
+          .select("id")
+          .eq("user_id", authedUserId)
+          .not("ended_at", "is", null)
+          .order("ended_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!active) return;
+
+        if (latestErr) {
+          setError(latestErr.message);
+          setLoading(false);
+          return;
+        }
+
+        if (!latestCompleted?.id) {
+          setError("No completed workouts found yet.");
+          setLoading(false);
+          return;
+        }
+
+        targetSessionId = latestCompleted.id;
+        setResolvedSessionId(latestCompleted.id);
+      }
 
       const { data: currentSession, error: sessionErr } = await supabase
         .from("sessions")
         .select("id, user_id, workout_id, started_at, ended_at")
-        .eq("id", sessionId)
+        .eq("id", targetSessionId)
         .single();
 
       if (!active) return;
@@ -107,7 +143,7 @@ export default function SessionSummaryPage() {
         .select(
           "id, session_id, exercise_id, variation_id, exercise_name, set_index, reps, weight, created_at"
         )
-        .eq("session_id", sessionId)
+        .eq("session_id", targetSessionId)
         .order("created_at", { ascending: true });
 
       if (!active) return;
@@ -476,6 +512,14 @@ export default function SessionSummaryPage() {
         </section>
 
         <div className="session-summary-actions">
+          {resolvedSessionId && (
+            <button
+              className="session-summary-btn session-summary-btn--ghost"
+              onClick={() => navigate(`/session/${resolvedSessionId}`)}
+            >
+              Back to Session
+            </button>
+          )}
           <button className="session-summary-btn" onClick={() => navigate("/progress")}>View Progress</button>
           <button
             className="session-summary-btn session-summary-btn--ghost"

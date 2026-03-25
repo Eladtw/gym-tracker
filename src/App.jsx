@@ -184,6 +184,7 @@ export default function App() {
             <Route path="/workouts/:id" element={<WorkoutDetail />} />
             <Route path="/session/:sessionId" element={<SessionPage />} />
             <Route path="/session/:sessionId/summary" element={<SessionSummaryPage />} />
+            <Route path="/session-summary" element={<SessionSummaryPage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/progress/id/:exerciseId" element={<ProgressPage />} />
             <Route path="/exercises" element={<ExerciseLibrary />} />
