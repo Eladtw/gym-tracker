@@ -8,7 +8,7 @@ const BUCKET = "exercise-images";
 const REST_TIMER_DEFAULT = 90;
 const REST_TIMER_STEP = 10;
 const WEIGHT_STEP = 2.5;
-const FINISH_REDIRECT_DELAY = 2400;
+const FINISH_REDIRECT_DELAY = 2200;
 
 const isPosNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) > 0;
 const isNonNegNum = (v) => v !== "" && Number.isFinite(Number(v)) && Number(v) >= 0;
@@ -1571,7 +1571,7 @@ export default function SessionPage() {
 
     if (finishRedirectRef.current) window.clearTimeout(finishRedirectRef.current);
     finishRedirectRef.current = window.setTimeout(() => {
-      navigate("/home");
+      navigate(`/session/${sessionId}/summary`);
     }, FINISH_REDIRECT_DELAY);
   }
 

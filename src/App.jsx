@@ -17,6 +17,7 @@ import CalendarPage from "./pages/CalendarPage";
 import ProgressPage from "./pages/ProgressPage";
 import ExerciseLibrary from "./pages/ExerciseLibrary";
 import AdminUsers from "./pages/AdminUsers";
+import SessionSummaryPage from "./pages/SessionSummaryPage";
 
 import "./css/App.css";
 import "./css/sidebar.css";
@@ -182,6 +183,7 @@ export default function App() {
             <Route path="/workouts" element={<Workouts />} />
             <Route path="/workouts/:id" element={<WorkoutDetail />} />
             <Route path="/session/:sessionId" element={<SessionPage />} />
+            <Route path="/session/:sessionId/summary" element={<SessionSummaryPage />} />
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/progress/id/:exerciseId" element={<ProgressPage />} />
             <Route path="/exercises" element={<ExerciseLibrary />} />
