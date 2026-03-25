@@ -4,7 +4,7 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #f3f4f6;
+  background: transparent;
   border-bottom: 1px solid #e2e8f0;
   padding: 6px 0 10px;
   display: grid;
@@ -98,3 +98,6 @@
 .whi-table-wrap td { padding: 6px 0; }
 .whi-table-wrap td:last-child { color: #10b981; font-weight: 700; text-align: right; }
 .whi-table-wrap th:last-child { text-align: right; }
+
+.whi-state { text-align:center; color:#64748b; padding:20px 8px; }
+.whi-state--error { color:#dc2626; }

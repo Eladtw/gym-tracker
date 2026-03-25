@@ -1,12 +1,12 @@
 .whd-page {
-  background: #f3f4f6;
+  background: transparent;
 }
 
 .whd-header {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #f3f4f6;
+  background: transparent;
   border-bottom: 1px solid #e2e8f0;
   padding: 8px 8px 10px;
 }
@@ -189,3 +189,6 @@
   font-size: 1rem;
   font-weight: 700;
 }
+
+.whd-state { text-align:center; color:#64748b; padding:20px 8px; }
+.whd-state--error { color:#dc2626; }

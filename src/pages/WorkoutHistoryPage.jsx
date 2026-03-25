@@ -1,6 +1,8 @@
 import { ChevronRight, Clock3, Dumbbell, Layers3 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { workoutHistoryItems } from "../data/workoutHistoryMock";
+import WorkoutHistoryHeaderCard from "../components/WorkoutHistoryHeaderCard";
+import { fetchWorkoutHistoryList } from "../data/workoutHistoryService";
 import "../css/workout-history-page.css";
 
 const statusClass = {
@@ -11,15 +13,46 @@ const statusClass = {
 
 export default function WorkoutHistoryPage() {
   const navigate = useNavigate();
+  const [items, setItems] = useState([]);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      setLoading(true);
+      setMsg("");
+
+      try {
+        const result = await fetchWorkoutHistoryList(40);
+        if (!alive) return;
+        setItems(result);
+      } catch (error) {
+        if (!alive) return;
+        setMsg(error?.message || "Failed to load workout history");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <section className="workout-history-page">
-      <header className="workout-history-page__header">
-        <h1>History</h1>
-      </header>
+      <WorkoutHistoryHeaderCard title="History" />
+
+      {loading ? <p className="workout-history-state">Loading history…</p> : null}
+      {!loading && msg ? <p className="workout-history-state workout-history-state--error">{msg}</p> : null}
+      {!loading && !msg && items.length === 0 ? (
+        <p className="workout-history-state">No completed sessions yet.</p>
+      ) : null}
 
       <div className="workout-history-list">
-        {workoutHistoryItems.map((item) => (
+        {items.map((item) => (
           <article
             key={item.id}
             className="workout-history-card"
@@ -58,12 +91,10 @@ export default function WorkoutHistoryPage() {
                 <Dumbbell size={13} />
                 {item.exercisesCount} exercises
               </span>
-              {item.setsCount ? (
-                <span>
-                  <Layers3 size={13} />
-                  {item.setsCount} sets
-                </span>
-              ) : null}
+              <span>
+                <Layers3 size={13} />
+                {item.setsCount} sets
+              </span>
               <span>
                 <Clock3 size={13} />
                 {item.duration}
@@ -71,12 +102,6 @@ export default function WorkoutHistoryPage() {
             </div>
           </article>
         ))}
-      </div>
-
-      <div className="workout-history-load-more-wrap">
-        <button type="button" className="workout-history-load-more-btn">
-          Load More
-        </button>
       </div>
     </section>
   );

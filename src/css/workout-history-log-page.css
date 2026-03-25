@@ -4,7 +4,7 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #f3f4f6;
+  background: transparent;
   padding-top: 8px;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -102,3 +102,6 @@
 
 .whl-item-table-wrap td.positive { color: #10b981; font-weight: 700; }
 .whl-item-table-wrap td.negative { color: #ef4444; font-weight: 700; }
+
+.whl-state { text-align:center; color:#64748b; padding:20px 8px; }
+.whl-state--error { color:#dc2626; }
