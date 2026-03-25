@@ -1,0 +1,104 @@
+.whl-page { padding: 0 8px 8px; }
+
+.whl-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #f3f4f6;
+  padding-top: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.whl-top-row {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+}
+
+.whl-top-row button {
+  border: 0;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+}
+
+.whl-top-row h1 { margin: 0; text-align: center; }
+.whl-top-row p { margin: 4px 0 0; text-align: center; color: #64748b; font-size: 0.83rem; }
+
+.whl-muscles {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 0 12px;
+}
+
+.whl-muscles span {
+  background: #eef2f7;
+  color: #64748b;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+}
+
+.whl-main h2 { margin: 14px 0 10px; font-size: 1.85rem; }
+
+.whl-list { display: flex; flex-direction: column; gap: 10px; }
+
+.whl-item {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+}
+
+.whl-item-head {
+  border: 0;
+  background: #fff;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  text-align: left;
+  padding: 14px;
+}
+
+.whl-item-head h3 { margin: 0; font-size: 1.4rem; }
+.whl-item-head p { margin: 4px 0; color: #64748b; font-size: 0.86rem; }
+.whl-item-head strong { color: #2563eb; font-size: 1rem; }
+.whl-item-head svg { color: #64748b; transition: transform .2s ease; }
+.whl-item-head svg.open { transform: rotate(180deg); }
+
+.whl-item-table-wrap {
+  border-top: 1px solid #e2e8f0;
+  padding: 10px 6px;
+  overflow-x: auto;
+}
+
+.whl-item-table-wrap table {
+  width: 100%;
+  min-width: 360px;
+  border-collapse: collapse;
+}
+
+.whl-item-table-wrap th {
+  color: #64748b;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 4px 8px;
+}
+
+.whl-item-table-wrap td {
+  padding: 10px 8px;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.whl-item-table-wrap td.current {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.whl-item-table-wrap td.positive { color: #10b981; font-weight: 700; }
+.whl-item-table-wrap td.negative { color: #ef4444; font-weight: 700; }

@@ -1,0 +1,191 @@
+.whd-page {
+  background: #f3f4f6;
+}
+
+.whd-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 8px 10px;
+}
+
+.whd-title-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.whd-back {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.whd-title-row h1 {
+  margin: 0;
+  text-align: center;
+  color: #1e293b;
+}
+
+.whd-title-row p {
+  margin: 3px 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.whd-muscles {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.whd-muscles span {
+  background: #eef2f7;
+  color: #64748b;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+}
+
+.whd-main {
+  padding: 14px 8px;
+}
+
+.whd-summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.whd-summary-top h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.84rem;
+  margin: 0;
+}
+
+.whd-summary-top button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+}
+
+.whd-summary-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.whd-summary-cards article,
+.whd-improvements,
+.whd-workout-log-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.whd-summary-cards article {
+  padding: 12px;
+}
+
+.whd-summary-cards p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.whd-summary-cards div {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.whd-summary-cards strong { font-size: 1.8rem; line-height: 1; }
+.whd-summary-cards span { color: #10b981; font-size: 0.75rem; font-weight: 700; }
+
+.whd-improvements {
+  padding: 14px;
+}
+
+.whd-improvements h3 {
+  margin: 0 0 10px;
+}
+
+.whd-segments {
+  display: flex;
+  gap: 8px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.whd-segments button {
+  flex: 1;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.74rem;
+  padding: 6px 0;
+}
+
+.whd-segments .active {
+  background: #f97316;
+  color: #fff;
+}
+
+.whd-improvements-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.whd-improvements-list article { display: flex; justify-content: space-between; gap: 10px; }
+.whd-improvements-list h4 { margin: 0; font-size: 1rem; }
+.whd-improvements-list p { margin: 4px 0 0; color: #64748b; font-size: 0.8rem; }
+.whd-improvements-list strong { display: block; text-align: right; }
+.whd-improvements-list span { margin-top: 4px; display: inline-flex; align-items: center; gap: 2px; color: #10b981; font-weight: 700; font-size: 0.8rem; }
+
+.whd-view-all {
+  margin-top: 10px;
+  border: 0;
+  background: transparent;
+  color: #2563eb;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  float: right;
+}
+
+.whd-workout-log-card {
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.whd-workout-log-card button {
+  width: 100%;
+  border: 0;
+  background: #fff;
+  padding: 16px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 700;
+}

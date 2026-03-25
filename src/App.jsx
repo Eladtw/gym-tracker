@@ -17,6 +17,10 @@ import CalendarPage from "./pages/CalendarPage";
 import ProgressPage from "./pages/ProgressPage";
 import ExerciseLibrary from "./pages/ExerciseLibrary";
 import AdminUsers from "./pages/AdminUsers";
+import WorkoutHistoryPage from "./pages/WorkoutHistoryPage";
+import WorkoutHistoryDetailPage from "./pages/WorkoutHistoryDetailPage";
+import WorkoutHistoryImprovementsPage from "./pages/WorkoutHistoryImprovementsPage";
+import WorkoutHistoryLogPage from "./pages/WorkoutHistoryLogPage";
 
 import "./css/App.css";
 import "./css/sidebar.css";
@@ -185,6 +189,13 @@ export default function App() {
             <Route path="/progress" element={<ProgressPage />} />
             <Route path="/progress/id/:exerciseId" element={<ProgressPage />} />
             <Route path="/exercises" element={<ExerciseLibrary />} />
+            <Route path="/history" element={<WorkoutHistoryPage />} />
+            <Route path="/history/:historyId" element={<WorkoutHistoryDetailPage />} />
+            <Route
+              path="/history/:historyId/improvements"
+              element={<WorkoutHistoryImprovementsPage />}
+            />
+            <Route path="/history/:historyId/log" element={<WorkoutHistoryLogPage />} />
             <Route
               path="/admin/users"
               element={<AdminUsers isAdmin={isAdmin} roleInit={roleInit} />}
