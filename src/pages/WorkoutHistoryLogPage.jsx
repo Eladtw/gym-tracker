@@ -1,7 +1,6 @@
-import { ChevronDown } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import WorkoutHistoryHeaderCard from "../components/WorkoutHistoryHeaderCard";
 import { fetchWorkoutHistorySession } from "../data/workoutHistoryService";
 import "../css/workout-history-log-page.css";
 
@@ -14,7 +13,6 @@ export default function WorkoutHistoryLogPage() {
 
   useEffect(() => {
     let alive = true;
-
     (async () => {
       try {
         const data = await fetchWorkoutHistorySession(historyId);
@@ -25,24 +23,31 @@ export default function WorkoutHistoryLogPage() {
         if (alive) setMsg(error?.message || "Failed to load workout log");
       }
     })();
-
     return () => {
       alive = false;
     };
   }, [historyId]);
 
-  if (!detail && !msg) {
-    return <p className="whl-state">Loading workout log…</p>;
-  }
+  if (!detail && !msg) return <p className="whl-state">Loading workout log…</p>;
 
   return (
     <section className="whl-page">
-      <WorkoutHistoryHeaderCard
-        title={detail?.title || "Workout"}
-        subtitle={detail?.subtitle || ""}
-        pills={detail?.muscles || []}
-        onBack={() => navigate(-1)}
-      />
+      <header className="whl-header">
+        <div className="whl-header-top">
+          <button onClick={() => navigate(-1)} aria-label="Go back"><ArrowLeft size={18} /></button>
+          <div>
+            <h1>{detail?.title || "Workout"}</h1>
+            <p>{detail?.subtitle || ""}</p>
+          </div>
+          <span />
+        </div>
+
+        <div className="whl-pills">
+          {(detail?.muscles || []).map((m) => (
+            <span key={m}>{m}</span>
+          ))}
+        </div>
+      </header>
 
       <main className="whl-main">
         <h2>Workout Log</h2>
@@ -52,21 +57,18 @@ export default function WorkoutHistoryLogPage() {
           {(detail?.workoutLog || []).map((exercise) => {
             const isOpen = expanded === exercise.id;
             return (
-              <article key={exercise.id} className="whl-item">
-                <button
-                  className="whl-item-head"
-                  onClick={() => setExpanded((prev) => (prev === exercise.id ? null : exercise.id))}
-                >
+              <article key={exercise.id} className="whl-card">
+                <button className="whl-card-head" onClick={() => setExpanded((p) => (p === exercise.id ? null : exercise.id))}>
                   <div>
                     <h3>{exercise.name}</h3>
                     <p>{exercise.area}</p>
                     <strong>{exercise.setsLabel}</strong>
                   </div>
-                  <ChevronDown className={isOpen ? "open" : ""} size={18} />
+                  <ChevronDown size={18} className={isOpen ? "open" : ""} />
                 </button>
 
                 {isOpen ? (
-                  <div className="whl-item-table-wrap">
+                  <div className="whl-table-wrap">
                     <table>
                       <thead>
                         <tr>

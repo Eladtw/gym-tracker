@@ -1,154 +1,70 @@
-.workout-history-page {
-  padding: 0 10px 20px;
-  font-family: "Outfit", sans-serif;
+.wh-page {
   background: #fdfdfd;
-  min-height: calc(100vh - 120px);
-}
-
-.workout-history-page .wh-header-card-wrap {
-  padding: 8px 0 10px;
-  background: transparent;
-  border-radius: 0;
-}
-
-.workout-history-page .wh-header-card {
-  background: transparent;
-  box-shadow: none;
-  border: 0;
-  padding: 6px 4px;
-}
-
-.workout-history-page .wh-header-card__top {
-  grid-template-columns: 1fr;
-}
-
-.workout-history-page .wh-header-card__title-block h1 {
-  text-align: left;
-  font-size: 37px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  min-height: calc(100vh - 118px);
+  font-family: "Outfit", sans-serif;
   color: #0f172a;
+  padding: 0 8px 20px;
 }
 
-.workout-history-page .wh-header-card__spacer,
-.workout-history-page .wh-header-card__right,
-.workout-history-page .wh-header-card__back {
-  display: none;
+.wh-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: rgba(253, 253, 253, 0.95);
+  backdrop-filter: blur(4px);
+  padding: 12px 6px 10px;
 }
 
-.workout-history-list {
+.wh-header h1 {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.wh-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.workout-history-card {
+.wh-card {
+  background: #fff;
   border: 1px solid #f1f5f9;
   border-radius: 12px;
-  background: #ffffff;
   padding: 14px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
-  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
-.workout-history-card__top {
+.wh-card__top {
   display: flex;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 
-.workout-history-card__top h2 {
-  margin: 0;
-  font-size: 27px;
-  font-weight: 600;
-  line-height: 1.15;
-  color: #0f172a;
-}
+.wh-card__top h2 { margin: 0; font-size: 28px; font-weight: 600; }
+.wh-card__top p { margin: 4px 0 0; font-size: 20px; color: #64748b; font-family: "Plus Jakarta Sans", sans-serif; }
 
-.workout-history-card__top p {
-  margin: 4px 0 0;
-  color: #64748b;
-  font-size: 21px;
-  font-family: "Plus Jakarta Sans", sans-serif;
-}
+.wh-card__right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; color: #64748b; }
 
-.workout-history-card__top-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 7px;
-  color: #64748b;
-}
+.wh-status { border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 500; }
+.wh-status--positive { background: #ecfdf5; color: #10b981; }
+.wh-status--neutral { background: #f1f5f9; color: #64748b; }
+.wh-status--negative { background: #fef2f2; color: #ef4444; }
 
-.workout-history-status {
-  font-size: 12px;
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-weight: 500;
-  white-space: nowrap;
-}
+.wh-pills { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 7px; }
+.wh-pills span { background: #f8fafc; border-radius: 999px; color: #64748b; padding: 4px 10px; font-size: 12px; }
 
-.workout-history-status--positive {
-  background: #ecfdf5;
-  color: #10b981;
-}
-
-.workout-history-status--neutral {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.workout-history-status--negative {
-  background: #fef2f2;
-  color: #ef4444;
-}
-
-.workout-history-muscles {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.workout-history-muscles span {
-  background: #f8fafc;
-  color: #64748b;
-  font-size: 12px;
-  padding: 4px 9px;
-  border-radius: 999px;
-}
-
-.workout-history-card__metrics {
-  margin-top: 10px;
+.wh-metrics {
+  margin-top: 11px;
   border-top: 1px solid rgba(241, 245, 249, 0.8);
   padding-top: 10px;
   display: flex;
+  gap: 13px;
   flex-wrap: wrap;
-  gap: 12px;
-  color: #0f172a;
 }
+.wh-metrics span { display: inline-flex; align-items: center; gap: 5px; font-family: "Plus Jakarta Sans", sans-serif; font-size: 12px; font-weight: 600; }
+.wh-metrics svg { color: rgba(100,116,139,0.7); }
 
-.workout-history-card__metrics span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-weight: 600;
-}
-
-.workout-history-card__metrics svg {
-  width: 14px;
-  height: 14px;
-  color: rgba(100, 116, 139, 0.7);
-}
-
-.workout-history-state {
-  text-align: center;
-  color: #64748b;
-  margin: 24px 0;
-}
-
-.workout-history-state--error {
-  color: #dc2626;
-}
+.wh-state { text-align: center; color: #64748b; padding: 26px 8px; }
+.wh-state--error { color: #dc2626; }

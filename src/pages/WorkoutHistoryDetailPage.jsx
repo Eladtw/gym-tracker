@@ -1,7 +1,6 @@
-import { ArrowRight, ChevronRight, Settings, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, Settings, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import WorkoutHistoryHeaderCard from "../components/WorkoutHistoryHeaderCard";
 import { fetchWorkoutHistorySession } from "../data/workoutHistoryService";
 import "../css/workout-history-detail-page.css";
 
@@ -11,26 +10,18 @@ export default function WorkoutHistoryDetailPage() {
   const [detail, setDetail] = useState(null);
   const [metric, setMetric] = useState("weight");
   const [msg, setMsg] = useState("");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-
     (async () => {
-      setLoading(true);
-      setMsg("");
       try {
         const data = await fetchWorkoutHistorySession(historyId);
         if (!alive) return;
         setDetail(data);
       } catch (error) {
-        if (!alive) return;
-        setMsg(error?.message || "Failed to load workout details");
-      } finally {
-        if (alive) setLoading(false);
+        if (alive) setMsg(error?.message || "Failed to load workout details");
       }
     })();
-
     return () => {
       alive = false;
     };
@@ -46,24 +37,34 @@ export default function WorkoutHistoryDetailPage() {
     return sorted.slice(0, 3);
   }, [detail, metric]);
 
-  if (loading) return <p className="whd-state">Loading workout details…</p>;
-  if (msg || !detail) return <p className="whd-state whd-state--error">{msg || "Workout not found"}</p>;
+  if (!detail && !msg) return <p className="whd-state">Loading workout details…</p>;
+  if (msg) return <p className="whd-state whd-state--error">{msg}</p>;
 
   return (
     <section className="whd-page">
-      <WorkoutHistoryHeaderCard
-        title={detail.title}
-        subtitle={detail.subtitle}
-        pills={detail.muscles}
-        onBack={() => navigate(-1)}
-      />
+      <header className="whd-header">
+        <div className="whd-header-top">
+          <button className="whd-back" onClick={() => navigate(-1)} aria-label="Go back">
+            <ArrowLeft size={19} />
+          </button>
+          <div className="whd-title-wrap">
+            <h1>{detail.title}</h1>
+            <p>{detail.subtitle}</p>
+          </div>
+          <span className="whd-spacer" />
+        </div>
+
+        <div className="whd-pills">
+          {detail.muscles.map((m) => (
+            <span key={m}>{m}</span>
+          ))}
+        </div>
+      </header>
 
       <main className="whd-main">
-        <div className="whd-summary-top">
+        <div className="whd-summary-row">
           <h2>Summary</h2>
-          <button type="button" aria-label="Settings">
-            <Settings size={16} />
-          </button>
+          <button type="button" aria-label="settings"><Settings size={16} /></button>
         </div>
 
         <section className="whd-summary-cards">
@@ -83,16 +84,16 @@ export default function WorkoutHistoryDetailPage() {
           </article>
         </section>
 
-        <section className="whd-improvements">
+        <section className="whd-improvements-card">
           <h3>Top Improvements</h3>
 
-          <div className="whd-segments">
-            <button type="button" className={metric === "reps" ? "active" : ""} onClick={() => setMetric("reps")}>Reps</button>
-            <button type="button" className={metric === "weight" ? "active" : ""} onClick={() => setMetric("weight")}>Weight</button>
-            <button type="button" className={metric === "volume" ? "active" : ""} onClick={() => setMetric("volume")}>Volume</button>
+          <div className="whd-segmented">
+            <button className={metric === "reps" ? "active" : ""} onClick={() => setMetric("reps")}>Reps</button>
+            <button className={metric === "weight" ? "active" : ""} onClick={() => setMetric("weight")}>Weight</button>
+            <button className={metric === "volume" ? "active" : ""} onClick={() => setMetric("volume")}>Volume</button>
           </div>
 
-          <div className="whd-improvements-list">
+          <div className="whd-improvement-list">
             {topItems.map((item) => (
               <article key={item.key}>
                 <div>
@@ -122,7 +123,7 @@ export default function WorkoutHistoryDetailPage() {
           </button>
         </section>
 
-        <section className="whd-workout-log-card">
+        <section className="whd-log-link-card">
           <button onClick={() => navigate("log") }>
             <span>Workout Log</span>
             <ChevronRight size={18} />

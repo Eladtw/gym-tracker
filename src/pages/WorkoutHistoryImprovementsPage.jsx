@@ -1,7 +1,6 @@
-import { ChevronDown } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import WorkoutHistoryHeaderCard from "../components/WorkoutHistoryHeaderCard";
 import { fetchWorkoutHistorySession } from "../data/workoutHistoryService";
 import "../css/workout-history-improvements-page.css";
 
@@ -25,7 +24,6 @@ export default function WorkoutHistoryImprovementsPage() {
         if (alive) setMsg(error?.message || "Failed to load improvements");
       }
     })();
-
     return () => {
       alive = false;
     };
@@ -44,26 +42,27 @@ export default function WorkoutHistoryImprovementsPage() {
 
   return (
     <section className="whi-page">
-      <WorkoutHistoryHeaderCard title="All Improvements" onBack={() => navigate(-1)} />
+      <header className="whi-header">
+        <button onClick={() => navigate(-1)} aria-label="Go back"><ArrowLeft size={18} /></button>
+        <h1>All Improvements</h1>
+        <span />
+      </header>
 
-      {msg ? <p className="whi-state">{msg}</p> : null}
+      {msg ? <p className="whi-state whi-state--error">{msg}</p> : null}
 
-      <div className="whi-filter">
+      <div className="whi-segmented">
         <button className={metric === "reps" ? "active" : ""} onClick={() => setMetric("reps")}>Reps</button>
         <button className={metric === "weight" ? "active" : ""} onClick={() => setMetric("weight")}>Weight</button>
         <button className={metric === "volume" ? "active" : ""} onClick={() => setMetric("volume")}>Volume</button>
       </div>
 
-      <div className="whi-list">
+      <main className="whi-list">
         {items.map((item) => {
           const isOpen = openId === item.key;
           const topDelta = metric === "weight" ? item.deltaWeight : metric === "volume" ? item.deltaVolume : item.deltaReps;
           return (
-            <article key={item.key} className="whi-item">
-              <button
-                className="whi-item-head"
-                onClick={() => setOpenId((prev) => (prev === item.key ? null : item.key))}
-              >
+            <article key={item.key} className="whi-card">
+              <button className="whi-card-head" onClick={() => setOpenId((p) => (p === item.key ? null : item.key))}>
                 <div>
                   <h2>{item.name}</h2>
                   <p>
@@ -78,7 +77,7 @@ export default function WorkoutHistoryImprovementsPage() {
                   </p>
                 </div>
                 <div>
-                  <strong>{topDelta >= 0 ? "+" : ""}{Math.round(topDelta * 10) / 10}{metric === "volume" ? "" : metric === "reps" ? " reps" : " lbs"}</strong>
+                  <strong>{topDelta >= 0 ? "+" : ""}{Math.round(topDelta)} {metric === "reps" ? "reps" : metric === "weight" ? "lbs" : "vol"}</strong>
                   <ChevronDown size={16} className={isOpen ? "open" : ""} />
                 </div>
               </button>
@@ -116,7 +115,7 @@ export default function WorkoutHistoryImprovementsPage() {
             </article>
           );
         })}
-      </div>
+      </main>
     </section>
   );
 }
