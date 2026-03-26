@@ -1,6 +1,8 @@
 .whl-page {
   padding: 0 10px 14px;
   font-family: "Outfit", sans-serif;
+  background: #fdfdfd;
+  min-height: calc(100vh - 120px);
 }
 
 .whl-page .wh-header-card-wrap {
@@ -13,6 +15,7 @@
   border: 0;
   box-shadow: none;
   background: transparent;
+  border-radius: 0;
   padding: 0;
 }
 

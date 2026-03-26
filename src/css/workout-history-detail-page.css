@@ -1,9 +1,12 @@
 .whd-page {
   font-family: "Outfit", sans-serif;
+  background: #fdfdfd;
+  min-height: calc(100vh - 120px);
 }
 
 .whd-page .wh-header-card-wrap {
   padding: 8px 10px 8px;
+  top: 0;
   background: rgba(253, 253, 253, 0.94);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid #f1f5f9;
@@ -13,6 +16,7 @@
   background: transparent;
   border: 0;
   box-shadow: none;
+  border-radius: 0;
   padding: 0;
 }
 

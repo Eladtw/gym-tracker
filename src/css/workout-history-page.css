@@ -1,11 +1,14 @@
 .workout-history-page {
   padding: 0 10px 20px;
   font-family: "Outfit", sans-serif;
+  background: #fdfdfd;
+  min-height: calc(100vh - 120px);
 }
 
 .workout-history-page .wh-header-card-wrap {
   padding: 8px 0 10px;
   background: transparent;
+  border-radius: 0;
 }
 
 .workout-history-page .wh-header-card {
