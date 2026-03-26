@@ -1,0 +1,57 @@
+.whd-page { background: #fdfdfd; min-height: calc(100vh - 118px); font-family: "Outfit", sans-serif; color: #0f172a; }
+
+.whd-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(253, 253, 253, 0.94);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #f1f5f9;
+  padding: 10px 10px 8px;
+}
+
+.whd-header-top { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; }
+.whd-back { width: 36px; height: 36px; border: 0; background: transparent; border-radius: 999px; color: #0f172a; }
+.whd-title-wrap h1 { margin: 0; text-align: center; font-size: 24px; font-weight: 600; }
+.whd-title-wrap p { margin: 2px 0 0; text-align: center; font-size: 13px; color: #64748b; font-weight: 500; }
+.whd-spacer { width: 36px; height: 36px; }
+.whd-pills { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.whd-pills span { background: #f8fafc; color: #64748b; border: 1px solid #f1f5f9; border-radius: 999px; padding: 4px 10px; font-size: 13px; }
+
+.whd-main { max-width: 540px; margin: 0 auto; padding: 16px 10px 30px; }
+.whd-summary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.whd-summary-row h2 { margin: 0; text-transform: uppercase; font-size: 12px; letter-spacing: 0.08em; }
+.whd-summary-row button { border: 0; background: transparent; color: #64748b; }
+
+.whd-summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.whd-summary-cards article,
+.whd-improvements-card,
+.whd-log-link-card { background: #fff; border: 1px solid #f1f5f9; border-radius: 12px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04); }
+.whd-summary-cards article { padding: 10px; }
+.whd-summary-cards p { margin: 0; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.whd-summary-cards strong { display: block; margin-top: 4px; font-size: 34px; font-family: "Space Grotesk", sans-serif; line-height: 1; }
+.whd-summary-cards span { color: #10b981; font-size: 11px; font-weight: 600; font-family: "Space Grotesk", sans-serif; }
+
+.whd-improvements-card { padding: 14px; }
+.whd-improvements-card h3 { margin: 0 0 10px; font-size: 16px; }
+.whd-segmented { display: flex; padding: 4px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 10px; }
+.whd-segmented button { flex: 1; border: 0; background: transparent; color: #64748b; padding: 7px 0; border-radius: 8px; font-size: 13px; font-weight: 500; }
+.whd-segmented button.active { background: #f97316; color: #fff; box-shadow: 0 2px 6px rgba(15,23,42,0.08); }
+
+.whd-improvement-list { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+.whd-improvement-list article { display: flex; justify-content: space-between; gap: 10px; }
+.whd-improvement-list h4 { margin: 0; font-size: 15px; font-weight: 500; }
+.whd-improvement-list p { margin: 3px 0 0; color: #64748b; font-size: 13px; }
+.whd-improvement-list strong { display: block; text-align: right; font-family: "Space Grotesk", sans-serif; }
+.whd-improvement-list span { margin-top: 3px; display: inline-flex; gap: 2px; align-items: center; color: #10b981; font-size: 13px; font-family: "Space Grotesk", sans-serif; }
+
+.whd-view-all { margin-top: 8px; border: 0; background: transparent; color: #2563eb; float: right; display: inline-flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 500; }
+.whd-log-link-card { margin-top: 14px; overflow: hidden; }
+.whd-log-link-card button { width: 100%; border: 0; background: #fff; padding: 15px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 600; }
+
+.whd-state { text-align: center; color: #64748b; padding: 24px 8px; }
+.whd-state--error { color: #dc2626; }
+
+.whd-summary-cards .delta-positive { color: #10b981; }
+.whd-summary-cards .delta-negative { color: #ef4444; }
+.whd-empty { margin: 0; color: #64748b; font-size: 13px; }
