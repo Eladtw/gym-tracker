@@ -31,7 +31,11 @@ export default function WorkoutHistoryImprovementsPage() {
 
   const items = useMemo(() => {
     if (!detail) return [];
-    const sorted = [...detail.allImprovements];
+    const sorted = [...detail.allImprovements].filter((a) => {
+      if (metric === "reps") return a.deltaReps > 0;
+      if (metric === "volume") return a.deltaVolume > 0;
+      return a.deltaWeight > 0;
+    });
     sorted.sort((a, b) => {
       if (metric === "weight") return b.deltaWeight - a.deltaWeight;
       if (metric === "volume") return b.deltaVolume - a.deltaVolume;
@@ -39,6 +43,11 @@ export default function WorkoutHistoryImprovementsPage() {
     });
     return sorted;
   }, [detail, metric]);
+
+
+  useEffect(() => {
+    setOpenId((prev) => (items.some((x) => x.key === prev) ? prev : items[0]?.key ?? null));
+  }, [items]);
 
   return (
     <section className="whi-page">
@@ -57,6 +66,7 @@ export default function WorkoutHistoryImprovementsPage() {
       </div>
 
       <main className="whi-list">
+        {items.length === 0 ? <p className="whi-state">No improved exercises for this category yet.</p> : null}
         {items.map((item) => {
           const isOpen = openId === item.key;
           const topDelta = metric === "weight" ? item.deltaWeight : metric === "volume" ? item.deltaVolume : item.deltaReps;

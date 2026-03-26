@@ -8,7 +8,7 @@ export default function WorkoutHistoryDetailPage() {
   const navigate = useNavigate();
   const { historyId } = useParams();
   const [detail, setDetail] = useState(null);
-  const [metric, setMetric] = useState("weight");
+  const [metric, setMetric] = useState("reps");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
@@ -29,11 +29,17 @@ export default function WorkoutHistoryDetailPage() {
 
   const topItems = useMemo(() => {
     if (!detail) return [];
-    const sorted = [...detail.allImprovements].sort((a, b) => {
-      if (metric === "reps") return b.deltaReps - a.deltaReps;
-      if (metric === "volume") return b.deltaVolume - a.deltaVolume;
-      return b.deltaWeight - a.deltaWeight;
-    });
+    const sorted = [...detail.allImprovements]
+      .filter((a) => {
+        if (metric === "reps") return a.deltaReps > 0;
+        if (metric === "volume") return a.deltaVolume > 0;
+        return a.deltaWeight > 0;
+      })
+      .sort((a, b) => {
+        if (metric === "reps") return b.deltaReps - a.deltaReps;
+        if (metric === "volume") return b.deltaVolume - a.deltaVolume;
+        return b.deltaWeight - a.deltaWeight;
+      });
     return sorted.slice(0, 3);
   }, [detail, metric]);
 
@@ -72,14 +78,14 @@ export default function WorkoutHistoryDetailPage() {
             <p>Total Exercises</p>
             <div>
               <strong>{detail.summary.totalExercises}</strong>
-              <span>{detail.summary.totalExercisesDelta >= 0 ? "+" : ""}{detail.summary.totalExercisesDelta} vs last</span>
+              <span className={detail.summary.totalExercisesDelta < 0 ? "delta-negative" : "delta-positive"}>{detail.summary.totalExercisesDelta >= 0 ? "+" : ""}{detail.summary.totalExercisesDelta} vs last</span>
             </div>
           </article>
           <article>
             <p>Total Volume</p>
             <div>
               <strong>{detail.summary.totalVolume} lbs</strong>
-              <span>{detail.summary.totalVolumeDelta >= 0 ? "+" : ""}{detail.summary.totalVolumeDelta} vs last</span>
+              <span className={detail.summary.totalVolumeDelta < 0 ? "delta-negative" : "delta-positive"}>{detail.summary.totalVolumeDelta >= 0 ? "+" : ""}{detail.summary.totalVolumeDelta} vs last</span>
             </div>
           </article>
         </section>
@@ -94,6 +100,7 @@ export default function WorkoutHistoryDetailPage() {
           </div>
 
           <div className="whd-improvement-list">
+            {topItems.length === 0 ? <p className="whd-empty">No improvements in this category yet.</p> : null}
             {topItems.map((item) => (
               <article key={item.key}>
                 <div>

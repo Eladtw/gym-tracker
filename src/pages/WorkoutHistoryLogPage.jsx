@@ -18,7 +18,7 @@ export default function WorkoutHistoryLogPage() {
         const data = await fetchWorkoutHistorySession(historyId);
         if (!alive) return;
         setDetail(data);
-        setExpanded(data.workoutLog[0]?.id ?? null);
+        setExpanded(null);
       } catch (error) {
         if (alive) setMsg(error?.message || "Failed to load workout log");
       }
