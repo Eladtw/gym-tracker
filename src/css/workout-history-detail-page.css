@@ -1,60 +1,51 @@
 .whd-page {
+  font-family: "Outfit", sans-serif;
+}
+
+.whd-page .wh-header-card-wrap {
+  padding: 8px 10px 8px;
+  background: rgba(253, 253, 253, 0.94);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.whd-page .wh-header-card {
   background: transparent;
-}
-
-.whd-header {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: transparent;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 8px 8px 10px;
-}
-
-.whd-title-row {
-  display: grid;
-  grid-template-columns: 40px 1fr 40px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.whd-back {
-  width: 36px;
-  height: 36px;
   border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.whd-page .wh-header-card__title-block h1 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.whd-page .wh-header-card__title-block p {
+  font-size: 13px;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.whd-page .wh-header-card__back {
   border-radius: 999px;
-  background: transparent;
 }
 
-.whd-title-row h1 {
-  margin: 0;
-  text-align: center;
-  color: #1e293b;
+.whd-page .wh-header-card__pills {
+  margin-top: 8px;
 }
 
-.whd-title-row p {
-  margin: 3px 0 0;
-  text-align: center;
-  font-size: 0.8rem;
-  color: #64748b;
-}
-
-.whd-muscles {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.whd-muscles span {
-  background: #eef2f7;
-  color: #64748b;
-  border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 0.75rem;
+.whd-page .wh-header-card__pills span {
+  border: 1px solid #f1f5f9;
+  background: #f8fafc;
+  font-size: 12px;
+  padding: 4px 11px;
 }
 
 .whd-main {
-  padding: 14px 8px;
+  padding: 16px 10px 30px;
+  max-width: 560px;
+  margin: 0 auto;
 }
 
 .whd-summary-top {
@@ -66,9 +57,10 @@
 
 .whd-summary-top h2 {
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.84rem;
+  letter-spacing: 0.08em;
+  font-size: 12px;
   margin: 0;
+  color: #0f172a;
 }
 
 .whd-summary-top button {
@@ -89,8 +81,8 @@
 .whd-workout-log-card {
   background: #fff;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
 }
 
 .whd-summary-cards article {
@@ -100,21 +92,31 @@
 .whd-summary-cards p {
   margin: 0;
   color: #64748b;
-  font-size: 0.68rem;
+  font-size: 11px;
   text-transform: uppercase;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
 }
 
 .whd-summary-cards div {
-  margin-top: 6px;
+  margin-top: 4px;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.whd-summary-cards strong { font-size: 1.8rem; line-height: 1; }
-.whd-summary-cards span { color: #10b981; font-size: 0.75rem; font-weight: 700; }
+.whd-summary-cards strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.whd-summary-cards span {
+  color: #10b981;
+  font-size: 12px;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 500;
+}
 
 .whd-improvements {
   padding: 14px;
@@ -122,13 +124,14 @@
 
 .whd-improvements h3 {
   margin: 0 0 10px;
+  font-size: 16px;
 }
 
 .whd-segments {
   display: flex;
-  gap: 8px;
-  background: #f1f5f9;
+  background: #f8fafc;
   border-radius: 10px;
+  border: 1px solid #f1f5f9;
   padding: 4px;
 }
 
@@ -138,14 +141,15 @@
   border-radius: 8px;
   background: transparent;
   color: #64748b;
-  font-weight: 600;
-  font-size: 0.74rem;
-  padding: 6px 0;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 7px 0;
 }
 
 .whd-segments .active {
   background: #f97316;
   color: #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.09);
 }
 
 .whd-improvements-list {
@@ -155,22 +159,51 @@
   gap: 12px;
 }
 
-.whd-improvements-list article { display: flex; justify-content: space-between; gap: 10px; }
-.whd-improvements-list h4 { margin: 0; font-size: 1rem; }
-.whd-improvements-list p { margin: 4px 0 0; color: #64748b; font-size: 0.8rem; }
-.whd-improvements-list strong { display: block; text-align: right; }
-.whd-improvements-list span { margin-top: 4px; display: inline-flex; align-items: center; gap: 2px; color: #10b981; font-weight: 700; font-size: 0.8rem; }
+.whd-improvements-list article {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.whd-improvements-list h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.whd-improvements-list p {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.whd-improvements-list strong {
+  display: block;
+  text-align: right;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.whd-improvements-list span {
+  margin-top: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #10b981;
+  font-size: 13px;
+  font-family: "Space Grotesk", sans-serif;
+}
 
 .whd-view-all {
-  margin-top: 10px;
+  margin-top: 8px;
   border: 0;
   background: transparent;
   color: #2563eb;
-  font-weight: 600;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   float: right;
+  font-size: 14px;
 }
 
 .whd-workout-log-card {
@@ -182,13 +215,20 @@
   width: 100%;
   border: 0;
   background: #fff;
-  padding: 16px 14px;
+  padding: 15px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
 }
 
-.whd-state { text-align:center; color:#64748b; padding:20px 8px; }
-.whd-state--error { color:#dc2626; }
+.whd-state {
+  text-align: center;
+  color: #64748b;
+  padding: 20px 8px;
+}
+
+.whd-state--error {
+  color: #dc2626;
+}

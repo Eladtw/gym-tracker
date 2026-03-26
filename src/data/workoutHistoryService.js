@@ -131,6 +131,7 @@ function summarizeVsPrevious(current, previous) {
           current: `${set.reps} x ${set.weight}`,
           deltaWeight: deltaW,
           deltaReps: deltaR,
+          deltaVolume: set.weight * set.reps - safeNum(prevSet?.weight) * safeNum(prevSet?.reps),
         };
       });
 
@@ -246,9 +247,18 @@ export async function fetchWorkoutHistoryList(limit = 20) {
 
     const delta = agg.totalVolume - safeNum(prev?.totalVolume);
     const threshold = safeNum(prev?.totalVolume) * 0.02;
+
+    const sameWorkout = sessionRows
+      .filter((x) => x.workout_id === s.workout_id)
+      .map((x) => aggregates.get(x.id)?.totalVolume || 0);
+    const maxVolumeForWorkout = sameWorkout.length ? Math.max(...sameWorkout) : agg.totalVolume;
+
     let status = "Maintained";
     let statusTone = "neutral";
-    if (delta > threshold) {
+    if (agg.totalVolume >= maxVolumeForWorkout && agg.totalVolume > 0) {
+      status = "Personal Best";
+      statusTone = "positive";
+    } else if (delta > threshold) {
       status = "Improved";
       statusTone = "positive";
     } else if (delta < -threshold) {

@@ -1,31 +1,25 @@
-.whi-page { padding: 8px; }
-
-.whi-header {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  background: transparent;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 6px 0 10px;
-  display: grid;
-  grid-template-columns: 40px 1fr 40px;
-  align-items: center;
+.whi-page {
+  padding: 0 10px 20px;
+  font-family: "Outfit", sans-serif;
 }
 
-.whi-header button {
+.whi-page .wh-header-card-wrap {
+  padding: 8px 0;
+  background: rgba(253, 253, 253, 0.95);
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.whi-page .wh-header-card {
   border: 0;
+  box-shadow: none;
   background: transparent;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
+  padding: 0;
 }
-
-.whi-header h1 { margin: 0; text-align: center; font-size: 1.4rem; }
 
 .whi-filter {
   margin-top: 12px;
   border-radius: 12px;
-  background: #eef2f7;
+  background: rgba(241, 245, 249, 0.5);
   display: flex;
   gap: 6px;
   padding: 4px;
@@ -36,8 +30,8 @@
   border: 0;
   background: transparent;
   border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: #64748b;
   padding: 8px 0;
 }
@@ -45,6 +39,7 @@
 .whi-filter .active {
   background: #f97316;
   color: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .whi-list {
@@ -55,10 +50,11 @@
 }
 
 .whi-item {
-  border: 1px solid #e2e8f0;
+  border: 1px solid #f1f5f9;
   border-radius: 12px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
 }
 
 .whi-item-head {
@@ -73,31 +69,81 @@
 
 .whi-item-head h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .whi-item-head p {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   color: #64748b;
   display: flex;
   gap: 10px;
-  font-size: 0.78rem;
+  font-size: 13px;
+  font-family: "Space Grotesk", sans-serif;
 }
 
-.whi-item-head strong { color: #10b981; font-size: 1.08rem; }
-.whi-item-head svg { color: #64748b; transition: transform .2s ease; }
-.whi-item-head svg.open { transform: rotate(180deg); }
+.whi-item-head p span:first-child {
+  background: rgba(241, 245, 249, 0.6);
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 1px 8px;
+  font-family: "Outfit", sans-serif;
+}
+
+.whi-item-head strong {
+  color: #10b981;
+  font-size: 17px;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.whi-item-head svg {
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+.whi-item-head svg.open {
+  transform: rotate(180deg);
+}
 
 .whi-table-wrap {
-  border-top: 1px solid #eef2f7;
+  border-top: 1px solid #f1f5f9;
   padding: 10px 12px;
 }
 
-.whi-table-wrap table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-.whi-table-wrap th { text-align: left; color: #64748b; padding-bottom: 6px; font-weight: 500; }
-.whi-table-wrap td { padding: 6px 0; }
-.whi-table-wrap td:last-child { color: #10b981; font-weight: 700; text-align: right; }
-.whi-table-wrap th:last-child { text-align: right; }
+.whi-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
 
-.whi-state { text-align:center; color:#64748b; padding:20px 8px; }
-.whi-state--error { color:#dc2626; }
+.whi-table-wrap th {
+  text-align: left;
+  color: #64748b;
+  padding-bottom: 6px;
+  font-weight: 500;
+}
+
+.whi-table-wrap td {
+  padding: 6px 0;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.whi-table-wrap td:last-child {
+  color: #10b981;
+  font-weight: 600;
+  text-align: right;
+}
+
+.whi-table-wrap th:last-child {
+  text-align: right;
+}
+
+.whi-state {
+  text-align: center;
+  color: #64748b;
+  padding: 20px 8px;
+}
+
+.whi-state--error {
+  color: #dc2626;
+}

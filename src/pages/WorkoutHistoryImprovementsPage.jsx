@@ -104,7 +104,7 @@ export default function WorkoutHistoryImprovementsPage() {
                             {metric === "weight"
                               ? `${row.deltaWeight >= 0 ? "+" : ""}${row.deltaWeight} lbs`
                               : metric === "volume"
-                              ? `${row.deltaWeight * 1 + row.deltaReps * 1 >= 0 ? "+" : ""}${Math.round((row.deltaWeight * 1 + row.deltaReps * 1) * 10) / 10}`
+                              ? `${row.deltaVolume >= 0 ? "+" : ""}${Math.round(row.deltaVolume)} vol`
                               : `${row.deltaReps >= 0 ? "+" : ""}${row.deltaReps} reps`}
                           </td>
                         </tr>

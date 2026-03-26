@@ -1,5 +1,36 @@
 .workout-history-page {
-  padding: 0 8px 12px;
+  padding: 0 10px 20px;
+  font-family: "Outfit", sans-serif;
+}
+
+.workout-history-page .wh-header-card-wrap {
+  padding: 8px 0 10px;
+  background: transparent;
+}
+
+.workout-history-page .wh-header-card {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  padding: 6px 4px;
+}
+
+.workout-history-page .wh-header-card__top {
+  grid-template-columns: 1fr;
+}
+
+.workout-history-page .wh-header-card__title-block h1 {
+  text-align: left;
+  font-size: 37px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.workout-history-page .wh-header-card__spacer,
+.workout-history-page .wh-header-card__right,
+.workout-history-page .wh-header-card__back {
+  display: none;
 }
 
 .workout-history-list {
@@ -9,9 +40,9 @@
 }
 
 .workout-history-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  background: #ffffff;
   padding: 14px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   cursor: pointer;
@@ -20,34 +51,38 @@
 .workout-history-card__top {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .workout-history-card__top h2 {
   margin: 0;
-  font-size: 1.18rem;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.15;
   color: #0f172a;
 }
 
 .workout-history-card__top p {
   margin: 4px 0 0;
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: 21px;
+  font-family: "Plus Jakarta Sans", sans-serif;
 }
 
 .workout-history-card__top-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: 7px;
   color: #64748b;
 }
 
 .workout-history-status {
-  font-size: 0.7rem;
-  border-radius: 6px;
+  font-size: 12px;
+  border-radius: 4px;
   padding: 2px 8px;
-  font-weight: 600;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .workout-history-status--positive {
@@ -66,7 +101,7 @@
 }
 
 .workout-history-muscles {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -75,41 +110,34 @@
 .workout-history-muscles span {
   background: #f8fafc;
   color: #64748b;
-  font-size: 0.75rem;
-  padding: 4px 10px;
+  font-size: 12px;
+  padding: 4px 9px;
   border-radius: 999px;
 }
 
 .workout-history-card__metrics {
-  margin-top: 12px;
-  border-top: 1px solid #f1f5f9;
+  margin-top: 10px;
+  border-top: 1px solid rgba(241, 245, 249, 0.8);
   padding-top: 10px;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
   color: #0f172a;
 }
 
 .workout-history-card__metrics span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
+  gap: 5px;
+  font-size: 12px;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-weight: 600;
 }
 
-.workout-history-load-more-wrap {
-  display: flex;
-  justify-content: center;
-  padding: 22px 0 8px;
-}
-
-.workout-history-load-more-btn {
-  background: transparent;
-  border: 0;
-  color: #2563eb;
-  font-weight: 600;
-  font-size: 0.92rem;
+.workout-history-card__metrics svg {
+  width: 14px;
+  height: 14px;
+  color: rgba(100, 116, 139, 0.7);
 }
 
 .workout-history-state {
